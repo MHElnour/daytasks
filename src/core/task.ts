@@ -20,3 +20,13 @@ export interface DayTask {
 	createdAt: string;
 	updatedAt: string;
 }
+
+export interface CreateDayTaskInput {
+	title: string;
+	scheduledDate: string;
+	dueDate?: string;
+	parentId?: string;
+	detailNotePath?: string;
+	tags?: string[];
+	contexts?: string[];
+}
