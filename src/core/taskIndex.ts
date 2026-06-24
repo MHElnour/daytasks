@@ -35,12 +35,12 @@ export class MemoryTaskIndex implements TaskIndex {
 
 	upsert(task: DayTask): void {
 		const existing = this.byIdMap.get(task.id);
-		if (existing) {
-			this.removeFromSecondaryMaps(existing);
-		}
-
 		this.byIdMap.set(task.id, task);
-		this.addToSecondaryMaps(task);
+		if (existing) {
+			this.syncSecondaryMaps(existing, task);
+		} else {
+			this.addToSecondaryMaps(task);
+		}
 	}
 
 	remove(id: string): void {
@@ -105,6 +105,24 @@ export class MemoryTaskIndex implements TaskIndex {
 		}
 	}
 
+	private syncSecondaryMaps(previous: DayTask, next: DayTask): void {
+		this.syncMap(this.byDateMap, [previous.scheduledDate], [next.scheduledDate], next);
+		this.syncMap(this.byStatusMap, [previous.status], [next.status], next);
+		this.syncMap(
+			this.byParentMap,
+			previous.parentId ? [previous.parentId] : [],
+			next.parentId ? [next.parentId] : [],
+			next
+		);
+		this.syncMap(this.byTagMap, previous.tags ?? [], next.tags ?? [], next);
+		this.syncMap(
+			this.byProjectMap,
+			(previous.projects ?? []).map((project) => project.path),
+			(next.projects ?? []).map((project) => project.path),
+			next
+		);
+	}
+
 	private addToMap<K>(map: Map<K, DayTask[]>, key: K, task: DayTask): void {
 		const existing = map.get(key);
 		if (existing) {
@@ -113,6 +131,45 @@ export class MemoryTaskIndex implements TaskIndex {
 		}
 
 		map.set(key, [task]);
+	}
+
+	private syncMap<K>(
+		map: Map<K, DayTask[]>,
+		previousKeys: K[],
+		nextKeys: K[],
+		task: DayTask
+	): void {
+		const nextKeySet = new Set(nextKeys);
+		for (const previousKey of previousKeys) {
+			if (!nextKeySet.has(previousKey)) {
+				this.removeFromMap(map, previousKey, task);
+			}
+		}
+
+		const previousKeySet = new Set(previousKeys);
+		for (const nextKey of nextKeys) {
+			if (previousKeySet.has(nextKey)) {
+				this.replaceInMap(map, nextKey, task);
+			} else {
+				this.addToMap(map, nextKey, task);
+			}
+		}
+	}
+
+	private replaceInMap<K>(map: Map<K, DayTask[]>, key: K, task: DayTask): void {
+		const existing = map.get(key);
+		if (!existing) {
+			this.addToMap(map, key, task);
+			return;
+		}
+
+		const index = existing.findIndex((candidate) => candidate.id === task.id);
+		if (index === -1) {
+			existing.push(task);
+			return;
+		}
+
+		existing[index] = task;
 	}
 
 	private removeFromMap<K>(map: Map<K, DayTask[]>, key: K, task: DayTask): void {

@@ -67,6 +67,22 @@ describe("MemoryTaskIndex", () => {
 		expect(index.byTag("errand")).toEqual([done]);
 	});
 
+	it("upsert preserves same-key query order when a task is updated", () => {
+		const index = new MemoryTaskIndex();
+		const secondSameDay: DayTask = {
+			...tasks[1],
+			scheduledDate: "2026-06-24",
+			status: "open",
+		};
+		index.rebuild([tasks[0], secondSameDay]);
+
+		const done: DayTask = { ...tasks[0], status: "done" };
+		index.upsert(done);
+
+		expect(index.byDate("2026-06-24")).toEqual([done, secondSameDay]);
+		expect(index.byStatus("done")).toEqual([done]);
+	});
+
 	it("remove deletes a task from every index", () => {
 		const index = new MemoryTaskIndex();
 		index.upsert(tasks[0]);
