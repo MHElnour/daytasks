@@ -4,7 +4,7 @@ import { createTaskForActiveNote } from "./commands/createTaskCommand";
 import { DayTaskService } from "./core/dayTaskService";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
-import { getDailyNoteDateFromPath } from "./daily-notes/dailyNoteDate";
+import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
 import {
 	DayTasksDataStore,
 	type DayTasksPluginData,
@@ -60,7 +60,6 @@ export default class DayTasksPlugin extends Plugin {
 		this.registerEditorExtension(
 			dailyTasksLivePreviewExtension({
 				isEnabled: () => this.settings.showDailyNoteWidget,
-				getActiveNotePath: () => this.app.workspace.getActiveFile()?.path ?? null,
 				renderWidget: (container, notePath) =>
 					this.renderWidgetInto(container, notePath),
 				version: () => this.dataVersion,
@@ -102,7 +101,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (!this.settings.showDailyNoteWidget) {
 			return false;
 		}
-		if (!getDailyNoteDateFromPath(notePath)) {
+		if (!resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder)) {
 			return false;
 		}
 		const model = this.controller.getWidgetForNotePath(notePath);
@@ -144,7 +143,10 @@ export default class DayTasksPlugin extends Plugin {
 			if (!path || view.getMode() !== "preview") {
 				return;
 			}
-			if (!this.settings.showDailyNoteWidget || !getDailyNoteDateFromPath(path)) {
+			if (
+				!this.settings.showDailyNoteWidget ||
+				!resolveDailyNoteDate(path, this.settings.dailyNoteFolder)
+			) {
 				return;
 			}
 			const sizer = container.querySelector(".markdown-preview-sizer");

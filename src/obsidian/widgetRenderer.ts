@@ -11,8 +11,10 @@ export interface WidgetRenderHandlers {
 	onToggleTask(taskId: string): void;
 }
 
-/** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS. */
-export const WIDGET_ROOT_CLASSES = ["daytasks-plugin", "task-card-note-widget"];
+/** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS.
+ * `daytasks-note-widget` is our own container class (not TaskNotes') to avoid
+ * restyling TaskNotes when both plugins are installed. */
+export const WIDGET_ROOT_CLASSES = ["daytasks-plugin", "daytasks-note-widget"];
 
 function el<K extends keyof HTMLElementTagNameMap>(
 	tag: K,
@@ -76,7 +78,7 @@ function renderTaskCard(
 	options: WidgetRenderOptions,
 	handlers: WidgetRenderHandlers
 ): HTMLElement {
-	const wrapper = el("li", "task-card-note-widget__card");
+	const wrapper = el("li", "daytasks-note-widget__card");
 
 	const cardEl = el("div", "task-card");
 	if (card.checked) {

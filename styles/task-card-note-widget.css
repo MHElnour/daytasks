@@ -1,7 +1,9 @@
-/* Task Card Note Widget — container for inline task cards in a note.
-   Ported from TaskNotes styles/task-card-note-widget.css. */
+/* Note widget container for inline task cards in a note.
+   Adapted from TaskNotes styles/task-card-note-widget.css, but renamed to
+   `daytasks-note-widget` and scoped under `.daytasks-plugin` so it never
+   restyles TaskNotes' own `.task-card-note-widget` when both are installed. */
 
-.task-card-note-widget {
+.daytasks-plugin .daytasks-note-widget {
 	display: block;
 	box-sizing: border-box;
 	border-radius: var(--radius-s);
@@ -12,13 +14,13 @@
 }
 
 /* Keep widget aligned with the centered readable column when enabled */
-.is-readable-line-width .task-card-note-widget {
+.is-readable-line-width .daytasks-plugin .daytasks-note-widget {
 	width: min(100%, var(--file-line-width, 100%));
 	max-width: var(--file-line-width, 100%);
 	margin-inline: auto;
 }
 
-.task-card-note-widget__card {
+.daytasks-plugin .daytasks-note-widget__card {
 	/* Reset margins for the inner task card */
 	margin: 0;
 }

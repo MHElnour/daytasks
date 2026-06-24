@@ -1,11 +1,11 @@
 import type { Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import { editorInfoField } from "obsidian";
 import { applyBottomOffset, insertWidgetAtBottom } from "./widgetInsertion";
 
 /** Everything the Live Preview widget needs from the plugin, kept narrow. */
 export interface LivePreviewWidgetHost {
 	isEnabled(): boolean;
-	getActiveNotePath(): string | null;
 	/** Renders the widget into `container`; returns true if a widget was drawn. */
 	renderWidget(container: HTMLElement, notePath: string): boolean;
 	/** Monotonic counter bumped whenever tasks or settings change. */
@@ -20,6 +20,11 @@ function findSizer(view: EditorView): HTMLElement | null {
 			.closest(".markdown-source-view")
 			?.querySelector<HTMLElement>(".cm-sizer") ?? null
 	);
+}
+
+/** Path of the file backing THIS editor (split-pane safe), not the active one. */
+function notePathFromView(view: EditorView): string | null {
+	return view.state.field(editorInfoField, false)?.file?.path ?? null;
 }
 
 /**
@@ -48,7 +53,7 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 
 			private sync(view: EditorView): void {
 				const container = findSizer(view);
-				const path = host.getActiveNotePath();
+				const path = notePathFromView(view);
 				if (!host.isEnabled() || !path || !container) {
 					this.remove();
 					return;

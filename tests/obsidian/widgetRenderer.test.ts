@@ -58,7 +58,7 @@ describe("renderDailyTasksWidget", () => {
 		const { root } = render(emptyModel);
 
 		expect(root.classList.contains("daytasks-plugin")).toBe(true);
-		expect(root.classList.contains("task-card-note-widget")).toBe(true);
+		expect(root.classList.contains("daytasks-note-widget")).toBe(true);
 	});
 
 	it("renders the header, date, and empty state for an empty model", () => {
@@ -81,7 +81,7 @@ describe("renderDailyTasksWidget", () => {
 			"Buy milk"
 		);
 		expect(cards[0].querySelector(".task-card__status-dot")).not.toBeNull();
-		expect(cards[0].closest(".task-card-note-widget__card")).not.toBeNull();
+		expect(cards[0].closest(".daytasks-note-widget__card")).not.toBeNull();
 		expect(root.querySelector(".daytasks-widget__empty")).toBeNull();
 	});
 

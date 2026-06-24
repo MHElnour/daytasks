@@ -46,6 +46,19 @@ describe("createTaskForActiveNote", () => {
 		expect(notify).toHaveBeenCalledOnce();
 	});
 
+	it("refuses a daily note outside the configured daily-note folder", async () => {
+		const { deps: d, createTask, notify } = deps({
+			getActiveFilePath: () => "2026-06-25.md",
+			settings: { ...DEFAULT_SETTINGS, dailyNoteFolder: "Daily" },
+		});
+
+		const result = await createTaskForActiveNote(d, "My task");
+
+		expect(result).toBeNull();
+		expect(createTask).not.toHaveBeenCalled();
+		expect(notify).toHaveBeenCalledOnce();
+	});
+
 	it("refuses when there is no active file", async () => {
 		const { deps: d, createTask } = deps({ getActiveFilePath: () => null });
 

@@ -1,10 +1,13 @@
-import { getDailyNoteDateFromPath } from "../daily-notes/dailyNoteDate";
+import { resolveDailyNoteDate } from "../daily-notes/dailyNoteDate";
 import type { CreateDayTaskInput, DayTask } from "../core/task";
 import type { DayTasksSettings } from "../settings/settings";
 
 export interface CreateTaskCommandDeps {
 	getActiveFilePath(): string | null;
-	settings: Pick<DayTasksSettings, "defaultTags" | "defaultProjectPath">;
+	settings: Pick<
+		DayTasksSettings,
+		"defaultTags" | "defaultProjectPath" | "dailyNoteFolder"
+	>;
 	service: { createTask(input: CreateDayTaskInput): Promise<DayTask> };
 	notify(message: string): void;
 }
@@ -19,7 +22,9 @@ export async function createTaskForActiveNote(
 	title: string
 ): Promise<DayTask | null> {
 	const path = deps.getActiveFilePath();
-	const date = path ? getDailyNoteDateFromPath(path) : null;
+	const date = path
+		? resolveDailyNoteDate(path, deps.settings.dailyNoteFolder)
+		: null;
 	if (!date) {
 		deps.notify("DayTasks: open a daily note (YYYY-MM-DD) to create a task.");
 		return null;

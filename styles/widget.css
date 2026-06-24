@@ -39,7 +39,7 @@
 
 /* Inline widget wrapper injected into the editor sizer (Live Preview) and the
    reading-mode preview sizer. Owns the outer spacing; the bordered look comes
-   from the inner .task-card-note-widget. The margin-top var is trimmed at
+   from the inner .daytasks-note-widget. The margin-top var is trimmed at
    runtime to cancel CodeMirror's spacer gap. */
 .daytasks-cm-widget,
 .daytasks-widget-host {
@@ -50,8 +50,8 @@
 	margin-inline: var(--file-margins, 0);
 }
 
-.daytasks-cm-widget .task-card-note-widget,
-.daytasks-widget-host .task-card-note-widget {
+.daytasks-cm-widget .daytasks-note-widget,
+.daytasks-widget-host .daytasks-note-widget {
 	margin-block: 0;
 	margin-inline: 0;
 }
