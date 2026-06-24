@@ -1,0 +1,24 @@
+/* Task Card Note Widget — container for inline task cards in a note.
+   Ported from TaskNotes styles/task-card-note-widget.css. */
+
+.task-card-note-widget {
+	display: block;
+	box-sizing: border-box;
+	border-radius: var(--radius-s);
+	border: 1px solid var(--background-modifier-border);
+	margin-block: var(--cs-spacing-md, 8px);
+	margin-inline: var(--file-margins, 0);
+	padding: var(--cs-spacing-sm, 4px);
+}
+
+/* Keep widget aligned with the centered readable column when enabled */
+.is-readable-line-width .task-card-note-widget {
+	width: min(100%, var(--file-line-width, 100%));
+	max-width: var(--file-line-width, 100%);
+	margin-inline: auto;
+}
+
+.task-card-note-widget__card {
+	/* Reset margins for the inner task card */
+	margin: 0;
+}

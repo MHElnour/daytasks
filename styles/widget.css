@@ -1,0 +1,57 @@
+/* =================================================================
+   DAYTASKS WIDGET — header, date, empty state, Live Preview panel.
+   The task cards themselves are styled by task-card.css.
+   ================================================================= */
+
+.daytasks-plugin .daytasks-widget__header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--tn-spacing-sm);
+	padding: var(--tn-spacing-xs) var(--tn-spacing-sm);
+	margin-bottom: var(--tn-spacing-xs);
+}
+
+.daytasks-plugin .daytasks-widget__title {
+	font-weight: 600;
+	font-size: var(--tn-font-size-md);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--tn-text-muted);
+}
+
+.daytasks-plugin .daytasks-widget__date {
+	font-size: var(--tn-font-size-sm);
+	color: var(--text-faint);
+}
+
+.daytasks-plugin .daytasks-widget__empty {
+	font-size: var(--tn-font-size-md);
+	color: var(--text-faint);
+	padding: var(--tn-spacing-sm) var(--tn-spacing-lg);
+}
+
+.daytasks-plugin .daytasks-cards {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* Inline widget wrapper injected into the editor sizer (Live Preview) and the
+   reading-mode preview sizer. Owns the outer spacing; the bordered look comes
+   from the inner .task-card-note-widget. The margin-top var is trimmed at
+   runtime to cancel CodeMirror's spacer gap. */
+.daytasks-cm-widget,
+.daytasks-widget-host {
+	display: block;
+	user-select: none;
+	clear: both;
+	margin-block: var(--daytasks-widget-margin-top, 1.5em) 2em;
+	margin-inline: var(--file-margins, 0);
+}
+
+.daytasks-cm-widget .task-card-note-widget,
+.daytasks-widget-host .task-card-note-widget {
+	margin-block: 0;
+	margin-inline: 0;
+}

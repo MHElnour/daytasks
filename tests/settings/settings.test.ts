@@ -1,0 +1,71 @@
+import { describe, expect, it } from "vitest";
+import { DEFAULT_SETTINGS, mergeSettings } from "../../src/settings/settings";
+
+describe("DEFAULT_SETTINGS", () => {
+	it("matches the spec defaults", () => {
+		expect(DEFAULT_SETTINGS).toMatchObject({
+			dailyNoteFolder: "",
+			dailyNoteDateFormat: "YYYY-MM-DD",
+			showDailyNoteWidget: true,
+			widgetPosition: "bottom",
+			showTaskIds: true,
+			showTags: true,
+			showProjects: true,
+			defaultTags: [],
+			defaultProjectPath: "",
+			detailNotesFolder: "DayTasks/Tasks",
+			createDetailNoteByDefault: false,
+			apiEnabled: false,
+			apiPort: 9982,
+			apiToken: "",
+		});
+	});
+});
+
+describe("mergeSettings", () => {
+	it("returns defaults when stored data is missing or not an object", () => {
+		expect(mergeSettings(undefined)).toEqual(DEFAULT_SETTINGS);
+		expect(mergeSettings(null)).toEqual(DEFAULT_SETTINGS);
+		expect(mergeSettings("nope")).toEqual(DEFAULT_SETTINGS);
+	});
+
+	it("overlays stored values on top of defaults", () => {
+		const merged = mergeSettings({
+			showTags: false,
+			apiPort: 1234,
+			defaultTags: ["work"],
+			defaultProjectPath: "Projects/Home.md",
+		});
+
+		expect(merged.showTags).toBe(false);
+		expect(merged.apiPort).toBe(1234);
+		expect(merged.defaultTags).toEqual(["work"]);
+		expect(merged.defaultProjectPath).toBe("Projects/Home.md");
+		expect(merged.showProjects).toBe(true);
+		expect(merged.widgetPosition).toBe("bottom");
+	});
+
+	it("ignores unknown keys and wrongly-typed values", () => {
+		const merged = mergeSettings({
+			bogus: "x",
+			apiPort: "not-a-number",
+			defaultTags: "not-an-array",
+		});
+
+		expect(merged).toEqual(DEFAULT_SETTINGS);
+		expect(merged).not.toHaveProperty("bogus");
+	});
+
+	it("keeps only string entries inside defaultTags", () => {
+		const merged = mergeSettings({ defaultTags: ["ok", 2, null, "fine"] });
+
+		expect(merged.defaultTags).toEqual(["ok", "fine"]);
+	});
+
+	it("does not share array references with DEFAULT_SETTINGS", () => {
+		const merged = mergeSettings({});
+		merged.defaultTags.push("mutated");
+
+		expect(DEFAULT_SETTINGS.defaultTags).toEqual([]);
+	});
+});

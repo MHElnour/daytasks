@@ -1,0 +1,47 @@
+/* =================================================================
+   DESIGN TOKENS
+   Ported from TaskNotes (source of truth) and scoped to the plugin.
+   ================================================================= */
+
+.daytasks-plugin {
+	/* Base spacing grid */
+	--cs-spacing-xs: 2px;
+	--cs-spacing-sm: 4px;
+	--cs-spacing-md: 8px;
+	--cs-spacing-lg: 12px;
+
+	/* Radii */
+	--cs-radius-xs: 2px;
+	--cs-radius-md: 10px;
+
+	/* Motion */
+	--cs-transition-fast: 140ms ease;
+
+	/* Semantic surface/text tokens mapped onto Obsidian theme vars */
+	--tn-bg-primary: var(--background-primary);
+	--tn-text-normal: var(--text-normal);
+	--tn-text-muted: var(--text-muted);
+	--tn-border-color: var(--background-modifier-border);
+	--tn-interactive-accent: var(--interactive-accent);
+	--tn-color-success: var(--color-green, #00aa00);
+	--tn-color-error: var(--color-red, #ff0000);
+
+	/* Spacing aliases */
+	--tn-spacing-xs: var(--cs-spacing-xs);
+	--tn-spacing-sm: var(--cs-spacing-sm);
+	--tn-spacing-md: var(--cs-spacing-md);
+	--tn-spacing-lg: var(--cs-spacing-lg);
+
+	/* Type scale */
+	--tn-font-size-base: var(--font-text-size, 16px);
+	--tn-font-size-sm: calc(var(--tn-font-size-base) * 0.6875);
+	--tn-font-size-md: calc(var(--tn-font-size-base) * 0.75);
+	--tn-font-size-lg: calc(var(--tn-font-size-base) * 0.875);
+
+	/* Radius aliases */
+	--tn-radius-xs: var(--cs-radius-xs);
+	--tn-radius-md: var(--cs-radius-md);
+
+	/* Transition alias */
+	--tn-transition-fast: var(--cs-transition-fast);
+}
