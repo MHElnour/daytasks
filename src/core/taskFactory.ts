@@ -1,3 +1,5 @@
+import { cloneProjects, cloneStrings } from "../util/clone";
+import { nowIso } from "../util/time";
 import type { CreateDayTaskInput, DayTask } from "./task";
 import { generateTaskId } from "./taskIds";
 
@@ -7,18 +9,13 @@ export interface TaskFactoryDependencies {
 }
 
 function copyNonEmpty(values: string[] | undefined): string[] | undefined {
-	if (!values || values.length === 0) {
-		return undefined;
-	}
-	return [...values];
+	return values && values.length > 0 ? cloneStrings(values) : undefined;
 }
 
 function copyProjects(input: CreateDayTaskInput): DayTask["projects"] {
-	if (!input.projects || input.projects.length === 0) {
-		return undefined;
-	}
-
-	return input.projects.map((project) => ({ ...project }));
+	return input.projects && input.projects.length > 0
+		? cloneProjects(input.projects)
+		: undefined;
 }
 
 export function createDayTask(
@@ -30,7 +27,7 @@ export function createDayTask(
 		throw new Error("Task title is required");
 	}
 
-	const now = dependencies.now ?? (() => new Date().toISOString());
+	const now = dependencies.now ?? nowIso;
 	const id = dependencies.id ?? (() => generateTaskId());
 	const timestamp = now();
 

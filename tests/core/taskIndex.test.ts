@@ -39,4 +39,45 @@ describe("MemoryTaskIndex", () => {
 		expect(index.byTag("errand")).toEqual([tasks[0]]);
 		expect(index.byProject("Projects/Home.md")).toEqual([tasks[0]]);
 	});
+
+	it("upsert adds a new task to every index", () => {
+		const index = new MemoryTaskIndex();
+
+		index.upsert(tasks[0]);
+
+		expect(index.byId("TSK-8cA562sd")).toEqual(tasks[0]);
+		expect(index.byDate("2026-06-24")).toEqual([tasks[0]]);
+		expect(index.byStatus("open")).toEqual([tasks[0]]);
+		expect(index.byParent("TSK-parent1")).toEqual([tasks[0]]);
+		expect(index.byTag("errand")).toEqual([tasks[0]]);
+		expect(index.byProject("Projects/Home.md")).toEqual([tasks[0]]);
+	});
+
+	it("upsert re-indexes a changed task without duplicating it", () => {
+		const index = new MemoryTaskIndex();
+		index.upsert(tasks[0]);
+
+		const done: DayTask = { ...tasks[0], status: "done" };
+		index.upsert(done);
+
+		expect(index.byId("TSK-8cA562sd")).toEqual(done);
+		expect(index.byStatus("open")).toEqual([]);
+		expect(index.byStatus("done")).toEqual([done]);
+		expect(index.byDate("2026-06-24")).toEqual([done]);
+		expect(index.byTag("errand")).toEqual([done]);
+	});
+
+	it("remove deletes a task from every index", () => {
+		const index = new MemoryTaskIndex();
+		index.upsert(tasks[0]);
+
+		index.remove("TSK-8cA562sd");
+
+		expect(index.byId("TSK-8cA562sd")).toBeNull();
+		expect(index.byDate("2026-06-24")).toEqual([]);
+		expect(index.byStatus("open")).toEqual([]);
+		expect(index.byParent("TSK-parent1")).toEqual([]);
+		expect(index.byTag("errand")).toEqual([]);
+		expect(index.byProject("Projects/Home.md")).toEqual([]);
+	});
 });

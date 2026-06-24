@@ -3,7 +3,14 @@ export const TASK_ID_RANDOM_LENGTH = 8;
 
 const TASK_ID_ALPHABET =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-const TASK_ID_PATTERN = /^TSK-[A-Za-z0-9]{8}$/;
+const TASK_ID_CHAR_CLASS = "[A-Za-z0-9]";
+
+/** Regex source matching a canonical task id (e.g. `TSK-8cA562sd`). */
+export const TASK_ID_SOURCE = `${TASK_ID_PREFIX}${TASK_ID_CHAR_CLASS}{${TASK_ID_RANDOM_LENGTH}}`;
+/** Regex source matching a task id embedded in surrounding text. */
+export const TASK_ID_INLINE_SOURCE = `${TASK_ID_PREFIX}${TASK_ID_CHAR_CLASS}+`;
+
+const TASK_ID_PATTERN = new RegExp(`^${TASK_ID_SOURCE}$`);
 
 export function isTaskId(value: string): boolean {
 	return TASK_ID_PATTERN.test(value);

@@ -1,3 +1,4 @@
+import { nowIso } from "../util/time";
 import type { CreateDayTaskInput, DayTask } from "./task";
 import { createDayTask, type TaskFactoryDependencies } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
@@ -16,7 +17,7 @@ export class DayTaskService {
 			now: this.dependencies.now,
 			id: this.dependencies.id,
 		});
-		await this.saveAndReindex(task);
+		await this.saveAndIndex(task);
 		return task;
 	}
 
@@ -47,16 +48,16 @@ export class DayTaskService {
 			status: task.status === "done" ? "open" : "done",
 			updatedAt: this.now(),
 		};
-		await this.saveAndReindex(updatedTask);
+		await this.saveAndIndex(updatedTask);
 		return updatedTask;
 	}
 
-	private async saveAndReindex(task: DayTask): Promise<void> {
+	private async saveAndIndex(task: DayTask): Promise<void> {
 		await this.dependencies.store.save(task);
-		this.dependencies.index.rebuild(await this.dependencies.store.list());
+		this.dependencies.index.upsert(task);
 	}
 
 	private now(): string {
-		return this.dependencies.now ? this.dependencies.now() : new Date().toISOString();
+		return this.dependencies.now ? this.dependencies.now() : nowIso();
 	}
 }

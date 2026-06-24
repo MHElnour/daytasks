@@ -1,10 +1,14 @@
+import { TASK_ID_INLINE_SOURCE } from "../core/taskIds";
+
 export interface ParsedDailyTaskLine {
 	id: string;
 	completed: boolean;
 	title: string;
 }
 
-const DAILY_TASK_LINE_PATTERN = /^-\s+\[([ xX])\]\s+(.+?)\s+<!--\s+(TSK-[A-Za-z0-9]+)\s+-->\s*$/;
+const DAILY_TASK_LINE_PATTERN = new RegExp(
+	`^-\\s+\\[([ xX])\\]\\s+(.+?)\\s+<!--\\s+(${TASK_ID_INLINE_SOURCE})\\s+-->\\s*$`
+);
 
 export function parseDailyTaskLine(line: string): ParsedDailyTaskLine | null {
 	const match = line.match(DAILY_TASK_LINE_PATTERN);

@@ -1,4 +1,6 @@
 import type { DayTask } from "../core/task";
+import { cloneStrings } from "../util/clone";
+import { noteBasename } from "../util/notePath";
 
 export interface TaskCardProjectViewModel {
 	path: string;
@@ -14,21 +16,16 @@ export interface TaskCardViewModel {
 	projects: TaskCardProjectViewModel[];
 }
 
-function projectLabel(path: string): string {
-	const fileName = path.split(/[\\/]/).pop() ?? path;
-	return fileName.replace(/\.md$/i, "");
-}
-
 export function createTaskCardViewModel(task: DayTask): TaskCardViewModel {
 	return {
 		id: task.id,
 		title: task.title,
 		checked: task.status === "done",
 		status: task.status,
-		tags: [...(task.tags ?? [])],
+		tags: cloneStrings(task.tags) ?? [],
 		projects: (task.projects ?? []).map((project) => ({
 			path: project.path,
-			label: project.title ?? projectLabel(project.path),
+			label: project.title ?? noteBasename(project.path),
 		})),
 	};
 }

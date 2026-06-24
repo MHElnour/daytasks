@@ -2,6 +2,8 @@ import type { DayTask } from "./task";
 
 export interface TaskIndex {
 	rebuild(tasks: DayTask[]): void;
+	upsert(task: DayTask): void;
+	remove(id: string): void;
 	byId(id: string): DayTask | null;
 	byDate(date: string): DayTask[];
 	byStatus(status: DayTask["status"]): DayTask[];
@@ -27,19 +29,28 @@ export class MemoryTaskIndex implements TaskIndex {
 		this.byProjectMap = new Map();
 
 		for (const task of tasks) {
-			this.byIdMap.set(task.id, task);
-			this.addToMap(this.byDateMap, task.scheduledDate, task);
-			this.addToMap(this.byStatusMap, task.status, task);
-			if (task.parentId) {
-				this.addToMap(this.byParentMap, task.parentId, task);
-			}
-			for (const tag of task.tags ?? []) {
-				this.addToMap(this.byTagMap, tag, task);
-			}
-			for (const project of task.projects ?? []) {
-				this.addToMap(this.byProjectMap, project.path, task);
-			}
+			this.upsert(task);
 		}
+	}
+
+	upsert(task: DayTask): void {
+		const existing = this.byIdMap.get(task.id);
+		if (existing) {
+			this.removeFromSecondaryMaps(existing);
+		}
+
+		this.byIdMap.set(task.id, task);
+		this.addToSecondaryMaps(task);
+	}
+
+	remove(id: string): void {
+		const existing = this.byIdMap.get(id);
+		if (!existing) {
+			return;
+		}
+
+		this.removeFromSecondaryMaps(existing);
+		this.byIdMap.delete(id);
 	}
 
 	byId(id: string): DayTask | null {
@@ -66,6 +77,34 @@ export class MemoryTaskIndex implements TaskIndex {
 		return [...(this.byProjectMap.get(projectPath) ?? [])];
 	}
 
+	private addToSecondaryMaps(task: DayTask): void {
+		this.addToMap(this.byDateMap, task.scheduledDate, task);
+		this.addToMap(this.byStatusMap, task.status, task);
+		if (task.parentId) {
+			this.addToMap(this.byParentMap, task.parentId, task);
+		}
+		for (const tag of task.tags ?? []) {
+			this.addToMap(this.byTagMap, tag, task);
+		}
+		for (const project of task.projects ?? []) {
+			this.addToMap(this.byProjectMap, project.path, task);
+		}
+	}
+
+	private removeFromSecondaryMaps(task: DayTask): void {
+		this.removeFromMap(this.byDateMap, task.scheduledDate, task);
+		this.removeFromMap(this.byStatusMap, task.status, task);
+		if (task.parentId) {
+			this.removeFromMap(this.byParentMap, task.parentId, task);
+		}
+		for (const tag of task.tags ?? []) {
+			this.removeFromMap(this.byTagMap, tag, task);
+		}
+		for (const project of task.projects ?? []) {
+			this.removeFromMap(this.byProjectMap, project.path, task);
+		}
+	}
+
 	private addToMap<K>(map: Map<K, DayTask[]>, key: K, task: DayTask): void {
 		const existing = map.get(key);
 		if (existing) {
@@ -74,5 +113,19 @@ export class MemoryTaskIndex implements TaskIndex {
 		}
 
 		map.set(key, [task]);
+	}
+
+	private removeFromMap<K>(map: Map<K, DayTask[]>, key: K, task: DayTask): void {
+		const existing = map.get(key);
+		if (!existing) {
+			return;
+		}
+
+		const next = existing.filter((candidate) => candidate.id !== task.id);
+		if (next.length > 0) {
+			map.set(key, next);
+		} else {
+			map.delete(key);
+		}
 	}
 }
