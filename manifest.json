@@ -1,0 +1,9 @@
+{
+  "id": "daytasks",
+  "name": "DayTasks",
+  "version": "0.0.0",
+  "minAppVersion": "1.8.0",
+  "description": "A lightweight day-first task plugin for Obsidian.",
+  "author": "MHElnour",
+  "isDesktopOnly": true
+}
