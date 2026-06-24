@@ -2,9 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first testable DayTasks core loop: create a task, save it, index it, and sync a readable task line into a daily note document.
+**Goal:** Build the first testable DayTasks core loop: create a task, save it, index it, and render a daily-note widget model for the active day.
 
-**Architecture:** Keep v0 store-first and adapter-friendly. Core modules are pure TypeScript; Obsidian-specific code stays out until the core contracts are stable. Daily notes are a projection of the canonical task store, keyed by stable `TSK-xxxxxxxx` IDs.
+**Architecture:** Keep v0 store-first and adapter-friendly. Core modules are pure TypeScript; Obsidian-specific code stays out until the core contracts are stable. Daily notes are the workspace surface, while the canonical task store feeds a bottom-of-note widget keyed by stable `TSK-xxxxxxxx` IDs.
+
+**Pivot note:** The original plan included markdown line upserts inside daily notes. We kept the pure markdown helpers as optional utilities, but the active v0 service path no longer mutates note content.
 
 **Tech Stack:** TypeScript, Vitest for unit tests, Obsidian plugin-compatible module layout.
 
@@ -18,7 +20,9 @@
 - Create `src/core/taskFactory.ts` to normalize task creation inputs.
 - Modify `src/core/taskStore.ts` with a memory-backed task store.
 - Modify `src/core/taskIndex.ts` with a memory-backed task index.
-- Create `src/core/dayTaskService.ts` to orchestrate task creation, status toggles, indexing, and daily-note sync.
+- Create `src/core/dayTaskService.ts` to orchestrate task creation, status toggles, and indexing.
+- Add project and tag metadata to core tasks and indexes.
+- Add daily-note date detection plus task-card and daily-widget view models.
 - Modify `src/daily-notes/dailyNoteFormatter.ts` with task line formatting.
 - Modify `src/daily-notes/dailyNoteParser.ts` with task line parsing.
 - Create `src/daily-notes/dailyNoteDocument.ts` with pure section upsert helpers.

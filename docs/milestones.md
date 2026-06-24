@@ -4,10 +4,11 @@
 
 - Create a task with a generated `TSK-xxxxxxxx` ID.
 - Save task data in the plugin store.
-- Maintain an in-memory task index by ID, date, status, and parent ID.
-- Append or update the task line in today's daily note.
-- Render today's tasks as cards.
-- Toggle task status from the card and sync it back to the store and daily note.
+- Maintain an in-memory task index by ID, date, status, parent ID, tag, and project.
+- Detect the active daily-note date from the note path.
+- Render the day's tasks as cards in a bottom-of-note widget.
+- Show task tags and project links on cards.
+- Toggle task status from the card and sync it back to the store and index.
 
 ## v1: Detail Notes
 
@@ -19,7 +20,7 @@
 
 - Add bearer-token-protected localhost HTTP API.
 - Support browser-extension-friendly CORS.
-- Expose task create, list, read, update, delete, status toggle, and time tracking endpoints.
+- Expose task create, list, read, update, delete, status toggle, project, tag, and time tracking endpoints.
 
 ## v3: Time Tracking
 
