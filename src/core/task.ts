@@ -6,6 +6,11 @@ export interface TimeEntry {
 	description?: string;
 }
 
+export interface ProjectLink {
+	path: string;
+	title?: string;
+}
+
 export interface DayTask {
 	id: string;
 	title: string;
@@ -16,6 +21,7 @@ export interface DayTask {
 	detailNotePath?: string;
 	tags?: string[];
 	contexts?: string[];
+	projects?: ProjectLink[];
 	timeEntries: TimeEntry[];
 	createdAt: string;
 	updatedAt: string;
@@ -29,4 +35,5 @@ export interface CreateDayTaskInput {
 	detailNotePath?: string;
 	tags?: string[];
 	contexts?: string[];
+	projects?: ProjectLink[];
 }

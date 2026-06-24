@@ -13,6 +13,14 @@ function copyNonEmpty(values: string[] | undefined): string[] | undefined {
 	return [...values];
 }
 
+function copyProjects(input: CreateDayTaskInput): DayTask["projects"] {
+	if (!input.projects || input.projects.length === 0) {
+		return undefined;
+	}
+
+	return input.projects.map((project) => ({ ...project }));
+}
+
 export function createDayTask(
 	input: CreateDayTaskInput,
 	dependencies: TaskFactoryDependencies = {}
@@ -54,6 +62,11 @@ export function createDayTask(
 	const contexts = copyNonEmpty(input.contexts);
 	if (contexts) {
 		task.contexts = contexts;
+	}
+
+	const projects = copyProjects(input);
+	if (projects) {
+		task.projects = projects;
 	}
 
 	return task;

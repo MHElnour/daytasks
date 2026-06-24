@@ -9,6 +9,8 @@ const tasks: DayTask[] = [
 		status: "open",
 		scheduledDate: "2026-06-24",
 		parentId: "TSK-parent1",
+		tags: ["errand", "home"],
+		projects: [{ path: "Projects/Home.md", title: "Home" }],
 		timeEntries: [],
 		createdAt: "2026-06-24T08:00:00.000Z",
 		updatedAt: "2026-06-24T08:00:00.000Z",
@@ -34,5 +36,7 @@ describe("MemoryTaskIndex", () => {
 		expect(index.byDate("2026-06-24")).toEqual([tasks[0]]);
 		expect(index.byStatus("done")).toEqual([tasks[1]]);
 		expect(index.byParent("TSK-parent1")).toEqual([tasks[0]]);
+		expect(index.byTag("errand")).toEqual([tasks[0]]);
+		expect(index.byProject("Projects/Home.md")).toEqual([tasks[0]]);
 	});
 });

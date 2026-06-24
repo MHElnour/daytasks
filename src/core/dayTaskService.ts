@@ -1,5 +1,3 @@
-import { upsertDailyTaskLine } from "../daily-notes/dailyNoteDocument";
-import type { DailyNotePort } from "../daily-notes/dailyNoteService";
 import type { CreateDayTaskInput, DayTask } from "./task";
 import { createDayTask, type TaskFactoryDependencies } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
@@ -8,8 +6,6 @@ import type { TaskStore } from "./taskStore";
 export interface DayTaskServiceDependencies extends TaskFactoryDependencies {
 	store: TaskStore;
 	index: TaskIndex;
-	dailyNotes: DailyNotePort;
-	dailyTaskHeading: string;
 }
 
 export class DayTaskService {
@@ -20,7 +16,7 @@ export class DayTaskService {
 			now: this.dependencies.now,
 			id: this.dependencies.id,
 		});
-		await this.saveAndSync(task);
+		await this.saveAndReindex(task);
 		return task;
 	}
 
@@ -30,6 +26,14 @@ export class DayTaskService {
 
 	getTasksForDate(date: string): DayTask[] {
 		return this.dependencies.index.byDate(date);
+	}
+
+	getTasksForTag(tag: string): DayTask[] {
+		return this.dependencies.index.byTag(tag);
+	}
+
+	getTasksForProject(projectPath: string): DayTask[] {
+		return this.dependencies.index.byProject(projectPath);
 	}
 
 	async toggleStatus(id: string): Promise<DayTask> {
@@ -43,21 +47,13 @@ export class DayTaskService {
 			status: task.status === "done" ? "open" : "done",
 			updatedAt: this.now(),
 		};
-		await this.saveAndSync(updatedTask);
+		await this.saveAndReindex(updatedTask);
 		return updatedTask;
 	}
 
-	private async saveAndSync(task: DayTask): Promise<void> {
+	private async saveAndReindex(task: DayTask): Promise<void> {
 		await this.dependencies.store.save(task);
 		this.dependencies.index.rebuild(await this.dependencies.store.list());
-
-		const currentContent = await this.dependencies.dailyNotes.read(task.scheduledDate);
-		const nextContent = upsertDailyTaskLine(
-			currentContent,
-			task,
-			this.dependencies.dailyTaskHeading
-		);
-		await this.dependencies.dailyNotes.write(task.scheduledDate, nextContent);
 	}
 
 	private now(): string {

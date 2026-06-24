@@ -12,6 +12,7 @@ function cloneTask(task: DayTask): DayTask {
 		...task,
 		tags: task.tags ? [...task.tags] : undefined,
 		contexts: task.contexts ? [...task.contexts] : undefined,
+		projects: task.projects ? task.projects.map((project) => ({ ...project })) : undefined,
 		timeEntries: task.timeEntries.map((entry) => ({ ...entry })),
 	};
 }
