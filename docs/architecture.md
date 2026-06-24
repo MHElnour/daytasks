@@ -29,8 +29,8 @@ TaskStore
 
 The task store is canonical. Daily notes should not be the only database, and
 v0 does not need to write a `## Tasks` section into the note body. Instead, the
-plugin detects the active daily note date, queries the task index, and renders a
-bottom-of-note widget from stored tasks.
+plugin detects the active daily note date, queries the task index through a
+daily-widget controller, and renders a bottom-of-note widget from stored tasks.
 
 Example widget model:
 
