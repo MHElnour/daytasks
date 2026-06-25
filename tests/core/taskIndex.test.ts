@@ -120,4 +120,61 @@ describe("MemoryTaskIndex", () => {
 		expect(index.byTag("errand")).toEqual([]);
 		expect(index.byProject("Projects/Home.md")).toEqual([]);
 	});
+
+	it("indexes tasks by the ids they are blocked by", () => {
+		const index = new MemoryTaskIndex();
+		const a: DayTask = {
+			id: "TSK-aaaaaaaa",
+			title: "Task A",
+			status: "open",
+			scheduledDate: "2026-06-26",
+			blockedBy: ["TSK-cccccccc"],
+			tags: [],
+			contexts: [],
+			projects: [],
+			timeEntries: [],
+			createdAt: "2026-06-26T08:00:00.000Z",
+			updatedAt: "2026-06-26T08:00:00.000Z",
+		};
+		const b: DayTask = {
+			id: "TSK-bbbbbbbb",
+			title: "Task B",
+			status: "open",
+			scheduledDate: "2026-06-26",
+			blockedBy: ["TSK-cccccccc"],
+			tags: [],
+			contexts: [],
+			projects: [],
+			timeEntries: [],
+			createdAt: "2026-06-26T08:00:00.000Z",
+			updatedAt: "2026-06-26T08:00:00.000Z",
+		};
+		index.rebuild([a, b]);
+		expect(index.byBlocker("TSK-cccccccc").map((t) => t.id)).toEqual([
+			"TSK-aaaaaaaa",
+			"TSK-bbbbbbbb",
+		]);
+		expect(index.byBlocker("TSK-none")).toEqual([]);
+	});
+
+	it("updates byBlocker when blockedBy changes", () => {
+		const index = new MemoryTaskIndex();
+		const a: DayTask = {
+			id: "TSK-aaaaaaaa",
+			title: "Task A",
+			status: "open",
+			scheduledDate: "2026-06-26",
+			blockedBy: ["TSK-cccccccc"],
+			tags: [],
+			contexts: [],
+			projects: [],
+			timeEntries: [],
+			createdAt: "2026-06-26T08:00:00.000Z",
+			updatedAt: "2026-06-26T08:00:00.000Z",
+		};
+		index.upsert(a);
+		index.upsert({ ...a, blockedBy: ["TSK-dddddddd"] });
+		expect(index.byBlocker("TSK-cccccccc")).toEqual([]);
+		expect(index.byBlocker("TSK-dddddddd").map((t) => t.id)).toEqual(["TSK-aaaaaaaa"]);
+	});
 });

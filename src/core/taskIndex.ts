@@ -12,6 +12,7 @@ export interface TaskIndex {
 	byTag(tag: string): DayTask[];
 	byContext(context: string): DayTask[];
 	byProject(projectPath: string): DayTask[];
+	byBlocker(id: string): DayTask[];
 }
 
 export class MemoryTaskIndex implements TaskIndex {
@@ -23,6 +24,7 @@ export class MemoryTaskIndex implements TaskIndex {
 	private byTagMap = new Map<string, DayTask[]>();
 	private byContextMap = new Map<string, DayTask[]>();
 	private byProjectMap = new Map<string, DayTask[]>();
+	private byBlockerMap = new Map<string, DayTask[]>();
 
 	rebuild(tasks: DayTask[]): void {
 		this.byIdMap = new Map();
@@ -33,6 +35,7 @@ export class MemoryTaskIndex implements TaskIndex {
 		this.byTagMap = new Map();
 		this.byContextMap = new Map();
 		this.byProjectMap = new Map();
+		this.byBlockerMap = new Map();
 
 		for (const task of tasks) {
 			this.upsert(task);
@@ -91,6 +94,10 @@ export class MemoryTaskIndex implements TaskIndex {
 		return [...(this.byProjectMap.get(projectPath) ?? [])];
 	}
 
+	byBlocker(id: string): DayTask[] {
+		return [...(this.byBlockerMap.get(id) ?? [])];
+	}
+
 	private addToSecondaryMaps(task: DayTask): void {
 		this.addToMap(this.byDateMap, task.scheduledDate, task);
 		this.addToMap(this.byStatusMap, task.status, task);
@@ -108,6 +115,9 @@ export class MemoryTaskIndex implements TaskIndex {
 		}
 		for (const project of task.projects) {
 			this.addToMap(this.byProjectMap, project.path, task);
+		}
+		for (const blockerId of task.blockedBy ?? []) {
+			this.addToMap(this.byBlockerMap, blockerId, task);
 		}
 	}
 
@@ -128,6 +138,9 @@ export class MemoryTaskIndex implements TaskIndex {
 		}
 		for (const project of task.projects) {
 			this.removeFromMap(this.byProjectMap, project.path, task);
+		}
+		for (const blockerId of task.blockedBy ?? []) {
+			this.removeFromMap(this.byBlockerMap, blockerId, task);
 		}
 	}
 
@@ -154,6 +167,7 @@ export class MemoryTaskIndex implements TaskIndex {
 			next.projects.map((project) => project.path),
 			next
 		);
+		this.syncMap(this.byBlockerMap, previous.blockedBy ?? [], next.blockedBy ?? [], next);
 	}
 
 	private addToMap<K>(map: Map<K, DayTask[]>, key: K, task: DayTask): void {
