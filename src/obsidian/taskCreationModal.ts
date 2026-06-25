@@ -2,7 +2,8 @@ import { App, Modal, Setting, type TextComponent } from "obsidian";
 import { MAX_DESCRIPTION_LENGTH, type CreateDayTaskInput, type DayTask } from "../core/task";
 import type { DayTasksSettings } from "../settings/settings";
 import { parseEstimateMinutes } from "../util/estimate";
-import { MarkdownPathSuggestModal } from "./modals";
+import { parseLabelList } from "../util/parseLabelList";
+import { addMarkdownPathPicker } from "./projectPicker";
 
 export interface TaskCreationModalOptions {
 	settings: DayTasksSettings;
@@ -12,13 +13,6 @@ export interface TaskCreationModalOptions {
 	onSubmit: (input: CreateDayTaskInput | null) => void;
 	/** Edit mode only: called when the user confirms deletion. */
 	onDelete?: (taskId: string) => void;
-}
-
-function parseList(value: string): string[] {
-	return value
-		.split(/[,\s]+/)
-		.map((entry) => entry.replace(/^[#@+]/, "").trim())
-		.filter((entry) => entry.length > 0);
 }
 
 /**
@@ -145,7 +139,7 @@ export class TaskCreationModal extends Modal {
 				})
 		);
 
-		new Setting(contentEl)
+		const projectSetting = new Setting(contentEl)
 			.setName("Project")
 			.addText((text) => {
 				this.projectInput = text;
@@ -154,19 +148,16 @@ export class TaskCreationModal extends Modal {
 					this.updatePreview();
 				});
 				text.inputEl.addClass("daytasks-project-input");
-			})
-			.addExtraButton((button) =>
-				button
-					.setIcon("search")
-					.setTooltip("Browse markdown notes")
-					.onClick(() => {
-						new MarkdownPathSuggestModal(this.app, (path) => {
-							this.projectPath = path;
-							this.projectInput?.setValue(path);
-							this.updatePreview();
-						}).open();
-					})
-			);
+			});
+		addMarkdownPathPicker(
+			projectSetting,
+			this.app,
+			() => this.projectInput,
+			(path) => {
+				this.projectPath = path;
+				this.updatePreview();
+			}
+		);
 
 		new Setting(contentEl).setName("Estimate").setDesc("e.g. 30m, 2h, 1h30m").addText(
 			(text) =>
@@ -236,10 +227,10 @@ export class TaskCreationModal extends Modal {
 		if (this.scheduledDate) {
 			parts.push(`· ${this.scheduledDate}`);
 		}
-		for (const tag of parseList(this.tags)) {
+		for (const tag of parseLabelList(this.tags)) {
 			parts.push(`#${tag}`);
 		}
-		for (const context of parseList(this.contexts)) {
+		for (const context of parseLabelList(this.contexts)) {
 			parts.push(`@${context}`);
 		}
 		if (this.projectPath) {
@@ -255,8 +246,8 @@ export class TaskCreationModal extends Modal {
 			return;
 		}
 
-		const tags = parseList(this.tags);
-		const contexts = parseList(this.contexts);
+		const tags = parseLabelList(this.tags);
+		const contexts = parseLabelList(this.contexts);
 		const input: CreateDayTaskInput = {
 			title,
 			scheduledDate: this.scheduledDate,

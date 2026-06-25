@@ -1,17 +1,11 @@
 import { App, PluginSettingTab, Setting, type TextComponent } from "obsidian";
 import type DayTasksPlugin from "../main";
-import { MarkdownPathSuggestModal } from "../obsidian/modals";
+import { addMarkdownPathPicker } from "../obsidian/projectPicker";
 import { debounce, type DebouncedFunction } from "../util/debounce";
+import { parseLabelList } from "../util/parseLabelList";
 
 /** Delay before a typed text setting is persisted, to coalesce keystrokes. */
 const TEXT_SAVE_DEBOUNCE_MS = 400;
-
-function parseTags(value: string): string[] {
-	return value
-		.split(",")
-		.map((tag) => tag.trim())
-		.filter((tag) => tag.length > 0);
-}
 
 export class DayTasksSettingTab extends PluginSettingTab {
 	private readonly persistDebounced: DebouncedFunction<[]>;
@@ -136,13 +130,13 @@ export class DayTasksSettingTab extends PluginSettingTab {
 					.setPlaceholder("work, errand")
 					.setValue(settings.defaultTags.join(", "))
 					.onChange((value) => {
-						settings.defaultTags = parseTags(value);
+						settings.defaultTags = parseLabelList(value);
 						this.persistDebounced();
 					})
 			);
 
 		let projectInput: TextComponent | undefined;
-		new Setting(containerEl)
+		const projectSetting = new Setting(containerEl)
 			.setName("Default project")
 			.setDesc("New tasks link to this note. Use the picker to search your vault.")
 			.addText((text) => {
@@ -152,19 +146,18 @@ export class DayTasksSettingTab extends PluginSettingTab {
 					this.persistDebounced();
 				});
 				text.inputEl.addClass("daytasks-project-input");
-			})
-			.addExtraButton((button) =>
-				button
-					.setIcon("search")
-					.setTooltip("Browse markdown notes")
-					.onClick(() => {
-						new MarkdownPathSuggestModal(this.app, async (path) => {
-							settings.defaultProjectPath = path;
-							projectInput?.setValue(path);
-							await this.plugin.saveSettings();
-						}).open();
-					})
-			);
+			});
+		addMarkdownPathPicker(
+			projectSetting,
+			this.app,
+			() => projectInput,
+			(path) => {
+				settings.defaultProjectPath = path;
+				void this.plugin.saveSettings().catch((error) => {
+					console.error("DayTasks: failed to save settings", error);
+				});
+			}
+		);
 
 		new Setting(containerEl)
 			.setName("Detail notes folder")

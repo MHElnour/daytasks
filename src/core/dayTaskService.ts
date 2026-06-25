@@ -77,8 +77,6 @@ export class DayTaskService {
 		const { statusManager } = this.dependencies;
 		const title = input.title.trim() || task.title;
 		const status = statusManager.normalizeStatusValue(input.status ?? task.status);
-		const wasCompleted = statusManager.isCompletedStatus(task.status);
-		const isCompleted = statusManager.isCompletedStatus(status);
 		const timestamp = this.now();
 
 		const updated: DayTask = {
@@ -96,11 +94,7 @@ export class DayTaskService {
 			updatedAt: timestamp,
 		};
 
-		if (isCompleted && !wasCompleted) {
-			updated.completedAt = timestamp;
-		} else if (!isCompleted && wasCompleted) {
-			updated.completedAt = undefined;
-		}
+		this.applyCompletion(updated, task.status, status, timestamp);
 
 		await this.saveAndIndex(updated);
 		return updated;
@@ -135,16 +129,10 @@ export class DayTaskService {
 
 		const { statusManager } = this.dependencies;
 		const normalized = statusManager.normalizeStatusValue(status);
-		const wasCompleted = statusManager.isCompletedStatus(task.status);
-		const isCompleted = statusManager.isCompletedStatus(normalized);
 		const timestamp = this.now();
 
 		const updated: DayTask = { ...task, status: normalized, updatedAt: timestamp };
-		if (isCompleted && !wasCompleted) {
-			updated.completedAt = timestamp;
-		} else if (!isCompleted && wasCompleted) {
-			updated.completedAt = undefined;
-		}
+		this.applyCompletion(updated, task.status, normalized, timestamp);
 
 		await this.saveAndIndex(updated);
 		return updated;
@@ -160,6 +148,26 @@ export class DayTaskService {
 			id,
 			this.dependencies.statusManager.getNextStatus(task.status)
 		);
+	}
+
+	/**
+	 * Stamps or clears `completedAt` when a status change crosses the completed
+	 * boundary, leaving it untouched otherwise. Mutates `task` in place.
+	 */
+	private applyCompletion(
+		task: DayTask,
+		previousStatus: string,
+		nextStatus: string,
+		timestamp: string
+	): void {
+		const { statusManager } = this.dependencies;
+		const wasCompleted = statusManager.isCompletedStatus(previousStatus);
+		const isCompleted = statusManager.isCompletedStatus(nextStatus);
+		if (isCompleted && !wasCompleted) {
+			task.completedAt = timestamp;
+		} else if (!isCompleted && wasCompleted) {
+			task.completedAt = undefined;
+		}
 	}
 
 	private async saveAndIndex(task: DayTask): Promise<void> {
