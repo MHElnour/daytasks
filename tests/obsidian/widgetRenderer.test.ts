@@ -283,6 +283,8 @@ describe("renderDailyTasksWidget subtasks", () => {
 		// Chevron lives in the right-edge action column, not in the title row.
 		expect(top?.querySelector(".task-card__actions .task-card__disclosure")).not.toBeNull();
 		expect(top?.querySelector(".task-card__title-row .task-card__disclosure")).toBeNull();
+		// A parent (has subtasks) gets a class so its title can shrink to wrap less.
+		expect(top?.querySelector(".task-card")?.classList.contains("task-card--parent")).toBe(true);
 
 		const sublist = top?.querySelector<HTMLElement>("ul.task-card__subtasks");
 		expect(sublist?.hasAttribute("hidden")).toBe(true);
@@ -311,6 +313,7 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
 		expect(top?.querySelector(".task-card__disclosure")).toBeNull();
 		expect(top?.querySelector(".task-card__actions")).toBeNull();
+		expect(top?.querySelector(".task-card")?.classList.contains("task-card--parent")).toBe(false);
 		expect(top?.querySelector("progress.task-card__progress")).toBeNull();
 		expect(top?.querySelector("ul.task-card__subtasks")).toBeNull();
 	});

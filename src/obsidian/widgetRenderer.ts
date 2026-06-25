@@ -176,6 +176,9 @@ function renderTaskCard(
 	if (card.overdue) {
 		cardEl.classList.add("task-card--overdue");
 	}
+	if (card.childProgress) {
+		cardEl.classList.add("task-card--parent");
+	}
 	if (handlers.onEditTask) {
 		cardEl.classList.add("task-card--interactive");
 		cardEl.addEventListener("click", () => handlers.onEditTask?.(card.id));
