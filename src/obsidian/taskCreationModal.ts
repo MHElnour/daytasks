@@ -1,5 +1,10 @@
 import { App, Modal, Setting, type TextComponent } from "obsidian";
-import { MAX_DESCRIPTION_LENGTH, type CreateDayTaskInput, type DayTask } from "../core/task";
+import {
+	MAX_DESCRIPTION_LENGTH,
+	applyPrimaryProjectEdit,
+	type CreateDayTaskInput,
+	type DayTask,
+} from "../core/task";
 import type { DayTasksSettings } from "../settings/settings";
 import { parseEstimateMinutes } from "../util/estimate";
 import { parseLabelList } from "../util/parseLabelList";
@@ -265,8 +270,14 @@ export class TaskCreationModal extends Modal {
 		if (contexts.length > 0) {
 			input.contexts = contexts;
 		}
-		if (this.projectPath) {
-			input.projects = [{ path: this.projectPath }];
+		// The form exposes one project field; on edit, keep any extra links the
+		// task already had so they are not silently dropped.
+		const projects = applyPrimaryProjectEdit(
+			this.projectPath,
+			this.options.initial?.projects ?? []
+		);
+		if (projects.length > 0) {
+			input.projects = projects;
 		}
 		const estimate = parseEstimateMinutes(this.estimate);
 		if (estimate !== undefined) {

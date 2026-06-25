@@ -43,6 +43,29 @@ export interface ProjectLink {
 	title?: string;
 }
 
+/**
+ * Builds the project list to persist when an edit form exposes only the primary
+ * (first) project link. The edited `primaryPath` replaces the first existing
+ * link; any further links are preserved so a multi-project task does not lose
+ * them on edit. A blank primary drops only the primary. Deduplicated by path
+ * (the primary wins).
+ */
+export function applyPrimaryProjectEdit(
+	primaryPath: string,
+	existing: ProjectLink[]
+): ProjectLink[] {
+	const head: ProjectLink[] = primaryPath ? [{ path: primaryPath }] : [];
+	const seen = new Set<string>();
+	const result: ProjectLink[] = [];
+	for (const project of [...head, ...existing.slice(1)]) {
+		if (!seen.has(project.path)) {
+			seen.add(project.path);
+			result.push({ ...project });
+		}
+	}
+	return result;
+}
+
 export interface DayTask {
 	id: string;
 	title: string;
