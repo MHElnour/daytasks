@@ -55,6 +55,11 @@
 	color: var(--text-muted);
 }
 
+/* Icon-only status/priority chips tint by their configured color. */
+.daytasks-chip-icon {
+	color: var(--chip-color, var(--text-muted));
+}
+
 .daytasks-chip-icon svg,
 .daytasks-field-icon svg,
 .daytasks-label-icon svg {
@@ -68,6 +73,12 @@
 	color: var(--text-normal);
 	font-size: var(--font-ui-small);
 	padding: 2px 0;
+}
+
+/* Hide the native date-picker icon; our leading Lucide icon distinguishes
+   scheduled vs due. Clicking the field still opens the picker. */
+.daytasks-chip--input input[type="date"]::-webkit-calendar-picker-indicator {
+	display: none;
 }
 
 .daytasks-estimate-input {

@@ -7,6 +7,7 @@ import {
 	type ProjectLink,
 } from "../core/task";
 import type { DayTasksSettings } from "../settings/settings";
+import { safeCssColor } from "../util/cssColor";
 import { parseEstimateMinutes } from "../util/estimate";
 import { noteBasename } from "../util/notePath";
 import { parseLabelList } from "../util/parseLabelList";
@@ -30,9 +31,11 @@ interface MenuChipItem {
 
 interface MenuChipOptions {
 	ariaPrefix: string;
+	/** Icon-only chip (value shown via tooltip) so its width never shifts. */
+	iconOnly?: boolean;
 	fallbackIcon?: string;
 	emptyLabel?: string;
-	getCurrent: () => { label: string; icon?: string } | undefined;
+	getCurrent: () => { label: string; icon?: string; color?: string } | undefined;
 	items: MenuChipItem[];
 	onPick: (value: string) => void;
 }
@@ -104,6 +107,7 @@ export class TaskCreationModal extends Modal {
 
 		this.buildMenuChip(toolbar, {
 			ariaPrefix: "Status",
+			iconOnly: true,
 			getCurrent: () => settings.statuses.find((s) => s.value === this.status),
 			items: settings.statuses.map((s) => ({ value: s.value, label: s.label, icon: s.icon })),
 			onPick: (value) => {
@@ -114,13 +118,15 @@ export class TaskCreationModal extends Modal {
 
 		this.buildMenuChip(toolbar, {
 			ariaPrefix: "Priority",
+			iconOnly: true,
 			fallbackIcon: "flag",
 			emptyLabel: "None",
 			getCurrent: () => settings.priorities.find((p) => p.value === this.priority),
-			items: [
-				{ value: "", label: "None", icon: "circle-slash" },
-				...settings.priorities.map((p) => ({ value: p.value, label: p.label, icon: p.icon })),
-			],
+			items: settings.priorities.map((p) => ({
+				value: p.value,
+				label: p.label,
+				icon: p.icon ?? "flag",
+			})),
 			onPick: (value) => {
 				this.priority = value;
 				this.updatePreview();
@@ -274,9 +280,20 @@ export class TaskCreationModal extends Modal {
 			if (iconName) {
 				setIcon(button.createSpan({ cls: "daytasks-chip-icon" }), iconName);
 			}
+			if (current?.color) {
+				button.style.setProperty(
+					"--chip-color",
+					safeCssColor(current.color, "var(--text-muted)")
+				);
+			} else {
+				button.style.removeProperty("--chip-color");
+			}
 			const label = current?.label ?? opts.emptyLabel ?? "—";
-			button.createSpan({ cls: "daytasks-chip-label", text: label });
+			if (!opts.iconOnly) {
+				button.createSpan({ cls: "daytasks-chip-label", text: label });
+			}
 			button.setAttribute("aria-label", `${opts.ariaPrefix}: ${label}`);
+			button.setAttribute("title", `${opts.ariaPrefix}: ${label}`);
 		};
 		refresh();
 		button.addEventListener("click", (evt) => {
