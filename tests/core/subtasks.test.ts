@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DayTask } from "../../src/core/task";
-import { computeChildProgress, isDescendant } from "../../src/core/subtasks";
+import { computeChildProgress, isDescendant, buildTaskForest } from "../../src/core/subtasks";
 
 const base: DayTask = {
 	id: "TSK-00000000",
@@ -50,5 +50,47 @@ describe("isDescendant", () => {
 	it("terminates on a cyclic chain", () => {
 		const cyclic = (id: string): string | undefined => (id === "p" ? "q" : "p");
 		expect(isDescendant("p", "z", cyclic)).toBe(false);
+	});
+});
+
+describe("buildTaskForest", () => {
+	const t = (id: string, status: string, parentId?: string): DayTask => ({
+		...base,
+		id,
+		status,
+		...(parentId ? { parentId } : {}),
+	});
+
+	it("nests children under a parent in the set", () => {
+		const forest = buildTaskForest(
+			[t("p", "open"), t("c1", "open", "p"), t("c2", "open", "p")],
+			isCompleted
+		);
+		expect(forest.map((n) => n.task.id)).toEqual(["p"]);
+		expect(forest[0].children.map((n) => n.task.id)).toEqual(["c1", "c2"]);
+	});
+
+	it("treats a child whose parent is absent as a root", () => {
+		const forest = buildTaskForest([t("c", "open", "missing")], isCompleted);
+		expect(forest.map((n) => n.task.id)).toEqual(["c"]);
+	});
+
+	it("sinks completed siblings to the bottom of each group", () => {
+		const forest = buildTaskForest(
+			[t("p", "open"), t("done1", "done", "p"), t("open1", "open", "p")],
+			isCompleted
+		);
+		expect(forest[0].children.map((n) => n.task.id)).toEqual(["open1", "done1"]);
+	});
+
+	it("renders every task exactly once for a cyclic parent chain", () => {
+		const forest = buildTaskForest([t("a", "open", "b"), t("b", "open", "a")], isCompleted);
+		const seen: string[] = [];
+		const walk = (n: { task: DayTask; children: unknown[] }): void => {
+			seen.push(n.task.id);
+			(n.children as { task: DayTask; children: unknown[] }[]).forEach(walk);
+		};
+		forest.forEach(walk);
+		expect([...seen].sort()).toEqual(["a", "b"]);
 	});
 });
