@@ -233,33 +233,38 @@ function renderProgress(progress: { done: number; total: number }): HTMLElement 
 }
 
 /**
- * Fixed right-rail: state controls (priority, status) pinned to the top, subtask
- * controls (progress, chevron) pinned to the bottom, so their location never
- * shifts with card content.
+ * Top-right control cluster (priority + status). Absolutely positioned via CSS so
+ * it never takes flow width from the title/metadata.
  */
-function renderCardRail(
+function renderRailTop(
 	card: TaskCardViewModel,
 	handlers: WidgetRenderHandlers
 ): HTMLElement {
-	const rail = el("div", "task-card__rail");
-
 	const top = el("div", "task-card__rail-top");
 	top.appendChild(renderPriorityControl(card, handlers));
 	top.appendChild(renderStatusControl(card, handlers));
-	rail.appendChild(top);
+	return top;
+}
 
-	if (card.childProgress || card.children.length > 0) {
-		const bottom = el("div", "task-card__rail-bottom");
-		if (card.childProgress) {
-			bottom.appendChild(renderProgress(card.childProgress));
-		}
-		if (card.children.length > 0) {
-			bottom.appendChild(renderDisclosure(card, handlers));
-		}
-		rail.appendChild(bottom);
+/**
+ * Bottom-right control cluster (subtask progress + expand chevron), or `null` for
+ * a leaf card. Absolutely positioned via CSS.
+ */
+function renderRailBottom(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement | null {
+	if (!card.childProgress && card.children.length === 0) {
+		return null;
 	}
-
-	return rail;
+	const bottom = el("div", "task-card__rail-bottom");
+	if (card.childProgress) {
+		bottom.appendChild(renderProgress(card.childProgress));
+	}
+	if (card.children.length > 0) {
+		bottom.appendChild(renderDisclosure(card, handlers));
+	}
+	return bottom;
 }
 
 function renderTaskCard(
@@ -318,9 +323,16 @@ function renderTaskCard(
 	}
 
 	mainRow.appendChild(content);
-	mainRow.appendChild(renderCardRail(card, handlers));
-
 	cardEl.appendChild(mainRow);
+
+	// Control clusters are absolutely positioned (CSS), so they never steal flow
+	// width from the title or metadata.
+	cardEl.appendChild(renderRailTop(card, handlers));
+	const railBottom = renderRailBottom(card, handlers);
+	if (railBottom) {
+		cardEl.appendChild(railBottom);
+	}
+
 	wrapper.appendChild(cardEl);
 
 	if (card.children.length > 0) {

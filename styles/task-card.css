@@ -310,31 +310,44 @@
 
 /* ---- subtask chevron, progress bar, nested list ---- */
 
-/* Fixed right rail: state controls pinned top, subtask controls pinned bottom. */
-.daytasks-plugin .task-card__rail {
-	display: flex;
-	flex-direction: column;
-	align-self: stretch;
-	align-items: flex-end;
-	justify-content: space-between;
-	gap: 8px;
-	flex: 0 0 auto;
-}
-
+/*
+ * Control clusters are pinned to fixed corners (absolute), so they never take
+ * flow width from the content. The content keeps the full card width; only the
+ * rows that would sit under a cluster reserve space for it (see padding below).
+ */
 .daytasks-plugin .task-card__rail-top {
+	position: absolute;
+	top: 8px;
+	inset-inline-end: 10px;
 	display: flex;
 	align-items: center;
 	gap: 4px;
 }
 
 .daytasks-plugin .task-card__rail-bottom {
+	position: absolute;
+	bottom: 8px;
+	inset-inline-end: 10px;
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	margin-top: auto;
 }
 
-.task-card__disclosure {
+/* Title clears the top-right cluster (≈ a flag + status icon) with a small gap. */
+.daytasks-plugin .task-card__title-row {
+	padding-inline-end: 64px;
+}
+
+/* On parent cards the bottom-right cluster (progress + chevron) overlays the
+ * lower rows, so those rows reserve room for it. Leaf cards have no bottom
+ * cluster and keep the full width. */
+.daytasks-plugin .task-card--parent .task-card__metadata,
+.daytasks-plugin .task-card--parent .task-card__tags,
+.daytasks-plugin .task-card--parent .task-card__description {
+	padding-inline-end: 116px;
+}
+
+.daytasks-plugin .task-card__disclosure {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -348,32 +361,37 @@
 	border-radius: var(--radius-s);
 }
 
-.task-card__disclosure-icon {
+.daytasks-plugin .task-card__disclosure-icon {
 	display: inline-flex;
 	transition: transform 120ms ease;
 }
 
-.task-card__disclosure.is-expanded .task-card__disclosure-icon {
+.daytasks-plugin .task-card__disclosure.is-expanded .task-card__disclosure-icon {
 	transform: rotate(90deg);
 }
 
-.task-card__disclosure:focus-visible {
+.daytasks-plugin .task-card__disclosure:focus-visible {
 	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 	outline: none;
 }
 
-.task-card__progress-wrap {
+.daytasks-plugin .task-card__progress-wrap {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--size-4-1);
+	flex: 0 0 auto;
 }
 
-.task-card__progress {
-	inline-size: 64px;
+/* Scoped + explicit width so a theme's `progress` rule can't stretch the bar. */
+.daytasks-plugin .task-card__progress {
+	flex: 0 0 auto;
+	inline-size: 80px;
+	width: 80px;
+	max-inline-size: 80px;
 	block-size: 6px;
 }
 
-.task-card__progress-label {
+.daytasks-plugin .task-card__progress-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
