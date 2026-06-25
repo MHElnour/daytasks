@@ -173,6 +173,27 @@ describe("renderDailyTasksWidget", () => {
 		expect(onOpenProject).toHaveBeenCalledWith("Projects/Home.md");
 	});
 
+	it("makes tag and project chips keyboard-operable", () => {
+		const onSelectTag = vi.fn();
+		const onOpenProject = vi.fn();
+		const { root } = render(filledModel, allOn, { onSelectTag, onOpenProject });
+		const first = root.querySelectorAll(".task-card")[0];
+
+		const tag = first.querySelector<HTMLElement>(".task-card__tag");
+		const project = first.querySelector<HTMLElement>(".task-card__project");
+
+		expect(tag?.getAttribute("role")).toBe("button");
+		expect(tag?.tabIndex).toBe(0);
+		expect(project?.getAttribute("role")).toBe("button");
+		expect(project?.tabIndex).toBe(0);
+
+		tag?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+		expect(onSelectTag).toHaveBeenCalledWith("daytask");
+
+		project?.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+		expect(onOpenProject).toHaveBeenCalledWith("Projects/Home.md");
+	});
+
 	it("renders an add button only when onAddTask is provided", () => {
 		const onAddTask = vi.fn();
 		const { root } = render(emptyModel, allOn, { onAddTask });

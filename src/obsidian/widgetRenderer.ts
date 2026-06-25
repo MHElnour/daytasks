@@ -49,6 +49,27 @@ function stop(event: Event): void {
 	event.stopPropagation();
 }
 
+/**
+ * Makes a non-button element (e.g. an `<a>` chip without `href`) operable like a
+ * button: focusable via keyboard, announced as a button, and activatable with
+ * click or Enter/Space. Stops propagation so it never triggers the card click.
+ */
+function makeActivatable(element: HTMLElement, activate: () => void): void {
+	element.setAttribute("role", "button");
+	element.tabIndex = 0;
+	element.addEventListener("click", (event) => {
+		event.stopPropagation();
+		activate();
+	});
+	element.addEventListener("keydown", (event) => {
+		if (event.key === "Enter" || event.key === " ") {
+			event.preventDefault();
+			event.stopPropagation();
+			activate();
+		}
+	});
+}
+
 function renderMetadata(
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
@@ -82,10 +103,7 @@ function renderMetadata(
 				`↗ ${project.label}`
 			);
 			link.dataset.path = project.path;
-			link.addEventListener("click", (event) => {
-				stop(event);
-				handlers.onOpenProject?.(project.path);
-			});
+			makeActivatable(link, () => handlers.onOpenProject?.(project.path));
 			metadata.appendChild(link);
 		}
 	}
@@ -111,10 +129,7 @@ function renderTags(
 	const row = el("div", "task-card__tags");
 	for (const tag of card.tags) {
 		const chip = colorChip("task-card__tag", tag, `#${tag}`);
-		chip.addEventListener("click", (event) => {
-			stop(event);
-			handlers.onSelectTag?.(tag);
-		});
+		makeActivatable(chip, () => handlers.onSelectTag?.(tag));
 		row.appendChild(chip);
 	}
 	return row;
