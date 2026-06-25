@@ -273,7 +273,20 @@ export default class DayTasksPlugin extends Plugin {
 
 	private async updateTask(id: string, input: CreateDayTaskInput): Promise<void> {
 		try {
-			await this.service.updateTask(id, input);
+			// The edit modal submits the full editable state, so map every field
+			// into the (replace-semantics) UpdateDayTaskInput. Omitted = cleared.
+			await this.service.updateTask(id, {
+				title: input.title,
+				scheduledDate: input.scheduledDate,
+				status: input.status,
+				dueDate: input.dueDate,
+				priority: input.priority,
+				tags: input.tags,
+				contexts: input.contexts,
+				projects: input.projects,
+				estimateMinutes: input.estimateMinutes,
+				description: input.description,
+			});
 			await this.persistTasks();
 			this.refreshViews();
 		} catch (error) {

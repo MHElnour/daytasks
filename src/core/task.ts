@@ -90,3 +90,24 @@ export interface CreateDayTaskInput {
 	description?: string;
 	sortOrder?: string;
 }
+
+/**
+ * Full editable state for `DayTaskService.updateTask`. Unlike
+ * `CreateDayTaskInput`, every editable field is a **required key** (optionals
+ * typed `| undefined`): an update **replaces** the task's editable fields, so a
+ * caller must state each one — pass `undefined` to clear it. This turns an
+ * accidentally-omitted field into a compile error instead of silent data loss.
+ * For single-field changes use `setStatus`/`cycleStatus` instead.
+ */
+export interface UpdateDayTaskInput {
+	title: string;
+	scheduledDate: string;
+	status: string | undefined;
+	dueDate: string | undefined;
+	priority: string | undefined;
+	tags: string[] | undefined;
+	contexts: string[] | undefined;
+	projects: ProjectLink[] | undefined;
+	estimateMinutes: number | undefined;
+	description: string | undefined;
+}

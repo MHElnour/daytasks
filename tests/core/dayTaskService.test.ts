@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { UpdateDayTaskInput } from "../../src/core/task";
 import { DayTaskService } from "../../src/core/dayTaskService";
 import { DEFAULT_STATUSES } from "../../src/core/status";
 import { StatusManager } from "../../src/core/statusManager";
@@ -29,6 +30,24 @@ function makeService(
 		now: () => "2026-06-25T08:00:00.000Z",
 		id: () => "TSK-8cA562sd",
 	});
+}
+
+/** Builds a full UpdateDayTaskInput, defaulting unspecified fields to cleared. */
+function update(
+	overrides: Partial<UpdateDayTaskInput> &
+		Pick<UpdateDayTaskInput, "title" | "scheduledDate">
+): UpdateDayTaskInput {
+	return {
+		status: undefined,
+		dueDate: undefined,
+		priority: undefined,
+		tags: undefined,
+		contexts: undefined,
+		projects: undefined,
+		estimateMinutes: undefined,
+		description: undefined,
+		...overrides,
+	};
 }
 
 describe("DayTaskService", () => {
@@ -87,13 +106,16 @@ describe("DayTaskService", () => {
 			tags: ["errand"],
 		});
 
-		const updated = await service.updateTask("TSK-8cA562sd", {
-			title: "Buy oat milk",
-			scheduledDate: "2026-06-25",
-			status: "done",
-			tags: ["shopping"],
-			description: "from the corner store",
-		});
+		const updated = await service.updateTask(
+			"TSK-8cA562sd",
+			update({
+				title: "Buy oat milk",
+				scheduledDate: "2026-06-25",
+				status: "done",
+				tags: ["shopping"],
+				description: "from the corner store",
+			})
+		);
 
 		expect(updated.title).toBe("Buy oat milk");
 		expect(updated.status).toBe("done");
@@ -107,11 +129,14 @@ describe("DayTaskService", () => {
 		const service = makeService();
 		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });
 
-		const updated = await service.updateTask("TSK-8cA562sd", {
-			title: "Buy milk",
-			scheduledDate: "2026-06-25",
-			tags: ["shopping", "shopping"],
-		});
+		const updated = await service.updateTask(
+			"TSK-8cA562sd",
+			update({
+				title: "Buy milk",
+				scheduledDate: "2026-06-25",
+				tags: ["shopping", "shopping"],
+			})
+		);
 
 		expect(updated.tags.filter((tag) => tag === "shopping")).toEqual(["shopping"]);
 		expect(service.getTasksForTag("shopping")).toHaveLength(1);

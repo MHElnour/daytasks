@@ -6,6 +6,7 @@ import {
 	withDefaultTag,
 	type CreateDayTaskInput,
 	type DayTask,
+	type UpdateDayTaskInput,
 } from "./task";
 import { createDayTask } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
@@ -67,8 +68,12 @@ export class DayTaskService {
 		return this.dependencies.index.byProject(projectPath);
 	}
 
-	/** Applies edited fields from a creation-input to an existing task. */
-	async updateTask(id: string, input: CreateDayTaskInput): Promise<DayTask> {
+	/**
+	 * Replaces an existing task's editable fields with `input`. This is a full
+	 * replacement: any optional field passed as `undefined` is cleared. See
+	 * `UpdateDayTaskInput`.
+	 */
+	async updateTask(id: string, input: UpdateDayTaskInput): Promise<DayTask> {
 		const task = await this.dependencies.store.get(id);
 		if (!task) {
 			throw new Error(`Task not found: ${id}`);
