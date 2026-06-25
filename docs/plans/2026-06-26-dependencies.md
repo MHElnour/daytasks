@@ -845,8 +845,10 @@ git commit -m "feat(ui): render blocked-by/blocking boxes with click-through"
 **Interfaces:**
 
 - Produces: `class TaskSuggestModal extends FuzzySuggestModal<TaskOption>` where
-  `interface TaskOption { id: string; title: string }`; constructed with the
-  candidate list + an `onChoose(id)` callback.
+  `interface TaskOption { id: string; title: string; scheduledDate: string }`;
+  constructed with the candidate list + an `onChoose(id)` callback. The picker is
+  over the plugin's **own tasks** (`DayTask` data from the store/index — tasks are
+  self-contained, NOT vault `.md` files), searched and shown by title + day.
 
 This file is Obsidian-coupled — **no vitest** (verified in Task 12).
 
@@ -859,9 +861,15 @@ import { App, FuzzySuggestModal } from "obsidian";
 export interface TaskOption {
  id: string;
  title: string;
+ scheduledDate: string;
 }
 
-/** Searchable picker over a pre-filtered list of tasks (excludes self + cycles). */
+/**
+ * Searchable picker over the plugin's own tasks (DayTask data from the
+ * store/index — NOT vault markdown files, since tasks are self-contained).
+ * Matched and shown by title + day. Constructed with a pre-filtered candidate
+ * list (excludes self + any task that would close a cycle).
+ */
 export class TaskSuggestModal extends FuzzySuggestModal<TaskOption> {
  constructor(
   app: App,
@@ -869,7 +877,7 @@ export class TaskSuggestModal extends FuzzySuggestModal<TaskOption> {
   private readonly onChoose: (id: string) => void
  ) {
   super(app);
-  this.setPlaceholder("Search for a task…");
+  this.setPlaceholder("Search tasks by title…");
  }
 
  getItems(): TaskOption[] {
@@ -877,7 +885,8 @@ export class TaskSuggestModal extends FuzzySuggestModal<TaskOption> {
  }
 
  getItemText(item: TaskOption): string {
-  return `${item.title} — ${item.id}`;
+  // Shown + fuzzy-matched: task title and its scheduled day.
+  return `${item.title} — ${item.scheduledDate}`;
  }
 
  onChooseItem(item: TaskOption): void {
@@ -984,6 +993,7 @@ private buildDependencySection(parent: HTMLElement, kind: "blocked-by" | "blocki
   const candidates = (this.options.getDependencyCandidates?.(thisId) ?? []).map((t) => ({
    id: t.id,
    title: t.title,
+   scheduledDate: t.scheduledDate,
   }));
   new TaskSuggestModal(this.app, candidates, async (pickedId) => {
    if (isBlockedBy) {

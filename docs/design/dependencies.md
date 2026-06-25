@@ -39,9 +39,11 @@ Slice B. All design decisions below are **locked** (resolved with the user).
 1. **Single stored edge.** Store only `blockedBy: string[]` (task ids). "Blocking"
    is derived via a `byBlocker` index. Editing either direction writes the one
    `blockedBy` edge on the correct task, so the inverse is always consistent.
-2. **Task picker.** A fuzzy `SuggestModal` over the task list (match title + id),
-   mirroring `projectPicker.ts`, excluding self and any candidate that would close
-   a cycle.
+2. **Task picker.** A fuzzy `SuggestModal` over the plugin's **own tasks**
+   (`DayTask` data from the store/index — tasks are self-contained, NOT vault
+   `.md` files), searched and shown by **title + day** (`scheduledDate`). Mirrors
+   the `FuzzySuggestModal` shape of `MarkdownPathSuggestModal`, but over tasks.
+   Candidates exclude self and any task that would close a cycle.
 3. **Card display.** Two bordered boxes in the card body, **below the tags and
    above the subtask progress row**: a **Blocked by** box, then a **Blocking** box,
    each rendered only when it has entries. Each lists its referenced tasks as
