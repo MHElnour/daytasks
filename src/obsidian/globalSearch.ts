@@ -19,6 +19,19 @@ interface InternalPluginsApp {
 	};
 }
 
+/** Characters that are NOT valid inside an Obsidian tag name. */
+const NON_TAG_CHARS = /[^\p{L}\p{N}/_-]/gu;
+
+/**
+ * Builds a `tag:#…` global-search query from a (possibly attacker-controlled,
+ * persisted) tag. The tag is reduced to valid tag characters first so a value
+ * like `evil" OR file:secret` cannot inject extra search operators into the
+ * query (SEC-5).
+ */
+export function buildTagSearchQuery(tag: string): string {
+	return `tag:#${tag.replace(NON_TAG_CHARS, "")}`;
+}
+
 /**
  * Opens Obsidian's global search pre-filled with `query`. Returns `false` when
  * the global-search plugin or its API is unavailable, so callers can fall back.

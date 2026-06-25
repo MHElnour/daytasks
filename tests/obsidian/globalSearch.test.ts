@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { App } from "obsidian";
-import { openGlobalSearch } from "../../src/obsidian/globalSearch";
+import { buildTagSearchQuery, openGlobalSearch } from "../../src/obsidian/globalSearch";
 
 function fakeApp(instance?: { openGlobalSearch?: (query: string) => void }): App {
 	return {
@@ -34,5 +34,20 @@ describe("openGlobalSearch", () => {
 	it("returns false when the plugin lacks an openGlobalSearch function", () => {
 		const app = fakeApp({});
 		expect(openGlobalSearch(app, "tag:#errand")).toBe(false);
+	});
+});
+
+describe("buildTagSearchQuery", () => {
+	it("builds a tag query for a normal tag", () => {
+		expect(buildTagSearchQuery("errand")).toBe("tag:#errand");
+	});
+
+	it("preserves hierarchy, dashes, and underscores", () => {
+		expect(buildTagSearchQuery("home/work-area_1")).toBe("tag:#home/work-area_1");
+	});
+
+	it("strips characters that could alter the search query syntax", () => {
+		expect(buildTagSearchQuery('evil" OR file:secret')).toBe("tag:#evilORfilesecret");
+		expect(buildTagSearchQuery("with space")).toBe("tag:#withspace");
 	});
 });

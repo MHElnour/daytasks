@@ -6,13 +6,14 @@ import type { CreateDayTaskInput } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
-import { openGlobalSearch } from "./obsidian/globalSearch";
+import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
 import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
 import {
 	DayTasksDataStore,
 	type DayTasksPluginData,
 } from "./obsidian/pluginDataAdapter";
 import { TaskCreationModal } from "./obsidian/taskCreationModal";
+import { resolvesToMarkdownNote } from "./obsidian/vaultNote";
 import { insertWidgetAtBottom } from "./obsidian/widgetInsertion";
 import { todayDate } from "./util/time";
 import {
@@ -296,13 +297,19 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private openProject(path: string): void {
+		// Project paths can be free-form / persisted text; only open a link that
+		// resolves to an existing markdown note (SEC-6).
+		if (!resolvesToMarkdownNote(this.app.metadataCache, path)) {
+			new Notice("DayTasks: that project note was not found.");
+			return;
+		}
 		this.app.workspace.openLinkText(path, "", false).catch((error) => {
 			console.error("DayTasks: failed to open project note", error);
 		});
 	}
 
 	private searchTag(tag: string): void {
-		if (!openGlobalSearch(this.app, `tag:#${tag}`)) {
+		if (!openGlobalSearch(this.app, buildTagSearchQuery(tag))) {
 			new Notice("DayTasks: global search is unavailable.");
 		}
 	}
