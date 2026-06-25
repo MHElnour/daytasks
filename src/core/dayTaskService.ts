@@ -1,7 +1,7 @@
 import { nowIso } from "../util/time";
 import type { DayTasksSettings } from "../settings/settings";
 import type { StatusManager } from "./statusManager";
-import type { CreateDayTaskInput, DayTask } from "./task";
+import { clampDescription, type CreateDayTaskInput, type DayTask } from "./task";
 import { createDayTask } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
 import type { TaskStore } from "./taskStore";
@@ -87,7 +87,7 @@ export class DayTaskService {
 			contexts: input.contexts ? [...input.contexts] : [],
 			projects: input.projects ? input.projects.map((p) => ({ ...p })) : [],
 			estimateMinutes: input.estimateMinutes,
-			description: input.description,
+			description: clampDescription(input.description),
 			updatedAt: timestamp,
 		};
 
@@ -99,6 +99,26 @@ export class DayTaskService {
 
 		await this.saveAndIndex(updated);
 		return updated;
+	}
+
+	/**
+	 * Removes a task. Children are orphaned (their `parentId` is cleared) rather
+	 * than cascade-deleted, so no task is left pointing at a missing parent.
+	 */
+	async deleteTask(id: string): Promise<void> {
+		const children = this.dependencies.index.byParent(id);
+		const timestamp = this.now();
+		for (const child of children) {
+			const fresh = await this.dependencies.store.get(child.id);
+			if (!fresh) {
+				continue;
+			}
+			const { parentId: _removed, ...rest } = fresh;
+			await this.saveAndIndex({ ...rest, updatedAt: timestamp });
+		}
+
+		await this.dependencies.store.delete(id);
+		this.dependencies.index.remove(id);
 	}
 
 	/** Sets an explicit status, applying completion side-effects on completedAt. */

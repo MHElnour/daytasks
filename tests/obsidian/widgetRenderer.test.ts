@@ -75,15 +75,13 @@ function render(
 	options: WidgetRenderOptions = allOn,
 	handlers: Partial<WidgetRenderHandlers> = {}
 ) {
-	const onToggleComplete = handlers.onToggleComplete ?? vi.fn();
 	const onCycleStatus = handlers.onCycleStatus ?? vi.fn();
 	const parent = document.createElement("div");
 	const root = renderDailyTasksWidget(parent, model, options, {
 		...handlers,
-		onToggleComplete,
 		onCycleStatus,
 	});
-	return { root, onToggleComplete, onCycleStatus };
+	return { root, onCycleStatus };
 }
 
 describe("renderDailyTasksWidget", () => {
@@ -101,18 +99,21 @@ describe("renderDailyTasksWidget", () => {
 
 		const first = cards[0];
 		expect(first.querySelector(".task-card__title-text")?.textContent).toBe("Buy milk");
-		expect(first.querySelector<HTMLInputElement>(".task-card__checkbox")?.checked).toBe(false);
+		expect(first.querySelector(".task-card__checkbox")).toBeNull();
 		expect(first.querySelector(".task-card__status-label")?.textContent).toBe("Open");
 		expect(first.querySelector(".task-card__id")?.textContent).toBe("Task ID: TSK-8cA562sd");
 		expect(first.querySelector(".task-card__description")?.textContent).toBe(
 			"from the corner store"
 		);
-		expect(first.querySelector(".task-card__due")?.textContent).toContain("Yesterday");
+		expect(first.querySelector(".task-card__due")?.textContent).toBe("Due: Yesterday");
 		expect(first.querySelector(".task-card__due")?.classList.contains("is-overdue")).toBe(
 			true
 		);
 		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("Est: 1h30m");
-		expect(first.querySelectorAll(".task-card__chip")).toHaveLength(4); // 2 tags + 1 ctx + 1 project
+		expect(
+			[...first.querySelectorAll(".task-card__chip")].map((chip) => chip.textContent)
+		).toEqual(["Tag: #errand", "Tag: #home", "Context: @phone", "Project: Home"]);
+		expect(first.querySelector(".task-card__handle")).not.toBeNull();
 		expect(first.classList.contains("task-card--overdue")).toBe(true);
 		expect(cards[1].classList.contains("task-card--completed")).toBe(true);
 	});
@@ -129,21 +130,11 @@ describe("renderDailyTasksWidget", () => {
 		expect(first.querySelector(".task-card__chip")).toBeNull();
 	});
 
-	it("checkbox toggles completion; status pill cycles; neither triggers edit", () => {
-		const onToggleComplete = vi.fn();
+	it("status pill cycles status; card click edits; pill does not trigger edit", () => {
 		const onCycleStatus = vi.fn();
 		const onEditTask = vi.fn();
-		const { root } = render(filledModel, allOn, {
-			onToggleComplete,
-			onCycleStatus,
-			onEditTask,
-		});
+		const { root } = render(filledModel, allOn, { onCycleStatus, onEditTask });
 		const first = root.querySelectorAll(".task-card")[0];
-
-		const checkbox = first.querySelector<HTMLInputElement>(".task-card__checkbox");
-		checkbox!.checked = true;
-		checkbox!.dispatchEvent(new Event("change", { bubbles: true }));
-		expect(onToggleComplete).toHaveBeenCalledWith("TSK-8cA562sd");
 
 		first.querySelector<HTMLElement>(".task-card__status")?.dispatchEvent(
 			new Event("click", { bubbles: true })

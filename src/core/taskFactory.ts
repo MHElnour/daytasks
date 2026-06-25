@@ -1,6 +1,6 @@
 import { nowIso } from "../util/time";
 import type { StatusManager } from "./statusManager";
-import type { CreateDayTaskInput, DayTask, ProjectLink } from "./task";
+import { clampDescription, type CreateDayTaskInput, type DayTask, type ProjectLink } from "./task";
 import { generateTaskId } from "./taskIds";
 
 export interface TaskFactoryDefaults {
@@ -90,8 +90,9 @@ export function createDayTask(
 	if (input.estimateMinutes !== undefined) {
 		task.estimateMinutes = input.estimateMinutes;
 	}
-	if (input.description) {
-		task.description = input.description;
+	const description = clampDescription(input.description);
+	if (description) {
+		task.description = description;
 	}
 	if (input.sortOrder) {
 		task.sortOrder = input.sortOrder;

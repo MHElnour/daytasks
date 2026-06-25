@@ -13,6 +13,8 @@ export interface DailyTasksWidgetService {
 export interface DailyTasksWidgetControllerDependencies {
 	service: DailyTasksWidgetService;
 	statusManager: StatusManager;
+	/** Returns the real current date (YYYY-MM-DD) for relative due / overdue. */
+	today: () => string;
 }
 
 export class DailyTasksWidgetController {
@@ -27,7 +29,8 @@ export class DailyTasksWidgetController {
 		return createDailyTasksWidgetModel(
 			date,
 			this.dependencies.service.getTasksForDate(date),
-			this.dependencies.statusManager
+			this.dependencies.statusManager,
+			this.dependencies.today()
 		);
 	}
 }

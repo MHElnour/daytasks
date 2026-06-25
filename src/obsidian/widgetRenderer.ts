@@ -10,7 +10,6 @@ export interface WidgetRenderOptions {
 }
 
 export interface WidgetRenderHandlers {
-	onToggleComplete(taskId: string): void;
 	onCycleStatus(taskId: string): void;
 	onAddTask?(): void;
 	onEditTask?(taskId: string): void;
@@ -59,7 +58,7 @@ function renderMetadata(
 	let rendered = false;
 
 	if (card.dueLabel) {
-		const due = el("span", "task-card__due", `📅 ${card.dueLabel}`);
+		const due = el("span", "task-card__meta-chip task-card__due", `Due: ${card.dueLabel}`);
 		if (card.overdue) {
 			due.classList.add("is-overdue");
 		}
@@ -70,7 +69,7 @@ function renderMetadata(
 	if (options.showTags && card.tags.length > 0) {
 		const group = el("span", "task-card__chips");
 		for (const tag of card.tags) {
-			const chip = colorChip("task-card__chip", tag, `#${tag}`);
+			const chip = colorChip("task-card__chip", tag, `Tag: #${tag}`);
 			chip.addEventListener("click", (event) => {
 				stop(event);
 				handlers.onSelectTag?.(tag);
@@ -84,7 +83,7 @@ function renderMetadata(
 	if (options.showContexts && card.contexts.length > 0) {
 		const group = el("span", "task-card__chips");
 		for (const context of card.contexts) {
-			group.appendChild(colorChip("task-card__chip", context, `@${context}`));
+			group.appendChild(colorChip("task-card__chip", context, `Context: @${context}`));
 		}
 		metadata.appendChild(group);
 		rendered = true;
@@ -93,7 +92,11 @@ function renderMetadata(
 	if (options.showProjects && card.projects.length > 0) {
 		const group = el("span", "task-card__chips");
 		for (const project of card.projects) {
-			const chip = colorChip("task-card__chip task-card__chip--project", project.label, `↗ ${project.label}`);
+			const chip = colorChip(
+				"task-card__chip task-card__chip--project",
+				project.label,
+				`Project: ${project.label}`
+			);
 			chip.dataset.path = project.path;
 			chip.addEventListener("click", (event) => {
 				stop(event);
@@ -106,7 +109,9 @@ function renderMetadata(
 	}
 
 	if (card.estimateLabel) {
-		metadata.appendChild(el("span", "task-card__estimate", `Est: ${card.estimateLabel}`));
+		metadata.appendChild(
+			el("span", "task-card__meta-chip task-card__estimate", `Est: ${card.estimateLabel}`)
+		);
 		rendered = true;
 	}
 
@@ -136,18 +141,19 @@ function renderTaskCard(
 
 	const mainRow = el("div", "task-card__main-row");
 
-	const checkbox = el("input", "task-card__checkbox");
-	checkbox.type = "checkbox";
-	checkbox.checked = card.checked;
-	checkbox.setAttribute("aria-label", `Complete ${card.title}`);
-	checkbox.addEventListener("click", stop);
-	checkbox.addEventListener("change", () => handlers.onToggleComplete(card.id));
-	mainRow.appendChild(checkbox);
+	const handle = el("span", "task-card__handle");
+	handle.setAttribute("aria-hidden", "true");
+	mainRow.appendChild(handle);
 
 	const content = el("div", "task-card__content");
 
 	const titleRow = el("div", "task-card__title-row");
-	titleRow.appendChild(el("span", "task-card__title-text", card.title));
+	const titleBlock = el("div", "task-card__title-block");
+	titleBlock.appendChild(el("span", "task-card__title-text", card.title));
+	if (options.showTaskIds) {
+		titleBlock.appendChild(el("div", "task-card__id", `Task ID: ${card.id}`));
+	}
+	titleRow.appendChild(titleBlock);
 
 	const statusPill = el("button", "task-card__status");
 	statusPill.style.setProperty("--daytasks-status-color", card.statusColor);
@@ -161,9 +167,6 @@ function renderTaskCard(
 	titleRow.appendChild(statusPill);
 	content.appendChild(titleRow);
 
-	if (options.showTaskIds) {
-		content.appendChild(el("div", "task-card__id", `Task ID: ${card.id}`));
-	}
 	if (card.description) {
 		content.appendChild(el("div", "task-card__description", card.description));
 	}
@@ -230,13 +233,13 @@ export function renderDailyTasksWidget(
 	header.appendChild(left);
 
 	const right = el("div", "daytasks-widget__header-right");
-	right.appendChild(el("span", "daytasks-widget__date", model.date));
 	if (handlers.onAddTask) {
 		const addButton = el("button", "daytasks-widget__add", "+ New Task");
 		addButton.setAttribute("aria-label", "Add task");
 		addButton.addEventListener("click", () => handlers.onAddTask?.());
 		right.appendChild(addButton);
 	}
+	right.appendChild(el("span", "daytasks-widget__date", model.date));
 	header.appendChild(right);
 	root.appendChild(header);
 

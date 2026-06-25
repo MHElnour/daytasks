@@ -13,6 +13,7 @@ import {
 } from "./obsidian/pluginDataAdapter";
 import { TaskCreationModal } from "./obsidian/taskCreationModal";
 import { insertWidgetAtBottom } from "./obsidian/widgetInsertion";
+import { todayDate } from "./util/time";
 import {
 	renderDailyTasksWidget,
 	type WidgetRenderOptions,
@@ -94,6 +95,7 @@ export default class DayTasksPlugin extends Plugin {
 		this.controller = new DailyTasksWidgetController({
 			service: this.service,
 			statusManager: this.statusManager,
+			today: () => todayDate(),
 		});
 	}
 
@@ -130,7 +132,6 @@ export default class DayTasksPlugin extends Plugin {
 			return false;
 		}
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
-			onToggleComplete: (taskId) => void this.handleToggleComplete(taskId),
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onAddTask: () => this.openCreateModal(date),
 			onEditTask: (taskId) => void this.openEditModal(taskId),
@@ -203,22 +204,6 @@ export default class DayTasksPlugin extends Plugin {
 		}
 	}
 
-	private async handleToggleComplete(taskId: string): Promise<void> {
-		try {
-			const task = await this.service.getTask(taskId);
-			if (!task) {
-				return;
-			}
-			const target = this.statusManager.getCompletionToggleTarget(task.status);
-			await this.service.setStatus(taskId, target);
-			await this.persistTasks();
-			this.refreshViews();
-		} catch (error) {
-			console.error("DayTasks: failed to toggle task", error);
-			new Notice("DayTasks: could not update that task.");
-		}
-	}
-
 	private runCreateTaskCommand(): void {
 		const path = this.app.workspace.getActiveFile()?.path ?? null;
 		const date = path
@@ -269,7 +254,20 @@ export default class DayTasksPlugin extends Plugin {
 					void this.updateTask(taskId, input);
 				}
 			},
+			onDelete: (id) => void this.deleteTask(id),
 		}).open();
+	}
+
+	private async deleteTask(id: string): Promise<void> {
+		try {
+			await this.service.deleteTask(id);
+			await this.persistTasks();
+			this.refreshViews();
+			new Notice("DayTasks: task deleted.");
+		} catch (error) {
+			console.error("DayTasks: failed to delete task", error);
+			new Notice("DayTasks: could not delete that task.");
+		}
 	}
 
 	private async updateTask(id: string, input: CreateDayTaskInput): Promise<void> {

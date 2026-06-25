@@ -103,6 +103,54 @@ describe("DayTaskService", () => {
 		expect(service.getTasksForTag("shopping")).toEqual([updated]);
 	});
 
+	it("deletes a task from the store and index", async () => {
+		const service = makeService();
+		await service.createTask({
+			title: "Buy milk",
+			scheduledDate: "2026-06-25",
+			tags: ["errand"],
+		});
+
+		await service.deleteTask("TSK-8cA562sd");
+
+		expect(await service.getTask("TSK-8cA562sd")).toBeNull();
+		expect(service.getTasksForDate("2026-06-25")).toEqual([]);
+		expect(service.getTasksForTag("errand")).toEqual([]);
+	});
+
+	it("orphans children (clears parentId) when their parent is deleted", async () => {
+		const ids = ["TSK-parent01", "TSK-child0001"];
+		let next = 0;
+		const service = new DayTaskService({
+			store: new MemoryTaskStore(),
+			index: new MemoryTaskIndex(),
+			statusManager,
+			settings: {
+				defaultStatus: "open",
+				defaultPriority: "normal",
+				defaultTags: [],
+				defaultProjectPath: "",
+			},
+			now: () => "2026-06-25T08:00:00.000Z",
+			id: () => ids[next++],
+		});
+
+		const parent = await service.createTask({ title: "Parent", scheduledDate: "2026-06-25" });
+		const child = await service.createTask({
+			title: "Child",
+			scheduledDate: "2026-06-25",
+			parentId: parent.id,
+		});
+		expect(child.parentId).toBe("TSK-parent01");
+
+		await service.deleteTask(parent.id);
+
+		expect(await service.getTask(parent.id)).toBeNull();
+		const childAfter = await service.getTask(child.id);
+		expect(childAfter).not.toBeNull();
+		expect(childAfter?.parentId).toBeUndefined();
+	});
+
 	it("cycles status and refreshes the index", async () => {
 		const service = makeService();
 		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });

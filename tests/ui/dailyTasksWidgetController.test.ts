@@ -27,7 +27,7 @@ function makeService(): DayTaskService {
 describe("DailyTasksWidgetController", () => {
 	it("creates a widget model for the active daily note", async () => {
 		const service = makeService();
-		const controller = new DailyTasksWidgetController({ service, statusManager });
+		const controller = new DailyTasksWidgetController({ service, statusManager, today: () => "2026-06-24" });
 
 		await service.createTask({
 			title: "Buy milk",
@@ -71,7 +71,7 @@ describe("DailyTasksWidgetController", () => {
 
 	it("does not create a widget model for non-daily notes", () => {
 		const service = makeService();
-		const controller = new DailyTasksWidgetController({ service, statusManager });
+		const controller = new DailyTasksWidgetController({ service, statusManager, today: () => "2026-06-24" });
 
 		expect(controller.getWidgetForNotePath("Projects/Home.md")).toBeNull();
 	});

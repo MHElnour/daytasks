@@ -24,7 +24,8 @@ export interface DailyTasksWidgetModel {
 export function createDailyTasksWidgetModel(
 	date: string,
 	tasks: DayTask[],
-	statusManager: StatusManager
+	statusManager: StatusManager,
+	referenceDate: string
 ): DailyTasksWidgetModel {
 	// Open tasks first, completed tasks sunk to the bottom (stable within group).
 	const ordered = [...tasks].sort(
@@ -32,12 +33,18 @@ export function createDailyTasksWidgetModel(
 			Number(statusManager.isCompletedStatus(a.status)) -
 			Number(statusManager.isCompletedStatus(b.status))
 	);
+	// Relative due labels / overdue are computed against the real current date
+	// (`referenceDate`), not the daily note's date.
 	const cards = ordered.map((task) =>
-		createTaskCardViewModel(task, statusManager, date)
+		createTaskCardViewModel(task, statusManager, referenceDate)
 	);
 	const doneCount = cards.filter((card) => card.checked).length;
 	const overdueCount = tasks.filter((task) =>
-		isOverdue(task.dueDate, date, statusManager.isCompletedStatus(task.status))
+		isOverdue(
+			task.dueDate,
+			referenceDate,
+			statusManager.isCompletedStatus(task.status)
+		)
 	).length;
 
 	const statusSummary: StatusSummaryEntry[] = statusManager

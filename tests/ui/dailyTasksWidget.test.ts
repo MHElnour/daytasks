@@ -21,7 +21,7 @@ const task: DayTask = {
 
 describe("createDailyTasksWidgetModel", () => {
 	it("creates a daily widget model from tasks for the active note date", () => {
-		expect(createDailyTasksWidgetModel("2026-06-24", [task], statusManager)).toEqual({
+		expect(createDailyTasksWidgetModel("2026-06-24", [task], statusManager, "2026-06-24")).toEqual({
 			date: "2026-06-24",
 			title: "DayTasks",
 			empty: false,
@@ -55,7 +55,7 @@ describe("createDailyTasksWidgetModel", () => {
 	});
 
 	it("marks the model empty when no tasks exist for the date", () => {
-		expect(createDailyTasksWidgetModel("2026-06-24", [], statusManager)).toEqual({
+		expect(createDailyTasksWidgetModel("2026-06-24", [], statusManager, "2026-06-24")).toEqual({
 			date: "2026-06-24",
 			title: "DayTasks",
 			empty: true,
@@ -74,11 +74,32 @@ describe("createDailyTasksWidgetModel", () => {
 		const model = createDailyTasksWidgetModel(
 			"2026-06-24",
 			[done, open],
-			statusManager
+			statusManager,
+			"2026-06-24"
 		);
 
 		expect(model.cards.map((c) => c.id)).toEqual(["TSK-open0001", "TSK-done0001"]);
 		expect(model.doneCount).toBe(1);
 		expect(model.totalCount).toBe(2);
+	});
+
+	it("computes due labels against the real today, not the note's date", () => {
+		const dueOnNoteDay: DayTask = {
+			...task,
+			status: "open",
+			dueDate: "2026-06-24",
+		};
+
+		// Viewing the 2026-06-24 note, but today is 2026-06-25.
+		const model = createDailyTasksWidgetModel(
+			"2026-06-24",
+			[dueOnNoteDay],
+			statusManager,
+			"2026-06-25"
+		);
+
+		expect(model.cards[0].dueLabel).toBe("Yesterday");
+		expect(model.cards[0].overdue).toBe(true);
+		expect(model.overdueCount).toBe(1);
 	});
 });

@@ -1,5 +1,5 @@
 import { App, Modal, Setting, type TextComponent } from "obsidian";
-import type { CreateDayTaskInput, DayTask } from "../core/task";
+import { MAX_DESCRIPTION_LENGTH, type CreateDayTaskInput, type DayTask } from "../core/task";
 import type { DayTasksSettings } from "../settings/settings";
 import { parseEstimateMinutes } from "../util/estimate";
 import { MarkdownPathSuggestModal } from "./modals";
@@ -10,6 +10,8 @@ export interface TaskCreationModalOptions {
 	/** When set, the modal opens in edit mode prefilled from this task. */
 	initial?: DayTask;
 	onSubmit: (input: CreateDayTaskInput | null) => void;
+	/** Edit mode only: called when the user confirms deletion. */
+	onDelete?: (taskId: string) => void;
 }
 
 function parseList(value: string): string[] {
@@ -176,11 +178,18 @@ export class TaskCreationModal extends Modal {
 					})
 		);
 
-		new Setting(contentEl).setName("Description").addTextArea((area) =>
-			area.setValue(this.description).onChange((value) => {
-				this.description = value;
-			})
-		);
+		const descriptionSetting = new Setting(contentEl)
+			.setName("Description")
+			.setDesc(`${this.description.length}/${MAX_DESCRIPTION_LENGTH}`)
+			.addTextArea((area) => {
+				area.inputEl.maxLength = MAX_DESCRIPTION_LENGTH;
+				area.setValue(this.description).onChange((value) => {
+					this.description = value.slice(0, MAX_DESCRIPTION_LENGTH);
+					descriptionSetting.setDesc(
+						`${this.description.length}/${MAX_DESCRIPTION_LENGTH}`
+					);
+				});
+			});
 
 		new Setting(contentEl)
 			.setName("Create detail note")
@@ -193,12 +202,33 @@ export class TaskCreationModal extends Modal {
 		this.preview = contentEl.createDiv({ cls: "daytasks-create-preview" });
 		this.updatePreview();
 
-		new Setting(contentEl).addButton((button) =>
+		const actions = new Setting(contentEl);
+		actions.addButton((button) =>
 			button
 				.setButtonText(this.isEdit ? "Save" : "Create")
 				.setCta()
 				.onClick(() => this.submit())
 		);
+
+		const initial = this.options.initial;
+		if (this.isEdit && this.options.onDelete && initial) {
+			let armed = false;
+			actions.addButton((button) => {
+				button
+					.setButtonText("Delete")
+					.setWarning()
+					.onClick(() => {
+						if (!armed) {
+							armed = true;
+							button.setButtonText("Confirm delete");
+							return;
+						}
+						this.submitted = true;
+						this.options.onDelete?.(initial.id);
+						this.close();
+					});
+			});
+		}
 	}
 
 	private updatePreview(): void {

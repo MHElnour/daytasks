@@ -92,6 +92,18 @@ describe("createDayTask", () => {
 		expect(task.completedAt).toBe("2026-06-25T08:00:00.000Z");
 	});
 
+	it("clamps the description to 500 characters", () => {
+		const task = createDayTask(
+			{
+				title: "Long note",
+				scheduledDate: "2026-06-25",
+				description: "x".repeat(600),
+			},
+			fixedDeps
+		);
+		expect(task.description).toHaveLength(500);
+	});
+
 	it("rejects blank titles", () => {
 		expect(() =>
 			createDayTask({ title: "   ", scheduledDate: "2026-06-25" }, fixedDeps)

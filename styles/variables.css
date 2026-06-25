@@ -12,7 +12,7 @@
 
 	/* Radii */
 	--cs-radius-xs: 2px;
-	--cs-radius-md: 10px;
+	--cs-radius-md: 8px;
 
 	/* Motion */
 	--cs-transition-fast: 140ms ease;
@@ -25,6 +25,11 @@
 	--tn-interactive-accent: var(--interactive-accent);
 	--tn-color-success: var(--color-green, #00aa00);
 	--tn-color-error: var(--color-red, #ff0000);
+	--daytasks-panel-bg: color-mix(in srgb, var(--background-primary) 96%, #f0dfc7 4%);
+	--daytasks-row-bg: color-mix(in srgb, var(--background-primary) 98%, #f0dfc7 2%);
+	--daytasks-row-bg-hover: color-mix(in srgb, var(--background-secondary) 94%, #f0dfc7 6%);
+	--daytasks-soft-border: color-mix(in srgb, var(--background-modifier-border) 82%, #d2ad7c 18%);
+	--daytasks-chip-bg: color-mix(in srgb, var(--background-primary) 88%, var(--background-secondary) 12%);
 
 	/* Spacing aliases */
 	--tn-spacing-xs: var(--cs-spacing-xs);

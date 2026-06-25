@@ -1,6 +1,21 @@
 /** Status is a configurable string value (see StatusConfig), not a closed union. */
 export type TaskStatus = string;
 
+/** Maximum stored length for a task description. */
+export const MAX_DESCRIPTION_LENGTH = 500;
+
+/** Trims and clamps a description to the maximum length, or undefined if blank. */
+export function clampDescription(value: string | undefined): string | undefined {
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return undefined;
+	}
+	return trimmed.slice(0, MAX_DESCRIPTION_LENGTH);
+}
+
 export interface TimeEntry {
 	startTime: string;
 	endTime?: string;
