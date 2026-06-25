@@ -21,7 +21,7 @@ const task: DayTask = {
 
 describe("createTaskCardViewModel", () => {
 	it("creates a card model with status presentation, tags, and project links", () => {
-		expect(createTaskCardViewModel(task, statusManager)).toEqual({
+		expect(createTaskCardViewModel(task, statusManager, "2026-06-24")).toEqual({
 			id: "TSK-8cA562sd",
 			title: "Buy milk",
 			checked: true,
@@ -30,6 +30,10 @@ describe("createTaskCardViewModel", () => {
 			statusColor: "#00aa00",
 			statusIcon: "check-circle",
 			priority: undefined,
+			estimateLabel: undefined,
+			dueDate: undefined,
+			dueLabel: undefined,
+			overdue: false,
 			tags: ["errand", "home"],
 			contexts: [],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
@@ -40,7 +44,8 @@ describe("createTaskCardViewModel", () => {
 	it("uses the project filename as a fallback label", () => {
 		const model = createTaskCardViewModel(
 			{ ...task, projects: [{ path: "Projects/Client Launch.md" }] },
-			statusManager
+			statusManager,
+			"2026-06-24"
 		);
 
 		expect(model.projects).toEqual([
@@ -49,17 +54,23 @@ describe("createTaskCardViewModel", () => {
 	});
 
 	it("treats a non-completed status as unchecked", () => {
-		const model = createTaskCardViewModel({ ...task, status: "open" }, statusManager);
+		const model = createTaskCardViewModel(
+			{ ...task, status: "open" },
+			statusManager,
+			"2026-06-24"
+		);
 		expect(model.checked).toBe(false);
 		expect(model.statusLabel).toBe("Open");
 	});
 
-	it("formats the estimate and carries the due date", () => {
+	it("formats the estimate and a relative due label", () => {
 		const model = createTaskCardViewModel(
-			{ ...task, estimateMinutes: 90, dueDate: "2026-07-01" },
-			statusManager
+			{ ...task, status: "open", estimateMinutes: 90, dueDate: "2026-06-23" },
+			statusManager,
+			"2026-06-24"
 		);
 		expect(model.estimateLabel).toBe("1h30m");
-		expect(model.dueDate).toBe("2026-07-01");
+		expect(model.dueLabel).toBe("Yesterday");
+		expect(model.overdue).toBe(true);
 	});
 });

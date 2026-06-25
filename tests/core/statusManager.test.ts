@@ -75,6 +75,15 @@ describe("StatusManager completion + normalize", () => {
 	});
 });
 
+describe("StatusManager completion toggle", () => {
+	it("flips incomplete -> first completed and completed -> default", () => {
+		const m = mgr();
+		expect(m.getCompletionToggleTarget("open")).toBe("done");
+		expect(m.getCompletionToggleTarget("in-progress")).toBe("done");
+		expect(m.getCompletionToggleTarget("done")).toBe("open");
+	});
+});
+
 describe("StatusManager validation", () => {
 	const base = (over: Partial<StatusConfig>, ...rest: StatusConfig[]): StatusConfig[] => [
 		{ id: "open", value: "open", label: "Open", color: "#1", isCompleted: false, order: 0, ...over },

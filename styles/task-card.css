@@ -1,175 +1,90 @@
 /* =================================================================
-   TASK CARD (BEM) — ported from TaskNotes task-card-bem.css
-   Scoped under .daytasks-plugin. Trimmed to the properties the
-   DayTasks daily widget renders (status, title, tags, projects, id).
+   TASK CARD — bordered, compact card row for the daily widget.
+   Scoped under .daytasks-plugin. Tokens ported from TaskNotes.
    ================================================================= */
 
+.daytasks-plugin .daytasks-note-widget__card {
+	margin-bottom: 6px;
+}
+
+.daytasks-plugin .daytasks-note-widget__card:last-child {
+	margin-bottom: 0;
+}
+
 .daytasks-plugin .task-card {
-	display: flex;
-	flex-direction: column;
-	gap: 0;
 	position: relative;
-	padding: var(--tn-spacing-md) var(--tn-spacing-lg);
-	margin-bottom: 1px;
-	background-color: transparent;
-	border: none;
-	border-radius: var(--tn-radius-xs);
-	box-shadow: none;
-	transition: background-color var(--tn-transition-fast),
-		box-shadow var(--tn-transition-fast), border-color var(--tn-transition-fast);
-	outline: none;
-}
-
-.daytasks-plugin .task-card:hover {
-	background-color: var(--background-modifier-hover);
-}
-
-.daytasks-plugin .task-card:focus-within {
-	background-color: var(--background-modifier-hover);
-}
-
-.daytasks-plugin .task-card:first-child,
-.daytasks-plugin .task-card:last-child {
-	border-radius: 0;
-}
-
-/* ---- elements ---- */
-
-.daytasks-plugin .task-card__main-row {
-	display: flex;
-	align-items: center;
-	gap: var(--tn-spacing-sm);
-	width: 100%;
-	position: relative;
-}
-
-.daytasks-plugin .task-card__content {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	min-width: 0;
-}
-
-.daytasks-plugin .task-card__title {
-	font-size: var(--tn-font-size-lg);
-	font-weight: 400;
-	line-height: 1.4;
-	color: var(--tn-text-normal);
-	margin: 0;
-	word-break: break-word;
-	white-space: normal;
-	transition: color var(--tn-transition-fast);
-	display: flex;
-	align-items: center;
-	gap: var(--tn-spacing-sm);
-}
-
-.daytasks-plugin .task-card__title-text {
-	flex: 1;
-	min-width: 0;
-}
-
-.daytasks-plugin .task-card__metadata {
-	font-size: var(--tn-font-size-md);
-	color: var(--tn-text-muted);
-	line-height: 1.3;
-	margin: 0;
-	font-weight: 400;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-
-.daytasks-plugin .task-card__metadata-property {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	min-width: 0;
-	max-width: 100%;
-}
-
-.daytasks-plugin .task-card__metadata-property--tags {
-	flex-wrap: wrap;
-	align-items: flex-start;
-}
-
-/* ---- tag chips ---- */
-
-.daytasks-plugin .task-card .tag {
-	display: inline-flex;
-	align-items: center;
-	flex: 0 0 auto;
-	white-space: nowrap;
-	background-color: var(--tag-background, var(--background-secondary));
-	color: var(--tag-color, var(--text-accent));
-	padding: var(--tag-padding-y, 1px) var(--tag-padding-x, 6px);
-	border: var(--tag-border-width, 1px) solid
-		var(--tag-border-color, var(--background-modifier-border));
-	border-radius: var(--tag-radius, var(--radius-s));
-	text-decoration: none;
-	font-size: var(--tn-font-size-sm);
-}
-
-.daytasks-plugin .task-card .tag:hover {
-	background-color: var(--tag-background-hover, var(--background-modifier-hover));
-}
-
-/* ---- project pill ---- */
-
-.daytasks-plugin .task-card__project {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--tn-spacing-xs);
-	padding: 1px 6px;
-	border-radius: var(--tn-radius-md);
-	font-size: var(--tn-font-size-sm);
-	background: var(--background-secondary);
-	color: var(--text-muted);
+	display: block;
+	padding: 7px 10px;
 	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--tn-radius-md);
+	background: var(--background-primary);
+	transition: background-color var(--tn-transition-fast),
+		border-color var(--tn-transition-fast), opacity var(--tn-transition-fast);
 }
-
-.daytasks-plugin .task-card__project::before {
-	content: "↗";
-	color: var(--text-faint);
-}
-
-/* ---- context chip ---- */
-
-.daytasks-plugin .task-card__context {
-	font-size: var(--tn-font-size-sm);
-	color: var(--text-muted);
-}
-
-/* ---- due date + estimate ---- */
-
-.daytasks-plugin .task-card__due,
-.daytasks-plugin .task-card__estimate {
-	font-size: var(--tn-font-size-sm);
-	color: var(--text-faint);
-}
-
-/* ---- description ---- */
-
-.daytasks-plugin .task-card__description {
-	font-size: var(--tn-font-size-md);
-	color: var(--tn-text-muted);
-	line-height: 1.3;
-}
-
-/* ---- interactivity ---- */
 
 .daytasks-plugin .task-card--interactive {
 	cursor: pointer;
 }
 
-.daytasks-plugin .task-card .tag,
-.daytasks-plugin .task-card__project {
+.daytasks-plugin .task-card:hover {
+	border-color: var(--background-modifier-border-hover);
+	background: var(--background-secondary);
+}
+
+.daytasks-plugin .task-card--overdue {
+	border-color: color-mix(in srgb, var(--tn-color-error) 40%, var(--background-modifier-border));
+}
+
+.daytasks-plugin .task-card--completed {
+	opacity: 0.6;
+}
+
+.daytasks-plugin .task-card--completed:hover {
+	opacity: 0.85;
+}
+
+.daytasks-plugin .task-card--completed .task-card__title-text,
+.daytasks-plugin .task-card--completed .task-card__description {
+	text-decoration: line-through;
+	color: var(--tn-text-muted);
+}
+
+/* ---- layout ---- */
+
+.daytasks-plugin .task-card__main-row {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--tn-spacing-sm);
+}
+
+.daytasks-plugin .task-card__checkbox {
+	margin: 3px 0 0;
+	flex-shrink: 0;
 	cursor: pointer;
 }
 
-/* ---- generated id ---- */
+.daytasks-plugin .task-card__content {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.daytasks-plugin .task-card__title-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--tn-spacing-sm);
+}
+
+.daytasks-plugin .task-card__title-text {
+	font-weight: 600;
+	font-size: var(--tn-font-size-lg);
+	line-height: 1.3;
+	color: var(--tn-text-normal);
+	word-break: break-word;
+}
 
 .daytasks-plugin .task-card__id {
 	font-family: var(--font-monospace);
@@ -177,49 +92,89 @@
 	color: var(--text-faint);
 }
 
-/* ---- status dot ---- */
+.daytasks-plugin .task-card__description {
+	font-size: var(--tn-font-size-md);
+	color: var(--tn-text-muted);
+	line-height: 1.35;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* ---- status pill ---- */
+
+.daytasks-plugin .task-card__status {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	flex-shrink: 0;
+	padding: 2px 9px;
+	border-radius: 999px;
+	font-size: var(--tn-font-size-sm);
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: pointer;
+	color: var(--daytasks-status-color, var(--tn-text-muted));
+	background: color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 14%, transparent);
+	border: 1px solid
+		color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 35%, transparent);
+}
+
+.daytasks-plugin .task-card__status:hover {
+	background: color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 24%, transparent);
+}
 
 .daytasks-plugin .task-card__status-dot {
-	display: inline-block;
-	width: 18px;
-	height: 18px;
+	width: 7px;
+	height: 7px;
 	border-radius: 50%;
-	flex-shrink: 0;
-	border: 2px solid
-		color-mix(
-			in srgb,
-			var(--daytasks-status-color, var(--tn-border-color)) 80%,
-			transparent
-		);
-	background-color: transparent;
-	transition: background-color var(--tn-transition-fast),
-		border-color var(--tn-transition-fast), box-shadow var(--tn-transition-fast);
-	position: relative;
-	cursor: pointer;
+	background: var(--daytasks-status-color, var(--tn-text-muted));
 }
 
-.daytasks-plugin .task-card__status-dot:hover {
-	background-color: color-mix(
-		in srgb,
-		var(--daytasks-status-color, var(--tn-interactive-accent)) 30%,
-		transparent
-	);
-	border-color: var(--daytasks-status-color, var(--tn-interactive-accent));
-}
+/* ---- metadata ---- */
 
-.daytasks-plugin .task-card__status-dot:focus-visible {
-	outline: 2px solid var(--background-modifier-border-focus, var(--tn-interactive-accent));
-	outline-offset: 2px;
-}
-
-/* ---- completed state ---- */
-
-.daytasks-plugin .task-card--completed > .task-card__main-row .task-card__status-dot {
-	background-color: var(--daytasks-status-color, var(--tn-color-success));
-	border-color: var(--daytasks-status-color, var(--tn-color-success));
-}
-
-.daytasks-plugin .task-card--completed > .task-card__main-row .task-card__title {
-	text-decoration: line-through;
+.daytasks-plugin .task-card__metadata {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	margin-top: 1px;
+	font-size: var(--tn-font-size-sm);
 	color: var(--tn-text-muted);
+	line-height: 1.3;
+}
+
+.daytasks-plugin .task-card__chips {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.daytasks-plugin .task-card__chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 1px 8px;
+	border-radius: 999px;
+	font-size: var(--tn-font-size-sm);
+	text-decoration: none;
+	cursor: pointer;
+	color: var(--chip-color, var(--text-accent));
+	background: color-mix(in srgb, var(--chip-color, var(--text-accent)) 14%, transparent);
+	border: 1px solid color-mix(in srgb, var(--chip-color, var(--text-accent)) 30%, transparent);
+}
+
+.daytasks-plugin .task-card__chip:hover {
+	background: color-mix(in srgb, var(--chip-color, var(--text-accent)) 24%, transparent);
+}
+
+.daytasks-plugin .task-card__due {
+	color: var(--text-faint);
+}
+
+.daytasks-plugin .task-card__due.is-overdue {
+	color: var(--tn-color-error);
+	font-weight: 500;
+}
+
+.daytasks-plugin .task-card__estimate {
+	color: var(--color-orange, #c8860a);
 }

@@ -40,6 +40,12 @@ describe("DailyTasksWidgetController", () => {
 			date: "2026-06-24",
 			title: "DayTasks",
 			empty: false,
+			totalCount: 1,
+			doneCount: 0,
+			overdueCount: 0,
+			statusSummary: [
+				{ value: "open", label: "Open", color: "#808080", count: 1 },
+			],
 			cards: [
 				{
 					id: "TSK-8cA562sd",
@@ -50,6 +56,10 @@ describe("DailyTasksWidgetController", () => {
 					statusColor: "#808080",
 					statusIcon: "circle",
 					priority: "normal",
+					estimateLabel: undefined,
+					dueDate: undefined,
+					dueLabel: undefined,
+					overdue: false,
 					tags: ["errand"],
 					contexts: [],
 					projects: [{ path: "Projects/Home.md", label: "Home" }],

@@ -1,60 +1,76 @@
 /* =================================================================
-   DAYTASKS WIDGET — header, date, empty state, Live Preview panel.
-   The task cards themselves are styled by task-card.css.
+   DAYTASKS WIDGET — header, footer summary, injection wrappers.
+   Task cards themselves are styled by task-card.css.
    ================================================================= */
 
 .daytasks-plugin .daytasks-widget__header {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	justify-content: space-between;
 	gap: var(--tn-spacing-sm);
-	padding: var(--tn-spacing-xs) var(--tn-spacing-sm);
-	margin-bottom: var(--tn-spacing-xs);
+	padding: 0 2px 8px;
+	margin-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.daytasks-plugin .daytasks-widget__header-left {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
 }
 
 .daytasks-plugin .daytasks-widget__title {
-	font-weight: 600;
+	font-weight: 700;
 	font-size: var(--tn-font-size-md);
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: var(--tn-text-muted);
+	color: var(--tn-text-normal);
+}
+
+.daytasks-plugin .daytasks-widget__count {
+	font-size: var(--tn-font-size-sm);
+	color: var(--text-muted);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 999px;
+	padding: 1px 8px;
+	font-variant-numeric: tabular-nums;
 }
 
 .daytasks-plugin .daytasks-widget__header-right {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--tn-spacing-sm);
+	gap: 8px;
 }
 
 .daytasks-plugin .daytasks-widget__date {
 	font-size: var(--tn-font-size-sm);
 	color: var(--text-faint);
+	font-variant-numeric: tabular-nums;
 }
 
 .daytasks-plugin .daytasks-widget__add {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 20px;
-	height: 20px;
-	padding: 0;
-	line-height: 1;
+	padding: 3px 10px;
+	font-size: var(--tn-font-size-sm);
+	font-weight: 500;
+	line-height: 1.2;
+	border: none;
 	border-radius: var(--tn-radius-xs);
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-secondary);
-	color: var(--text-muted);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
 	cursor: pointer;
+	transition: background var(--tn-transition-fast);
 }
 
 .daytasks-plugin .daytasks-widget__add:hover {
-	background: var(--background-modifier-hover);
-	color: var(--text-normal);
+	background: var(--interactive-accent-hover);
 }
 
 .daytasks-plugin .daytasks-widget__empty {
 	font-size: var(--tn-font-size-md);
 	color: var(--text-faint);
-	padding: var(--tn-spacing-sm) var(--tn-spacing-lg);
+	padding: var(--tn-spacing-sm) var(--tn-spacing-md);
 }
 
 .daytasks-plugin .daytasks-cards {
@@ -63,10 +79,61 @@
 	padding: 0;
 }
 
-/* Inline widget wrapper injected into the editor sizer (Live Preview) and the
-   reading-mode preview sizer. Owns the outer spacing; the bordered look comes
-   from the inner .daytasks-note-widget. The margin-top var is trimmed at
-   runtime to cancel CodeMirror's spacer gap. */
+/* ---- footer summary ---- */
+
+.daytasks-plugin .daytasks-widget__footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px 12px;
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid var(--background-modifier-border);
+	font-size: var(--tn-font-size-sm);
+	color: var(--tn-text-muted);
+}
+
+.daytasks-plugin .daytasks-widget__footer-total {
+	font-weight: 500;
+}
+
+.daytasks-plugin .daytasks-widget__legend {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+}
+
+.daytasks-plugin .daytasks-widget__legend-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-variant-numeric: tabular-nums;
+}
+
+.daytasks-plugin .daytasks-widget__legend-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--daytasks-status-color, var(--tn-text-muted));
+}
+
+.daytasks-plugin .daytasks-widget__legend-item--overdue {
+	color: var(--tn-color-error);
+}
+
+.daytasks-plugin .daytasks-widget__legend-item--overdue::before {
+	content: "";
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--tn-color-error);
+}
+
+/* ---- injection wrappers (Live Preview + reading mode) ---- */
+
 .daytasks-cm-widget,
 .daytasks-widget-host {
 	display: block;
@@ -82,7 +149,8 @@
 	margin-inline: 0;
 }
 
-/* Task creation modal preview line */
+/* ---- task creation modal preview line ---- */
+
 .daytasks-create-preview {
 	margin: var(--cs-spacing-md, 8px) 0;
 	padding: var(--cs-spacing-sm, 4px) var(--cs-spacing-md, 8px);

@@ -130,7 +130,8 @@ export default class DayTasksPlugin extends Plugin {
 			return false;
 		}
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
-			onToggleTask: (taskId) => void this.handleCycleStatus(taskId),
+			onToggleComplete: (taskId) => void this.handleToggleComplete(taskId),
+			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onAddTask: () => this.openCreateModal(date),
 			onEditTask: (taskId) => void this.openEditModal(taskId),
 			onOpenProject: (path) => this.openProject(path),
@@ -198,6 +199,22 @@ export default class DayTasksPlugin extends Plugin {
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to update task status", error);
+			new Notice("DayTasks: could not update that task.");
+		}
+	}
+
+	private async handleToggleComplete(taskId: string): Promise<void> {
+		try {
+			const task = await this.service.getTask(taskId);
+			if (!task) {
+				return;
+			}
+			const target = this.statusManager.getCompletionToggleTarget(task.status);
+			await this.service.setStatus(taskId, target);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to toggle task", error);
 			new Notice("DayTasks: could not update that task.");
 		}
 	}

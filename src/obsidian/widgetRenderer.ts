@@ -1,3 +1,4 @@
+import { chipColor } from "../util/chipColor";
 import type { TaskCardViewModel } from "../ui/taskCard";
 import type { DailyTasksWidgetModel } from "../ui/todayView";
 
@@ -9,16 +10,15 @@ export interface WidgetRenderOptions {
 }
 
 export interface WidgetRenderHandlers {
-	onToggleTask(taskId: string): void;
+	onToggleComplete(taskId: string): void;
+	onCycleStatus(taskId: string): void;
 	onAddTask?(): void;
 	onEditTask?(taskId: string): void;
 	onOpenProject?(path: string): void;
 	onSelectTag?(tag: string): void;
 }
 
-/** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS.
- * `daytasks-note-widget` is our own container class (not TaskNotes') to avoid
- * restyling TaskNotes when both plugins are installed. */
+/** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS. */
 export const WIDGET_ROOT_CLASSES = ["daytasks-plugin", "daytasks-note-widget"];
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -36,80 +36,81 @@ function el<K extends keyof HTMLElementTagNameMap>(
 	return node;
 }
 
+function colorChip(
+	className: string,
+	rawLabel: string,
+	text: string
+): HTMLElement {
+	const chip = el("a", className, text);
+	chip.style.setProperty("--chip-color", chipColor(rawLabel));
+	return chip;
+}
+
+function stop(event: Event): void {
+	event.stopPropagation();
+}
+
 function renderMetadata(
-	content: HTMLElement,
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
 	handlers: WidgetRenderHandlers
-): void {
-	const hasId = options.showTaskIds;
-	const hasTags = options.showTags && card.tags.length > 0;
-	const hasContexts = options.showContexts && card.contexts.length > 0;
-	const hasProjects = options.showProjects && card.projects.length > 0;
-	const hasMeta =
-		hasId ||
-		hasTags ||
-		hasContexts ||
-		hasProjects ||
-		Boolean(card.dueDate) ||
-		Boolean(card.estimateLabel);
-	if (!hasMeta) {
-		return;
-	}
-
+): HTMLElement | null {
 	const metadata = el("div", "task-card__metadata");
+	let rendered = false;
 
-	if (hasId) {
-		metadata.appendChild(el("span", "task-card__id", card.id));
+	if (card.dueLabel) {
+		const due = el("span", "task-card__due", `📅 ${card.dueLabel}`);
+		if (card.overdue) {
+			due.classList.add("is-overdue");
+		}
+		metadata.appendChild(due);
+		rendered = true;
 	}
 
-	if (card.dueDate) {
-		metadata.appendChild(el("span", "task-card__due", `due ${card.dueDate}`));
+	if (options.showTags && card.tags.length > 0) {
+		const group = el("span", "task-card__chips");
+		for (const tag of card.tags) {
+			const chip = colorChip("task-card__chip", tag, `#${tag}`);
+			chip.addEventListener("click", (event) => {
+				stop(event);
+				handlers.onSelectTag?.(tag);
+			});
+			group.appendChild(chip);
+		}
+		metadata.appendChild(group);
+		rendered = true;
+	}
+
+	if (options.showContexts && card.contexts.length > 0) {
+		const group = el("span", "task-card__chips");
+		for (const context of card.contexts) {
+			group.appendChild(colorChip("task-card__chip", context, `@${context}`));
+		}
+		metadata.appendChild(group);
+		rendered = true;
+	}
+
+	if (options.showProjects && card.projects.length > 0) {
+		const group = el("span", "task-card__chips");
+		for (const project of card.projects) {
+			const chip = colorChip("task-card__chip task-card__chip--project", project.label, `↗ ${project.label}`);
+			chip.dataset.path = project.path;
+			chip.addEventListener("click", (event) => {
+				stop(event);
+				handlers.onOpenProject?.(project.path);
+			});
+			group.appendChild(chip);
+		}
+		metadata.appendChild(group);
+		rendered = true;
 	}
 
 	if (card.estimateLabel) {
-		metadata.appendChild(el("span", "task-card__estimate", `~${card.estimateLabel}`));
+		metadata.appendChild(el("span", "task-card__estimate", `Est: ${card.estimateLabel}`));
+		rendered = true;
 	}
 
-	if (hasTags) {
-		const tagsProp = el(
-			"span",
-			"task-card__metadata-property task-card__metadata-property--tags"
-		);
-		for (const tag of card.tags) {
-			const chip = el("a", "tag", tag);
-			chip.addEventListener("click", (event) => {
-				event.stopPropagation();
-				handlers.onSelectTag?.(tag);
-			});
-			tagsProp.appendChild(chip);
-		}
-		metadata.appendChild(tagsProp);
-	}
-
-	if (hasContexts) {
-		const contextsProp = el("span", "task-card__metadata-property");
-		for (const context of card.contexts) {
-			contextsProp.appendChild(el("span", "task-card__context", `@${context}`));
-		}
-		metadata.appendChild(contextsProp);
-	}
-
-	if (hasProjects) {
-		const projectsProp = el("span", "task-card__metadata-property");
-		for (const project of card.projects) {
-			const pill = el("a", "task-card__project", project.label);
-			pill.dataset.path = project.path;
-			pill.addEventListener("click", (event) => {
-				event.stopPropagation();
-				handlers.onOpenProject?.(project.path);
-			});
-			projectsProp.appendChild(pill);
-		}
-		metadata.appendChild(projectsProp);
-	}
-
-	content.appendChild(metadata);
+	return rendered ? metadata : null;
 }
 
 function renderTaskCard(
@@ -120,11 +121,14 @@ function renderTaskCard(
 	const wrapper = el("li", "daytasks-note-widget__card");
 
 	const cardEl = el("div", "task-card");
+	cardEl.dataset.taskId = card.id;
+	cardEl.dataset.status = card.status;
 	if (card.checked) {
 		cardEl.classList.add("task-card--completed");
 	}
-	cardEl.dataset.taskId = card.id;
-	cardEl.dataset.status = card.status;
+	if (card.overdue) {
+		cardEl.classList.add("task-card--overdue");
+	}
 	if (handlers.onEditTask) {
 		cardEl.classList.add("task-card--interactive");
 		cardEl.addEventListener("click", () => handlers.onEditTask?.(card.id));
@@ -132,43 +136,77 @@ function renderTaskCard(
 
 	const mainRow = el("div", "task-card__main-row");
 
-	const statusDot = el("div", "task-card__status-dot");
-	statusDot.setAttribute("role", "checkbox");
-	statusDot.setAttribute("aria-checked", card.checked ? "true" : "false");
-	statusDot.setAttribute("aria-label", `Toggle ${card.title}`);
-	statusDot.title = card.statusLabel;
-	statusDot.style.setProperty("--daytasks-status-color", card.statusColor);
-	statusDot.tabIndex = 0;
-	statusDot.addEventListener("click", (event) => {
-		event.stopPropagation();
-		handlers.onToggleTask(card.id);
-	});
-	statusDot.addEventListener("keydown", (event) => {
-		if (event.key === "Enter" || event.key === " ") {
-			event.preventDefault();
-			handlers.onToggleTask(card.id);
-		}
-	});
-	mainRow.appendChild(statusDot);
+	const checkbox = el("input", "task-card__checkbox");
+	checkbox.type = "checkbox";
+	checkbox.checked = card.checked;
+	checkbox.setAttribute("aria-label", `Complete ${card.title}`);
+	checkbox.addEventListener("click", stop);
+	checkbox.addEventListener("change", () => handlers.onToggleComplete(card.id));
+	mainRow.appendChild(checkbox);
 
 	const content = el("div", "task-card__content");
-	const title = el("div", "task-card__title");
-	title.appendChild(el("span", "task-card__title-text", card.title));
-	content.appendChild(title);
-	renderMetadata(content, card, options, handlers);
+
+	const titleRow = el("div", "task-card__title-row");
+	titleRow.appendChild(el("span", "task-card__title-text", card.title));
+
+	const statusPill = el("button", "task-card__status");
+	statusPill.style.setProperty("--daytasks-status-color", card.statusColor);
+	statusPill.appendChild(el("span", "task-card__status-dot"));
+	statusPill.appendChild(el("span", "task-card__status-label", card.statusLabel));
+	statusPill.setAttribute("aria-label", `Status: ${card.statusLabel} (click to advance)`);
+	statusPill.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onCycleStatus(card.id);
+	});
+	titleRow.appendChild(statusPill);
+	content.appendChild(titleRow);
+
+	if (options.showTaskIds) {
+		content.appendChild(el("div", "task-card__id", `Task ID: ${card.id}`));
+	}
 	if (card.description) {
 		content.appendChild(el("div", "task-card__description", card.description));
 	}
-	mainRow.appendChild(content);
+	const metadata = renderMetadata(card, options, handlers);
+	if (metadata) {
+		content.appendChild(metadata);
+	}
 
+	mainRow.appendChild(content);
 	cardEl.appendChild(mainRow);
 	wrapper.appendChild(cardEl);
 	return wrapper;
 }
 
+function renderFooter(model: DailyTasksWidgetModel): HTMLElement {
+	const footer = el("div", "daytasks-widget__footer");
+	footer.appendChild(
+		el("span", "daytasks-widget__footer-total", `${model.totalCount} tasks total`)
+	);
+
+	const legend = el("div", "daytasks-widget__legend");
+	for (const entry of model.statusSummary) {
+		const item = el("span", "daytasks-widget__legend-item", `${entry.count} ${entry.label}`);
+		const dot = el("span", "daytasks-widget__legend-dot");
+		dot.style.setProperty("--daytasks-status-color", entry.color);
+		item.prepend(dot);
+		legend.appendChild(item);
+	}
+	if (model.overdueCount > 0) {
+		legend.appendChild(
+			el(
+				"span",
+				"daytasks-widget__legend-item daytasks-widget__legend-item--overdue",
+				`${model.overdueCount} Overdue`
+			)
+		);
+	}
+	footer.appendChild(legend);
+	return footer;
+}
+
 /**
  * Renders the DayTasks daily widget into `parent` and returns the root element.
- * The card markup mirrors TaskNotes' BEM TaskCard so the ported styles apply.
  * Pure DOM (no Obsidian APIs) — unit-tested and reused by reading mode and
  * Live Preview.
  */
@@ -182,11 +220,19 @@ export function renderDailyTasksWidget(
 	root.classList.add(...WIDGET_ROOT_CLASSES);
 
 	const header = el("div", "daytasks-widget__header");
-	header.appendChild(el("span", "daytasks-widget__title", model.title));
+	const left = el("div", "daytasks-widget__header-left");
+	left.appendChild(el("span", "daytasks-widget__title", model.title));
+	if (model.totalCount > 0) {
+		left.appendChild(
+			el("span", "daytasks-widget__count", `${model.totalCount} tasks`)
+		);
+	}
+	header.appendChild(left);
+
 	const right = el("div", "daytasks-widget__header-right");
 	right.appendChild(el("span", "daytasks-widget__date", model.date));
 	if (handlers.onAddTask) {
-		const addButton = el("button", "daytasks-widget__add", "+");
+		const addButton = el("button", "daytasks-widget__add", "+ New Task");
 		addButton.setAttribute("aria-label", "Add task");
 		addButton.addEventListener("click", () => handlers.onAddTask?.());
 		right.appendChild(addButton);
@@ -202,6 +248,7 @@ export function renderDailyTasksWidget(
 			list.appendChild(renderTaskCard(card, options, handlers));
 		}
 		root.appendChild(list);
+		root.appendChild(renderFooter(model));
 	}
 
 	parent.appendChild(root);

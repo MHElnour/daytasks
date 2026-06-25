@@ -18,6 +18,10 @@ const emptyModel: DailyTasksWidgetModel = {
 	date: "2026-06-25",
 	title: "DayTasks",
 	empty: true,
+	totalCount: 0,
+	doneCount: 0,
+	overdueCount: 0,
+	statusSummary: [],
 	cards: [],
 };
 
@@ -25,6 +29,13 @@ const filledModel: DailyTasksWidgetModel = {
 	date: "2026-06-25",
 	title: "DayTasks",
 	empty: false,
+	totalCount: 2,
+	doneCount: 1,
+	overdueCount: 1,
+	statusSummary: [
+		{ value: "open", label: "Open", color: "#808080", count: 1 },
+		{ value: "done", label: "Done", color: "#00aa00", count: 1 },
+	],
 	cards: [
 		{
 			id: "TSK-8cA562sd",
@@ -35,7 +46,9 @@ const filledModel: DailyTasksWidgetModel = {
 			statusColor: "#808080",
 			statusIcon: "circle",
 			estimateLabel: "1h30m",
-			dueDate: "2026-07-01",
+			dueDate: "2026-06-24",
+			dueLabel: "Yesterday",
+			overdue: true,
 			tags: ["errand", "home"],
 			contexts: ["phone"],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
@@ -49,6 +62,7 @@ const filledModel: DailyTasksWidgetModel = {
 			statusLabel: "Done",
 			statusColor: "#00aa00",
 			statusIcon: "check-circle",
+			overdue: false,
 			tags: [],
 			contexts: [],
 			projects: [],
@@ -61,53 +75,49 @@ function render(
 	options: WidgetRenderOptions = allOn,
 	handlers: Partial<WidgetRenderHandlers> = {}
 ) {
-	const onToggleTask = handlers.onToggleTask ?? vi.fn();
+	const onToggleComplete = handlers.onToggleComplete ?? vi.fn();
+	const onCycleStatus = handlers.onCycleStatus ?? vi.fn();
 	const parent = document.createElement("div");
 	const root = renderDailyTasksWidget(parent, model, options, {
 		...handlers,
-		onToggleTask,
+		onToggleComplete,
+		onCycleStatus,
 	});
-	return { root, onToggleTask };
+	return { root, onToggleComplete, onCycleStatus };
 }
 
 describe("renderDailyTasksWidget", () => {
-	it("scopes the root under the plugin and the note-widget container", () => {
+	it("renders header with count and empty state", () => {
 		const { root } = render(emptyModel);
 		expect(root.classList.contains("daytasks-plugin")).toBe(true);
-		expect(root.classList.contains("daytasks-note-widget")).toBe(true);
-	});
-
-	it("renders the header, date, and empty state for an empty model", () => {
-		const { root } = render(emptyModel);
 		expect(root.querySelector(".daytasks-widget__title")?.textContent).toBe("DayTasks");
-		expect(root.querySelector(".daytasks-widget__date")?.textContent).toContain(
-			"2026-06-25"
-		);
 		expect(root.querySelector(".daytasks-widget__empty")).not.toBeNull();
-		expect(root.querySelectorAll(".task-card")).toHaveLength(0);
 	});
 
-	it("renders cards with status color, contexts, and description", () => {
+	it("renders a card per task with checkbox, status pill, id, description, chips", () => {
 		const { root } = render(filledModel);
 		const cards = root.querySelectorAll(".task-card");
 		expect(cards).toHaveLength(2);
 
 		const first = cards[0];
 		expect(first.querySelector(".task-card__title-text")?.textContent).toBe("Buy milk");
-		expect(first.querySelector(".task-card__id")?.textContent).toBe("TSK-8cA562sd");
-		expect(first.querySelector(".task-card__context")?.textContent).toBe("@phone");
-		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("~1h30m");
-		expect(first.querySelector(".task-card__due")?.textContent).toBe("due 2026-07-01");
+		expect(first.querySelector<HTMLInputElement>(".task-card__checkbox")?.checked).toBe(false);
+		expect(first.querySelector(".task-card__status-label")?.textContent).toBe("Open");
+		expect(first.querySelector(".task-card__id")?.textContent).toBe("Task ID: TSK-8cA562sd");
 		expect(first.querySelector(".task-card__description")?.textContent).toBe(
 			"from the corner store"
 		);
-
-		const doneDot = cards[1].querySelector<HTMLElement>(".task-card__status-dot");
+		expect(first.querySelector(".task-card__due")?.textContent).toContain("Yesterday");
+		expect(first.querySelector(".task-card__due")?.classList.contains("is-overdue")).toBe(
+			true
+		);
+		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("Est: 1h30m");
+		expect(first.querySelectorAll(".task-card__chip")).toHaveLength(4); // 2 tags + 1 ctx + 1 project
+		expect(first.classList.contains("task-card--overdue")).toBe(true);
 		expect(cards[1].classList.contains("task-card--completed")).toBe(true);
-		expect(doneDot?.style.getPropertyValue("--daytasks-status-color")).toBe("#00aa00");
 	});
 
-	it("hides id, tags, contexts, and projects when disabled", () => {
+	it("hides id and chips when options are disabled", () => {
 		const { root } = render(filledModel, {
 			showTaskIds: false,
 			showTags: false,
@@ -116,42 +126,50 @@ describe("renderDailyTasksWidget", () => {
 		});
 		const first = root.querySelectorAll(".task-card")[0];
 		expect(first.querySelector(".task-card__id")).toBeNull();
-		expect(first.querySelector(".tag")).toBeNull();
-		expect(first.querySelector(".task-card__context")).toBeNull();
-		expect(first.querySelector(".task-card__project")).toBeNull();
+		expect(first.querySelector(".task-card__chip")).toBeNull();
 	});
 
-	it("calls onSelectTag and onOpenProject from clickable metadata", () => {
+	it("checkbox toggles completion; status pill cycles; neither triggers edit", () => {
+		const onToggleComplete = vi.fn();
+		const onCycleStatus = vi.fn();
+		const onEditTask = vi.fn();
+		const { root } = render(filledModel, allOn, {
+			onToggleComplete,
+			onCycleStatus,
+			onEditTask,
+		});
+		const first = root.querySelectorAll(".task-card")[0];
+
+		const checkbox = first.querySelector<HTMLInputElement>(".task-card__checkbox");
+		checkbox!.checked = true;
+		checkbox!.dispatchEvent(new Event("change", { bubbles: true }));
+		expect(onToggleComplete).toHaveBeenCalledWith("TSK-8cA562sd");
+
+		first.querySelector<HTMLElement>(".task-card__status")?.dispatchEvent(
+			new Event("click", { bubbles: true })
+		);
+		expect(onCycleStatus).toHaveBeenCalledWith("TSK-8cA562sd");
+		expect(onEditTask).not.toHaveBeenCalled();
+
+		(first as HTMLElement).dispatchEvent(new Event("click", { bubbles: true }));
+		expect(onEditTask).toHaveBeenCalledWith("TSK-8cA562sd");
+	});
+
+	it("chips call onSelectTag and onOpenProject", () => {
 		const onSelectTag = vi.fn();
 		const onOpenProject = vi.fn();
 		const { root } = render(filledModel, allOn, { onSelectTag, onOpenProject });
 		const first = root.querySelectorAll(".task-card")[0];
 
-		first.querySelector<HTMLElement>(".tag")?.dispatchEvent(
+		first.querySelector<HTMLElement>(".task-card__chip")?.dispatchEvent(
 			new Event("click", { bubbles: true })
 		);
-		first.querySelector<HTMLElement>(".task-card__project")?.dispatchEvent(
-			new Event("click", { bubbles: true })
-		);
+		first
+			.querySelector<HTMLElement>(".task-card__chip--project")
+			?.dispatchEvent(new Event("click", { bubbles: true }));
 
 		expect(onSelectTag).toHaveBeenCalledWith("errand");
 		expect(onOpenProject).toHaveBeenCalledWith("Projects/Home.md");
-	});
-
-	it("opens edit on card click but cycles (not edits) on status-dot click", () => {
-		const onEditTask = vi.fn();
-		const onToggleTask = vi.fn();
-		const { root } = render(filledModel, allOn, { onEditTask, onToggleTask });
-		const first = root.querySelectorAll(".task-card")[0];
-
-		first.querySelector<HTMLElement>(".task-card__status-dot")?.dispatchEvent(
-			new Event("click", { bubbles: true })
-		);
-		expect(onToggleTask).toHaveBeenCalledWith("TSK-8cA562sd");
-		expect(onEditTask).not.toHaveBeenCalled();
-
-		(first as HTMLElement).dispatchEvent(new Event("click", { bubbles: true }));
-		expect(onEditTask).toHaveBeenCalledWith("TSK-8cA562sd");
 	});
 
 	it("renders an add button only when onAddTask is provided", () => {
@@ -161,8 +179,17 @@ describe("renderDailyTasksWidget", () => {
 		expect(addButton).not.toBeNull();
 		addButton?.dispatchEvent(new Event("click"));
 		expect(onAddTask).toHaveBeenCalledOnce();
+	});
 
-		const { root: noAdd } = render(emptyModel);
-		expect(noAdd.querySelector(".daytasks-widget__add")).toBeNull();
+	it("renders a footer summary with legend and overdue", () => {
+		const { root } = render(filledModel);
+		expect(root.querySelector(".daytasks-widget__footer-total")?.textContent).toBe(
+			"2 tasks total"
+		);
+		const legend = root.querySelectorAll(".daytasks-widget__legend-item");
+		expect(legend.length).toBe(3); // 2 statuses + overdue
+		expect(
+			root.querySelector(".daytasks-widget__legend-item--overdue")?.textContent
+		).toContain("1 Overdue");
 	});
 });

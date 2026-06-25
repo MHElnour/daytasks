@@ -72,6 +72,18 @@ export class StatusManager {
 		);
 	}
 
+	/**
+	 * Target status for a checkbox toggle: a completed task flips back to the
+	 * default status; an incomplete task flips to the first completed status.
+	 */
+	getCompletionToggleTarget(current: string): string {
+		if (this.isCompletedStatus(current)) {
+			return this.defaultStatus;
+		}
+		const completed = this.getStatusesByOrder().find((status) => status.isCompleted);
+		return completed?.value ?? this.defaultStatus;
+	}
+
 	validate(): StatusValidationResult {
 		const errors: string[] = [];
 
