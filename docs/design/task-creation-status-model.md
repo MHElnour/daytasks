@@ -1,14 +1,27 @@
+---
+id: task-creation-status-model
+title: Task Creation And Status Model
+type: design
+status: partial
+opened: 2026-06-25
+closed:
+area:
+  - core
+  - settings
+  - ui
+---
+
 # Task Creation And Status Model Design
 
 Date: 2026-06-25
 Repo: DayTasks
-Status: Draft for review
+Status: Partially implemented
 
 ## Goal
 
 Design the full DayTasks task creation model and status manager before adding a
-rich creation modal, widget add button, API creation route, or browser extension
-integration.
+rich creation modal, widget add button, detail-note creation, or deeper card
+actions.
 
 The goal is not to copy all of TaskNotes. The goal is to copy the useful shape:
 one shared task creation contract, one normalized task data model, and one
@@ -16,11 +29,11 @@ status manager used everywhere status behavior matters.
 
 ## User Story
 
-As a user, I can create a day-first task from a daily note, widget button, API,
-or future browser extension. The task can include title, scheduled date, due
-date, status, priority, tags, contexts, linked projects, estimate, parent task,
-and optional detail note. The same task object is stored, indexed, shown in the
-daily widget, and updated by time tracking or status actions.
+As a user, I can create a day-first task from the command palette or the daily
+note widget. The task can include title, scheduled date, due date, status,
+priority, tags, contexts, linked projects, estimate, parent task, and optional
+detail note. The same task object is stored, indexed, shown in the daily widget,
+and updated by status actions.
 
 ## Current DayTasks Model
 
@@ -96,8 +109,8 @@ export interface DayTask {
 ```
 
 Important model rule: arrays should default to `[]`, not `undefined`, once this
-model is adopted. That keeps API responses, widget rendering, and future browser
-extension usage predictable.
+model is adopted. That keeps widget rendering, persistence, and any later
+integration work predictable.
 
 ## Date Semantics
 
@@ -108,8 +121,7 @@ DayTasks is day-first, so every task should have `scheduledDate`.
 `dueDate` means: deadline.
 
 Creation from a daily note should default `scheduledDate` to the active daily
-note date. Creation from the API should require `scheduledDate` unless the API
-explicitly supports a "today" default.
+note date. Creation from the daily widget should use the widget's date.
 
 ## Creation Input Contract
 
@@ -142,8 +154,6 @@ Consumers:
 
 - command palette creation
 - daily widget add button
-- local HTTP API
-- future browser extension
 - optional detail-note creation
 
 The factory/service decides defaults. Callers should not duplicate defaulting
@@ -358,23 +368,14 @@ Creation behavior:
 The plugin data task remains canonical. The detail note is extra workspace for
 long notes, links, and attachments.
 
-## API Shape
+## Deferred Integration Note
 
-The API should use the same creation input and return the same stored task
-shape.
+External creation surfaces are not part of the current milestone. The useful
+rule to preserve now is simpler: command creation, widget creation, and optional
+detail-note creation all go through `DayTaskService.createTask`.
 
-Minimum future endpoints:
-
-- `POST /api/tasks`
-- `GET /api/tasks`
-- `GET /api/tasks/:id`
-- `PUT /api/tasks/:id`
-- `POST /api/tasks/:id/status/next`
-- `POST /api/tasks/:id/time/start`
-- `POST /api/tasks/:id/time/stop`
-
-API creation should not have a separate task model. Browser extension creation,
-widget creation, and command creation all go through `DayTaskService.createTask`.
+If DayTasks later grows an external surface, it should reuse this same creation
+input instead of inventing a parallel model.
 
 ## Indexing Impact
 
@@ -472,8 +473,8 @@ When implementing, inspect these TaskNotes files first:
     object.
 
 - `src/services/task-service/TaskCreationService.ts`
-  - Shows how TaskNotes centralizes task creation after the modal/API/CLI have
-    produced input data.
+  - Shows how TaskNotes centralizes task creation after multiple entrypoints
+    have produced input data.
 
 - `src/modals/TaskCreationModal.ts`
   - Useful for the creation modal flow and NLP preview, but do not copy the full
@@ -511,8 +512,7 @@ Recommended order:
 6. Update widget view models to use `StatusManager`.
 7. Add a task creation modal that writes `CreateDayTaskInput`.
 8. Wire command palette and widget add button to the modal.
-9. Add API creation/update routes using the same service methods.
-10. Add detail-note creation.
+9. Add detail-note creation.
 
 ## Testing Requirements
 
@@ -532,7 +532,6 @@ Integration-ish tests:
 
 - command creation uses the shared creation service
 - widget add-button creation uses the shared creation service
-- API creation uses the shared creation service
 
 ## Non-Goals
 
@@ -556,5 +555,5 @@ These can be added later if DayTasks actually needs them.
 - All task creation entrypoints call one shared creation path.
 - The widget uses the status manager to decide checked/completed state.
 - Default status and custom statuses are editable from settings.
-- Future API/browser-extension creation can reuse the same input contract without
-  inventing a parallel model.
+- The creation input remains small enough for later integrations to reuse
+  without a parallel model.

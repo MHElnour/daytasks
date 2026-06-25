@@ -1,0 +1,117 @@
+# DayTasks Architecture
+
+DayTasks is a small Obsidian plugin built around a store-first model.
+
+Daily notes are the user workspace. The plugin data store is canonical.
+DayTasks does not write a `## Tasks` section into daily notes for the active
+workflow; it injects an inline widget at the bottom of daily notes and renders
+stored tasks for that date.
+
+## Design Goals
+
+- Keep the Obsidian experience useful before adding external surfaces.
+- Keep domain logic testable without Obsidian.
+- Keep Obsidian APIs behind small adapters.
+- Keep task IDs stable and generated as `TSK-xxxxxxxx`.
+- Avoid fake UI: visible controls should either work or stay hidden.
+
+## Main Flow
+
+```text
+Obsidian plugin lifecycle
+  -> load settings and persisted tasks
+  -> rebuild MemoryTaskStore and MemoryTaskIndex
+  -> detect daily-note date
+  -> build DailyTasksWidgetModel
+  -> render note widget
+```
+
+Task mutations follow the same shape:
+
+```text
+modal/card action
+  -> DayTaskService
+  -> TaskStore save/delete
+  -> TaskIndex upsert/remove
+  -> plugin saveData
+  -> widget refresh
+```
+
+## Module Boundaries
+
+### `src/core/`
+
+Owns task data and domain rules:
+
+- `task.ts` - task model and shared input/update types.
+- `taskFactory.ts` - creation normalization and defaults.
+- `dayTaskService.ts` - create, update, delete, status changes, indexing.
+- `taskIndex.ts` - in-memory lookup by ID/date/status/parent/tag/context/project.
+- `statusManager.ts` - configurable status behavior.
+
+Core modules should not call Obsidian APIs or touch DOM.
+
+### `src/obsidian/`
+
+Owns Obsidian-specific integration:
+
+- plugin data load/save adapter;
+- Live Preview widget extension;
+- reading-mode widget injection;
+- project picker and project-link opening;
+- global search integration;
+- modal wiring.
+
+Keep casts to private Obsidian surfaces contained in adapter modules.
+
+### `src/ui/`
+
+Owns view-model assembly for renderers:
+
+- `taskCard.ts` turns a `DayTask` into card display data.
+- `todayView.ts` builds the daily widget model and status summary.
+- `dailyTasksWidgetController.ts` maps dates/paths to widget models.
+
+UI modules should not persist data.
+
+### `src/settings/`
+
+Owns defaults, merge/validation, and the settings tab.
+
+Settings are currently English-only and private-project scoped. There is no i18n
+system in DayTasks.
+
+### `styles/`
+
+Source CSS lives here and is concatenated into `styles.css` by
+`npm run build-css`.
+
+Edit source files under `styles/`, not only the generated `styles.css`.
+
+### Stubs And Deferred Areas
+
+Some modules exist as roadmap placeholders:
+
+- `src/detail-notes/detailNoteService.ts`
+- `src/api/*`
+- `src/commands/openTodayCommand.ts`
+- `src/obsidian/vaultAdapter.ts`
+
+Treat these as deferred unless the current milestone explicitly activates them.
+API and browser-extension work are not part of the current Obsidian-completion
+goal.
+
+## Data Model Summary
+
+Each task has:
+
+- generated `id`;
+- `title`;
+- configurable `status`;
+- `scheduledDate`;
+- optional `dueDate`, `priority`, `estimateMinutes`, `description`;
+- optional `parentId` and `detailNotePath`;
+- arrays for `tags`, `contexts`, `projects`, and `timeEntries`;
+- timestamps for `createdAt`, `updatedAt`, and optional `completedAt`.
+
+Arrays should be normalized to empty arrays, not `undefined`.

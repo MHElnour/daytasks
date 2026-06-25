@@ -2,6 +2,7 @@ node_modules/
 /main.js
 /styles.css
 dist/
+coverage/
 .DS_Store
 
 # Local Obsidian test vault

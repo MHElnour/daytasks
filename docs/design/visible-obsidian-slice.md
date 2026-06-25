@@ -1,8 +1,21 @@
+---
+id: visible-obsidian-slice
+title: Visible Obsidian Slice
+type: design
+status: implemented
+opened: 2026-06-25
+closed:
+area:
+  - obsidian
+  - ui
+  - core
+---
+
 # Visible Obsidian Slice Design
 
 Date: 2026-06-25
 Repo: DayTasks
-Status: Draft for review
+Status: Implemented baseline
 
 ## Goal
 
@@ -41,8 +54,7 @@ This slice does not include:
 
 - Full task creation modal.
 - NLP parsing.
-- Local HTTP API.
-- Browser extension support.
+- External API or browser-extension support.
 - Time tracking.
 - Pomodoro.
 - Drag/drop sorting.
@@ -132,20 +144,6 @@ The settings tab should start small.
 - `createDetailNoteByDefault`
   - Default: `false`.
   - Reserved for the detail-note milestone.
-
-### API
-
-- `apiEnabled`
-  - Default: `false`.
-
-- `apiPort`
-  - Default: `9982`.
-
-- `apiToken`
-  - Default: generated or empty until API is enabled.
-
-The API settings can exist in the schema now, but the UI can mark them as
-inactive until the API milestone.
 
 ## Data Flow
 
@@ -343,6 +341,5 @@ Manual Obsidian test:
 
 ## Review Notes
 
-This spec intentionally avoids the local API and browser extension work. Those
-are important, but the plugin should first prove that the Obsidian-visible task
-loop works end to end.
+This spec intentionally avoids external integration work. The plugin should
+first prove that the Obsidian-visible task loop works end to end.

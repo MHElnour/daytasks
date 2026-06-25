@@ -1,6 +1,17 @@
-# V0 Daily Task Loop Implementation Plan
+---
+id: v0-daily-task-loop
+title: V0 Daily Task Loop
+type: plan
+status: historical
+opened: 2026-06-24
+closed:
+area:
+  - core
+  - obsidian
+  - ui
+---
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+# V0 Daily Task Loop Implementation Plan
 
 **Goal:** Build the first testable DayTasks core loop: create a task, save it, index it, and render a daily-note widget model for the active day.
 
