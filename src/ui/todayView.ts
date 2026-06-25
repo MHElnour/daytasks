@@ -1,6 +1,7 @@
 import type { StatusManager } from "../core/statusManager";
 import type { PriorityConfig } from "../core/status";
 import type { DayTask } from "../core/task";
+import { buildTaskForest, computeChildProgress, type TaskNode } from "../core/subtasks";
 import { safeCssColor } from "../util/cssColor";
 import { createTaskCardViewModel, type TaskCardViewModel } from "./taskCard";
 
@@ -27,21 +28,35 @@ export function createDailyTasksWidgetModel(
 	tasks: DayTask[],
 	statusManager: StatusManager,
 	referenceDate: string,
-	priorities: PriorityConfig[]
+	priorities: PriorityConfig[],
+	getChildren: (id: string) => DayTask[] = () => [],
+	expandedIds: ReadonlySet<string> = new Set()
 ): DailyTasksWidgetModel {
-	// Open tasks first, completed tasks sunk to the bottom (stable within group).
-	const ordered = [...tasks].sort(
-		(a, b) =>
-			Number(statusManager.isCompletedStatus(a.status)) -
-			Number(statusManager.isCompletedStatus(b.status))
-	);
-	// Relative due labels / overdue are computed against the real current date
-	// (`referenceDate`), not the daily note's date.
-	const cards = ordered.map((task) =>
-		createTaskCardViewModel(task, statusManager, referenceDate, priorities)
-	);
-	const doneCount = cards.filter((card) => card.checked).length;
-	const overdueCount = cards.filter((card) => card.overdue).length;
+	const isCompleted = (status: string): boolean => statusManager.isCompletedStatus(status);
+
+	const toCard = (node: TaskNode): TaskCardViewModel => {
+		const directChildren = getChildren(node.task.id);
+		const childProgress =
+			directChildren.length > 0 ? computeChildProgress(directChildren, isCompleted) : undefined;
+		return createTaskCardViewModel(node.task, statusManager, referenceDate, priorities, {
+			children: node.children.map(toCard),
+			childProgress,
+			expanded: expandedIds.has(node.task.id),
+		});
+	};
+
+	const cards = buildTaskForest(tasks, isCompleted).map(toCard);
+
+	// Counts cover every task for the day, including nested ones.
+	const flat: TaskCardViewModel[] = [];
+	const collect = (card: TaskCardViewModel): void => {
+		flat.push(card);
+		card.children.forEach(collect);
+	};
+	cards.forEach(collect);
+
+	const doneCount = flat.filter((card) => card.checked).length;
+	const overdueCount = flat.filter((card) => card.overdue).length;
 
 	const statusSummary: StatusSummaryEntry[] = statusManager
 		.getStatusesByOrder()
@@ -49,15 +64,15 @@ export function createDailyTasksWidgetModel(
 			value: status.value,
 			label: status.label,
 			color: safeCssColor(status.color, "var(--text-muted)"),
-			count: tasks.filter((task) => task.status === status.value).length,
+			count: tasks.filter((t) => t.status === status.value).length,
 		}))
 		.filter((entry) => entry.count > 0);
 
 	return {
 		date,
 		title: "DayTasks",
-		empty: cards.length === 0,
-		totalCount: cards.length,
+		empty: tasks.length === 0,
+		totalCount: tasks.length,
 		doneCount,
 		overdueCount,
 		statusSummary,

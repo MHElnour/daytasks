@@ -54,6 +54,8 @@ describe("createDailyTasksWidgetModel", () => {
 					contexts: [],
 					projects: [{ path: "Projects/Home.md", label: "Home" }],
 					description: undefined,
+					children: [],
+					expanded: false,
 				},
 			],
 		});
@@ -108,5 +110,68 @@ describe("createDailyTasksWidgetModel", () => {
 		expect(model.cards[0].dueLabel).toBe("Jun 24");
 		expect(model.cards[0].overdue).toBe(true);
 		expect(model.overdueCount).toBe(1);
+	});
+
+	it("nests same-day children under their parent and counts progress", () => {
+		const parent: DayTask = { ...task, id: "TSK-parent01", status: "open" };
+		const child: DayTask = { ...task, id: "TSK-child0001", status: "done", parentId: "TSK-parent01" };
+		const getChildren = (id: string): DayTask[] => (id === "TSK-parent01" ? [child] : []);
+
+		const model = createDailyTasksWidgetModel(
+			"2026-06-24",
+			[parent, child],
+			statusManager,
+			"2026-06-24",
+			priorities,
+			getChildren
+		);
+
+		expect(model.cards.map((c) => c.id)).toEqual(["TSK-parent01"]);
+		expect(model.cards[0].children.map((c) => c.id)).toEqual(["TSK-child0001"]);
+		expect(model.cards[0].childProgress).toEqual({ done: 1, total: 1 });
+		expect(model.totalCount).toBe(2);
+		expect(model.doneCount).toBe(1);
+	});
+
+	it("counts an off-day child in progress but does not nest it", () => {
+		const parent: DayTask = { ...task, id: "TSK-parent01", status: "open", scheduledDate: "2026-06-24" };
+		const offDay: DayTask = {
+			...task,
+			id: "TSK-child0001",
+			status: "open",
+			scheduledDate: "2026-06-30",
+			parentId: "TSK-parent01",
+		};
+		const getChildren = (id: string): DayTask[] => (id === "TSK-parent01" ? [offDay] : []);
+
+		const model = createDailyTasksWidgetModel(
+			"2026-06-24",
+			[parent],
+			statusManager,
+			"2026-06-24",
+			priorities,
+			getChildren
+		);
+
+		expect(model.cards[0].children).toEqual([]);
+		expect(model.cards[0].childProgress).toEqual({ done: 0, total: 1 });
+	});
+
+	it("reflects expandedIds on the parent card", () => {
+		const parent: DayTask = { ...task, id: "TSK-parent01" };
+		const child: DayTask = { ...task, id: "TSK-child0001", parentId: "TSK-parent01" };
+		const getChildren = (id: string): DayTask[] => (id === "TSK-parent01" ? [child] : []);
+
+		const model = createDailyTasksWidgetModel(
+			"2026-06-24",
+			[parent, child],
+			statusManager,
+			"2026-06-24",
+			priorities,
+			getChildren,
+			new Set(["TSK-parent01"])
+		);
+
+		expect(model.cards[0].expanded).toBe(true);
 	});
 });
