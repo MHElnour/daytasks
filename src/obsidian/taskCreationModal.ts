@@ -22,6 +22,12 @@ export interface TaskCreationModalOptions {
 	onSubmit: (input: CreateDayTaskInput | null) => void;
 	/** Edit mode only: called when the user confirms deletion. */
 	onDelete?: (taskId: string) => void;
+	/** Edit mode: direct children of the task being edited. */
+	getChildren?: (parentId: string) => DayTask[];
+	/** Edit mode: create a child task under the given parent. */
+	onAddSubtask?: (parentId: string, title: string) => Promise<void>;
+	/** Edit mode: unlink (orphan) a child task. */
+	onUnlinkSubtask?: (childId: string) => Promise<void>;
 }
 
 interface MenuChipItem {
@@ -235,7 +241,7 @@ export class TaskCreationModal extends Modal {
 
 		// ---- Relationship placeholders (wired in later slices) ----
 		const placeholders = contentEl.createDiv({ cls: "daytasks-placeholders" });
-		this.buildPlaceholder(placeholders, "list-tree", "Subtasks", "Add subtask");
+		this.buildSubtasks(placeholders);
 		this.buildPlaceholder(placeholders, "ban", "Blocked by", "Add task");
 		this.buildPlaceholder(placeholders, "arrow-right", "Blocking", "Add task");
 
@@ -378,6 +384,72 @@ export class TaskCreationModal extends Modal {
 		});
 		input.value = value;
 		input.addEventListener("input", () => onChange(input.value));
+	}
+
+	private buildSubtasks(parent: HTMLElement): void {
+		const initial = this.options.initial;
+		const row = parent.createDiv({ cls: "daytasks-subtasks" });
+		const header = row.createDiv({ cls: "daytasks-placeholder-label" });
+		setIcon(header.createSpan({ cls: "daytasks-label-icon" }), "list-tree");
+		header.createSpan({ text: "Subtasks" });
+
+		if (!this.isEdit || !initial || !this.options.getChildren) {
+			header.createSpan({
+				cls: "daytasks-placeholder-hint",
+				text: "Save the task first to add subtasks",
+			});
+			return;
+		}
+		const parentId = initial.id;
+		const getChildren = this.options.getChildren;
+
+		const list = row.createDiv({ cls: "daytasks-subtasks-list" });
+		const renderList = (): void => {
+			list.empty();
+			for (const child of getChildren(parentId)) {
+				const item = list.createDiv({ cls: "daytasks-subtask-row" });
+				const dot = item.createSpan({ cls: "daytasks-subtask-dot" });
+				dot.style.setProperty(
+					"--daytasks-status-color",
+					safeCssColor(
+						this.options.settings.statuses.find((s) => s.value === child.status)?.color ?? "",
+						"var(--text-muted)"
+					)
+				);
+				item.createSpan({ cls: "daytasks-subtask-title", text: child.title });
+				const unlink = item.createEl("button", { cls: "daytasks-subtask-unlink" });
+				setIcon(unlink, "x");
+				unlink.setAttribute("aria-label", `Unlink subtask ${child.title}`);
+				unlink.addEventListener("click", async () => {
+					await this.options.onUnlinkSubtask?.(child.id);
+					renderList();
+				});
+			}
+		};
+		renderList();
+
+		const add = row.createDiv({ cls: "daytasks-subtask-add" });
+		const input = add.createEl("input", {
+			cls: "daytasks-subtask-input",
+			attr: { type: "text", placeholder: "Add subtask", "aria-label": "Add subtask" },
+		});
+		const submitSubtask = async (): Promise<void> => {
+			const title = input.value.trim();
+			if (!title) {
+				return;
+			}
+			input.value = "";
+			await this.options.onAddSubtask?.(parentId, title);
+			renderList();
+		};
+		input.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				void submitSubtask();
+			}
+		});
+		const addButton = add.createEl("button", { cls: "daytasks-subtask-add-button", text: "Add subtask" });
+		addButton.addEventListener("click", () => void submitSubtask());
 	}
 
 	/** A disabled relationship row, reserving layout for a later slice. */
