@@ -1,6 +1,5 @@
 import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
-import { isOverdue } from "../util/relativeDate";
 import { createTaskCardViewModel, type TaskCardViewModel } from "./taskCard";
 
 export interface StatusSummaryEntry {
@@ -39,13 +38,7 @@ export function createDailyTasksWidgetModel(
 		createTaskCardViewModel(task, statusManager, referenceDate)
 	);
 	const doneCount = cards.filter((card) => card.checked).length;
-	const overdueCount = tasks.filter((task) =>
-		isOverdue(
-			task.dueDate,
-			referenceDate,
-			statusManager.isCompletedStatus(task.status)
-		)
-	).length;
+	const overdueCount = cards.filter((card) => card.overdue).length;
 
 	const statusSummary: StatusSummaryEntry[] = statusManager
 		.getStatusesByOrder()

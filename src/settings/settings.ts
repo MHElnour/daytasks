@@ -7,6 +7,7 @@ import {
 	type StatusConfig,
 } from "../core/status";
 import { StatusManager } from "../core/statusManager";
+import { isRecord } from "../util/isRecord";
 
 export type WidgetPosition = "bottom";
 
@@ -66,10 +67,6 @@ export const DEFAULT_SETTINGS: DayTasksSettings = {
 	apiPort: 9982,
 	apiToken: "",
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
-}
 
 function asString(value: unknown, fallback: string): string {
 	return typeof value === "string" ? value : fallback;

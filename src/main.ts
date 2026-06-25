@@ -282,7 +282,9 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private openProject(path: string): void {
-		void this.app.workspace.openLinkText(path, "", false);
+		this.app.workspace.openLinkText(path, "", false).catch((error) => {
+			console.error("DayTasks: failed to open project note", error);
+		});
 	}
 
 	private searchTag(tag: string): void {

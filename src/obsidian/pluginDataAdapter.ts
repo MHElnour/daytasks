@@ -1,5 +1,6 @@
 import type { DayTask, ProjectLink, TimeEntry } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
+import { isRecord } from "../util/isRecord";
 
 /** Minimal surface of Obsidian's `Plugin` data API, kept narrow for testing. */
 export interface PluginDataPort {
@@ -10,10 +11,6 @@ export interface PluginDataPort {
 export interface DayTasksPluginData {
 	settings: DayTasksSettings;
 	tasks: DayTask[];
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
 }
 
 function isValidTask(value: unknown): value is Record<string, unknown> {

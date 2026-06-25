@@ -1,6 +1,4 @@
-import { noteBasename } from "./notePath";
-
-const MARKDOWN_EXTENSION_PATTERN = /\.md$/i;
+import { MARKDOWN_EXTENSION_PATTERN, noteBasename } from "./notePath";
 
 function isSubsequence(haystack: string, needle: string): boolean {
 	let index = 0;

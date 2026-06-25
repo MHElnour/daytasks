@@ -1,4 +1,4 @@
-const MARKDOWN_EXTENSION_PATTERN = /\.md$/i;
+export const MARKDOWN_EXTENSION_PATTERN = /\.md$/i;
 
 /**
  * Returns the final path segment with the `.md` extension removed.

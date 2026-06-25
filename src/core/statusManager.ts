@@ -10,17 +10,22 @@ export interface StatusValidationResult {
  * statuses. Behavior ported (and trimmed) from TaskNotes StatusManager.
  */
 export class StatusManager {
+	/** Statuses sorted by `order`, computed once (the set is immutable here). */
+	private readonly orderedStatuses: StatusConfig[];
+
 	constructor(
 		private readonly statuses: StatusConfig[],
 		private readonly defaultStatus: string
-	) {}
+	) {
+		this.orderedStatuses = [...statuses].sort((a, b) => a.order - b.order);
+	}
 
 	getAllStatuses(): StatusConfig[] {
 		return [...this.statuses];
 	}
 
 	getStatusesByOrder(): StatusConfig[] {
-		return [...this.statuses].sort((a, b) => a.order - b.order);
+		return [...this.orderedStatuses];
 	}
 
 	getStatusConfig(value: string): StatusConfig | undefined {
