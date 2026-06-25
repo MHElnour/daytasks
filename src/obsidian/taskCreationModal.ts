@@ -1,4 +1,4 @@
-import { App, Menu, Modal, Setting, setIcon } from "obsidian";
+import { App, Menu, Modal, setIcon } from "obsidian";
 import { mergeUniqueProjects } from "../core/taskFactory";
 import {
 	MAX_DESCRIPTION_LENGTH,
@@ -22,10 +22,26 @@ export interface TaskCreationModalOptions {
 	onDelete?: (taskId: string) => void;
 }
 
+interface MenuChipItem {
+	value: string;
+	label: string;
+	icon?: string;
+}
+
+interface MenuChipOptions {
+	ariaPrefix: string;
+	fallbackIcon?: string;
+	emptyLabel?: string;
+	getCurrent: () => { label: string; icon?: string } | undefined;
+	items: MenuChipItem[];
+	onPick: (value: string) => void;
+}
+
 /**
- * Rich task-creation modal. Collects the full CreateDayTaskInput contract and
- * shows a live preview. NLP parsing of the title can be layered on later without
- * changing this contract.
+ * Rich task create/edit modal. Two boxes (the task, its metadata) with a compact
+ * icon toolbar; relationship sections (subtasks / blocked-by / blocking) are
+ * disabled placeholders until those slices ship. Collects the full
+ * CreateDayTaskInput contract and shows a live preview.
  */
 export class TaskCreationModal extends Modal {
 	private submitted = false;
@@ -80,110 +96,99 @@ export class TaskCreationModal extends Modal {
 		const { settings } = this.options;
 		this.titleEl.setText(this.isEdit ? "Edit task" : "New DayTasks task");
 		const { contentEl } = this;
+		contentEl.addClass("daytasks-task-modal");
 
-		new Setting(contentEl).setName("Title").addText((text) => {
-			text.setValue(this.title);
-			text.setPlaceholder("Buy milk").onChange((value) => {
-				this.title = value;
+		// ---- Box 1: the task ----
+		const box1 = contentEl.createDiv({ cls: "daytasks-modal-box" });
+		const toolbar = box1.createDiv({ cls: "daytasks-toolbar" });
+
+		this.buildMenuChip(toolbar, {
+			ariaPrefix: "Status",
+			getCurrent: () => settings.statuses.find((s) => s.value === this.status),
+			items: settings.statuses.map((s) => ({ value: s.value, label: s.label, icon: s.icon })),
+			onPick: (value) => {
+				this.status = value;
 				this.updatePreview();
-			});
-			window.setTimeout(() => text.inputEl.focus(), 0);
+			},
 		});
 
-		const statusSetting = new Setting(contentEl).setName("Status");
-		this.addLabelIcon(statusSetting, "circle-dot");
-		statusSetting.addButton((button) => {
-			button.buttonEl.addClass("daytasks-status-picker");
-			button.buttonEl.setAttribute("aria-haspopup", "menu");
-			const refresh = (): void => {
-				const current = settings.statuses.find((s) => s.value === this.status);
-				const el = button.buttonEl;
-				el.empty();
-				const iconEl = el.createSpan({ cls: "daytasks-picker-icon" });
-				if (current?.icon) {
-					setIcon(iconEl, current.icon);
-				}
-				el.createSpan({ text: current?.label ?? this.status });
-				el.setAttribute("aria-label", `Status: ${current?.label ?? this.status}`);
-			};
-			refresh();
-			button.onClick((evt) => {
-				const menu = new Menu();
-				for (const status of settings.statuses) {
-					menu.addItem((item) => {
-						item.setTitle(status.label);
-						if (status.icon) {
-							item.setIcon(status.icon);
-						}
-						item.onClick(() => {
-							this.status = status.value;
-							refresh();
-							this.updatePreview();
-						});
-					});
-				}
-				menu.showAtMouseEvent(evt);
-			});
-		});
-
-		const prioritySetting = new Setting(contentEl).setName("Priority");
-		this.addLabelIcon(prioritySetting, "flag");
-		prioritySetting.addDropdown((dropdown) => {
-			dropdown.addOption("", "—");
-			for (const priority of settings.priorities) {
-				dropdown.addOption(priority.value, priority.label);
-			}
-			dropdown.setValue(this.priority).onChange((value) => {
+		this.buildMenuChip(toolbar, {
+			ariaPrefix: "Priority",
+			fallbackIcon: "flag",
+			emptyLabel: "None",
+			getCurrent: () => settings.priorities.find((p) => p.value === this.priority),
+			items: [
+				{ value: "", label: "None", icon: "circle-slash" },
+				...settings.priorities.map((p) => ({ value: p.value, label: p.label, icon: p.icon })),
+			],
+			onPick: (value) => {
 				this.priority = value;
 				this.updatePreview();
-			});
+			},
 		});
 
-		const scheduledSetting = new Setting(contentEl).setName("Scheduled date");
-		this.addLabelIcon(scheduledSetting, "calendar");
-		scheduledSetting.addText((text) => {
-			text.inputEl.type = "date";
-			text.setValue(this.scheduledDate).onChange((value) => {
-				this.scheduledDate = value.trim();
-				this.updatePreview();
-			});
+		this.buildDateChip(toolbar, "calendar", this.scheduledDate, "Scheduled date", (value) => {
+			this.scheduledDate = value;
+			this.updatePreview();
+		});
+		this.buildDateChip(toolbar, "calendar-clock", this.dueDate, "Due date", (value) => {
+			this.dueDate = value;
+		});
+		this.buildTextChip(toolbar, "clock", this.estimate, "30m", "Estimate", (value) => {
+			this.estimate = value;
 		});
 
-		const dueSetting = new Setting(contentEl).setName("Due date");
-		this.addLabelIcon(dueSetting, "calendar-clock");
-		dueSetting.addText((text) => {
-			text.inputEl.type = "date";
-			text.setValue(this.dueDate).onChange((value) => {
-				this.dueDate = value.trim();
-			});
+		const titleInput = box1.createEl("input", {
+			cls: "daytasks-title-input",
+			attr: { type: "text", placeholder: "Buy milk", "aria-label": "Title" },
+		});
+		titleInput.value = this.title;
+		titleInput.addEventListener("input", () => {
+			this.title = titleInput.value;
+			this.updatePreview();
+		});
+		window.setTimeout(() => titleInput.focus(), 0);
+
+		const description = box1.createEl("textarea", {
+			cls: "daytasks-description-input",
+			attr: {
+				placeholder: "Description…",
+				maxlength: String(MAX_DESCRIPTION_LENGTH),
+				"aria-label": "Description",
+			},
+		});
+		description.value = this.description;
+		const counter = box1.createDiv({
+			cls: "daytasks-char-counter",
+			text: `${this.description.length}/${MAX_DESCRIPTION_LENGTH}`,
+		});
+		description.addEventListener("input", () => {
+			this.description = description.value.slice(0, MAX_DESCRIPTION_LENGTH);
+			counter.setText(`${this.description.length}/${MAX_DESCRIPTION_LENGTH}`);
 		});
 
-		new Setting(contentEl).setName("Tags").setDesc("Comma or space separated").addText(
-			(text) =>
-				text
-					.setPlaceholder("errand, home")
-					.setValue(this.tags)
-					.onChange((value) => {
-						this.tags = value;
-						this.updatePreview();
-					})
-		);
+		// ---- Box 2: metadata ----
+		const box2 = contentEl.createDiv({ cls: "daytasks-modal-box" });
+		const fields = box2.createDiv({ cls: "daytasks-field-2up" });
+		this.buildLabeledInput(fields, "hash", this.tags, "errand, home", "Tags", (value) => {
+			this.tags = value;
+			this.updatePreview();
+		});
+		this.buildLabeledInput(fields, "at-sign", this.contexts, "phone, office", "Contexts", (value) => {
+			this.contexts = value;
+			this.updatePreview();
+		});
 
-		new Setting(contentEl).setName("Contexts").addText((text) =>
-			text
-				.setPlaceholder("phone, office")
-				.setValue(this.contexts)
-				.onChange((value) => {
-					this.contexts = value;
-					this.updatePreview();
-				})
-		);
-
-		const projectsSetting = new Setting(contentEl)
-			.setName("Projects")
-			.setDesc("Link one or more project notes.");
-		this.addLabelIcon(projectsSetting, "folder");
-		const projectsList = contentEl.createDiv({ cls: "daytasks-projects-list" });
+		const projectsField = box2.createDiv({ cls: "daytasks-projects-field" });
+		const projectsHeader = projectsField.createDiv({ cls: "daytasks-projects-header" });
+		const projectsLabel = projectsHeader.createDiv({ cls: "daytasks-field-label" });
+		setIcon(projectsLabel.createSpan({ cls: "daytasks-label-icon" }), "folder");
+		projectsLabel.createSpan({ text: "Projects" });
+		const addProjectButton = projectsHeader.createEl("button", {
+			cls: "daytasks-add-project",
+			text: "Add project",
+		});
+		const projectsList = projectsField.createDiv({ cls: "daytasks-projects-list" });
 		const renderProjects = (): void => {
 			projectsList.empty();
 			for (const project of this.projects) {
@@ -192,9 +197,7 @@ export class TaskCreationModal extends Modal {
 					cls: "daytasks-project-row__label",
 					text: noteBasename(project.path),
 				});
-				const remove = row.createEl("button", {
-					cls: "daytasks-project-row__remove",
-				});
+				const remove = row.createEl("button", { cls: "daytasks-project-row__remove" });
 				setIcon(remove, "x");
 				remove.setAttribute("aria-label", `Remove project ${noteBasename(project.path)}`);
 				remove.addEventListener("click", () => {
@@ -204,78 +207,163 @@ export class TaskCreationModal extends Modal {
 				});
 			}
 		};
-		projectsSetting.addButton((button) =>
-			button.setButtonText("Add project").onClick(() => {
-				new MarkdownPathSuggestModal(this.app, (path) => {
-					this.projects = mergeUniqueProjects(this.projects, [{ path }]);
-					renderProjects();
-					this.updatePreview();
-				}).open();
-			})
-		);
+		addProjectButton.addEventListener("click", () => {
+			new MarkdownPathSuggestModal(this.app, (path) => {
+				this.projects = mergeUniqueProjects(this.projects, [{ path }]);
+				renderProjects();
+				this.updatePreview();
+			}).open();
+		});
 		renderProjects();
 
-		new Setting(contentEl).setName("Estimate").setDesc("e.g. 30m, 2h, 1h30m").addText(
-			(text) =>
-				text
-					.setPlaceholder("30m")
-					.setValue(this.estimate)
-					.onChange((value) => {
-						this.estimate = value;
-					})
-		);
+		const detailRow = box2.createDiv({ cls: "daytasks-toggle-row" });
+		detailRow.createSpan({ text: "Create detail note" });
+		const detailToggle = detailRow.createEl("input", {
+			attr: { type: "checkbox", "aria-label": "Create detail note" },
+		});
+		detailToggle.checked = this.createDetailNote;
+		detailToggle.addEventListener("change", () => {
+			this.createDetailNote = detailToggle.checked;
+		});
 
-		const descriptionSetting = new Setting(contentEl)
-			.setName("Description")
-			.setDesc(`${this.description.length}/${MAX_DESCRIPTION_LENGTH}`)
-			.addTextArea((area) => {
-				area.inputEl.maxLength = MAX_DESCRIPTION_LENGTH;
-				area.setValue(this.description).onChange((value) => {
-					this.description = value.slice(0, MAX_DESCRIPTION_LENGTH);
-					descriptionSetting.setDesc(
-						`${this.description.length}/${MAX_DESCRIPTION_LENGTH}`
-					);
-				});
-			});
-
-		new Setting(contentEl)
-			.setName("Create detail note")
-			.addToggle((toggle) =>
-				toggle.setValue(this.createDetailNote).onChange((value) => {
-					this.createDetailNote = value;
-				})
-			);
+		// ---- Relationship placeholders (wired in later slices) ----
+		const placeholders = contentEl.createDiv({ cls: "daytasks-placeholders" });
+		this.buildPlaceholder(placeholders, "list-tree", "Subtasks", "Add subtask");
+		this.buildPlaceholder(placeholders, "ban", "Blocked by", "Add task");
+		this.buildPlaceholder(placeholders, "arrow-right", "Blocking", "Add task");
 
 		this.preview = contentEl.createDiv({ cls: "daytasks-create-preview" });
 		this.updatePreview();
 
-		const actions = new Setting(contentEl);
-		actions.addButton((button) =>
-			button
-				.setButtonText(this.isEdit ? "Save" : "Create")
-				.setCta()
-				.onClick(() => this.submit())
-		);
+		// ---- Actions ----
+		const actions = contentEl.createDiv({ cls: "daytasks-modal-actions" });
+		const submitButton = actions.createEl("button", {
+			cls: "mod-cta",
+			text: this.isEdit ? "Save" : "Create",
+		});
+		submitButton.addEventListener("click", () => this.submit());
 
 		const initial = this.options.initial;
 		if (this.isEdit && this.options.onDelete && initial) {
 			let armed = false;
-			actions.addButton((button) => {
-				button
-					.setButtonText("Delete")
-					.setWarning()
-					.onClick(() => {
-						if (!armed) {
-							armed = true;
-							button.setButtonText("Confirm delete");
-							return;
-						}
-						this.submitted = true;
-						this.options.onDelete?.(initial.id);
-						this.close();
-					});
+			const deleteButton = actions.createEl("button", {
+				cls: "mod-warning",
+				text: "Delete",
+			});
+			deleteButton.addEventListener("click", () => {
+				if (!armed) {
+					armed = true;
+					deleteButton.setText("Confirm delete");
+					return;
+				}
+				this.submitted = true;
+				this.options.onDelete?.(initial.id);
+				this.close();
 			});
 		}
+	}
+
+	/** A toolbar chip (icon + label) that opens an Obsidian menu of options. */
+	private buildMenuChip(parent: HTMLElement, opts: MenuChipOptions): void {
+		const button = parent.createEl("button", { cls: "daytasks-chip" });
+		button.setAttribute("aria-haspopup", "menu");
+		const refresh = (): void => {
+			const current = opts.getCurrent();
+			button.empty();
+			const iconName = current?.icon ?? opts.fallbackIcon;
+			if (iconName) {
+				setIcon(button.createSpan({ cls: "daytasks-chip-icon" }), iconName);
+			}
+			const label = current?.label ?? opts.emptyLabel ?? "—";
+			button.createSpan({ cls: "daytasks-chip-label", text: label });
+			button.setAttribute("aria-label", `${opts.ariaPrefix}: ${label}`);
+		};
+		refresh();
+		button.addEventListener("click", (evt) => {
+			const menu = new Menu();
+			for (const item of opts.items) {
+				menu.addItem((menuItem) => {
+					menuItem.setTitle(item.label);
+					if (item.icon) {
+						menuItem.setIcon(item.icon);
+					}
+					menuItem.onClick(() => {
+						opts.onPick(item.value);
+						refresh();
+					});
+				});
+			}
+			menu.showAtMouseEvent(evt);
+		});
+	}
+
+	/** A toolbar chip with a leading icon and a native date input. */
+	private buildDateChip(
+		parent: HTMLElement,
+		iconName: string,
+		value: string,
+		ariaLabel: string,
+		onChange: (value: string) => void
+	): void {
+		const chip = parent.createDiv({ cls: "daytasks-chip daytasks-chip--input" });
+		setIcon(chip.createSpan({ cls: "daytasks-chip-icon" }), iconName);
+		const input = chip.createEl("input", { attr: { type: "date", "aria-label": ariaLabel } });
+		input.value = value;
+		input.addEventListener("input", () => onChange(input.value.trim()));
+	}
+
+	/** A toolbar chip with a leading icon and a small text input. */
+	private buildTextChip(
+		parent: HTMLElement,
+		iconName: string,
+		value: string,
+		placeholder: string,
+		ariaLabel: string,
+		onChange: (value: string) => void
+	): void {
+		const chip = parent.createDiv({ cls: "daytasks-chip daytasks-chip--input" });
+		setIcon(chip.createSpan({ cls: "daytasks-chip-icon" }), iconName);
+		const input = chip.createEl("input", {
+			cls: "daytasks-estimate-input",
+			attr: { type: "text", placeholder, "aria-label": ariaLabel },
+		});
+		input.value = value;
+		input.addEventListener("input", () => onChange(input.value));
+	}
+
+	/** An icon-prefixed text field used for tags / contexts in the metadata box. */
+	private buildLabeledInput(
+		parent: HTMLElement,
+		iconName: string,
+		value: string,
+		placeholder: string,
+		ariaLabel: string,
+		onChange: (value: string) => void
+	): void {
+		const field = parent.createDiv({ cls: "daytasks-field" });
+		setIcon(field.createSpan({ cls: "daytasks-field-icon" }), iconName);
+		const input = field.createEl("input", {
+			attr: { type: "text", placeholder, "aria-label": ariaLabel },
+		});
+		input.value = value;
+		input.addEventListener("input", () => onChange(input.value));
+	}
+
+	/** A disabled relationship row, reserving layout for a later slice. */
+	private buildPlaceholder(
+		parent: HTMLElement,
+		iconName: string,
+		label: string,
+		addLabel: string
+	): void {
+		const row = parent.createDiv({ cls: "daytasks-placeholder-row" });
+		const left = row.createDiv({ cls: "daytasks-placeholder-label" });
+		setIcon(left.createSpan({ cls: "daytasks-label-icon" }), iconName);
+		left.createSpan({ text: label });
+		left.createSpan({ cls: "daytasks-placeholder-hint", text: "Coming soon" });
+		const button = row.createEl("button", { cls: "daytasks-placeholder-add", text: addLabel });
+		button.disabled = true;
+		button.setAttribute("aria-disabled", "true");
 	}
 
 	private updatePreview(): void {
@@ -293,13 +381,6 @@ export class TaskCreationModal extends Modal {
 			parts.push(`+${project.path}`);
 		}
 		this.preview.setText(parts.join(" "));
-	}
-
-	/** Prepends a small Lucide icon to a setting's name label. */
-	private addLabelIcon(setting: Setting, iconName: string): void {
-		const icon = setting.nameEl.createSpan({ cls: "daytasks-label-icon" });
-		setIcon(icon, iconName);
-		setting.nameEl.prepend(icon);
 	}
 
 	private submit(): void {

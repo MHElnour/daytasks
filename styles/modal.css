@@ -1,40 +1,175 @@
-/* DayTasks task modal — slice A (status picker, multi-project, label icons). */
+/* DayTasks task modal — slice A.5 layout (two boxes, icon toolbar, placeholders). */
 
-.daytasks-label-icon {
-	display: inline-flex;
-	align-items: center;
-	margin-right: 6px;
-	color: var(--text-muted);
+.daytasks-task-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
-.daytasks-label-icon svg {
-	width: 0.9em;
-	height: 0.9em;
+/* ---- boxes ---- */
+.daytasks-modal-box {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
 }
 
-/* Status picker button: current status icon + label, opens a menu. */
-.daytasks-status-picker {
-	display: inline-flex;
+/* ---- icon toolbar ---- */
+.daytasks-toolbar {
+	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px;
 }
 
-.daytasks-picker-icon {
+.daytasks-chip {
 	display: inline-flex;
 	align-items: center;
+	gap: 5px;
+	padding: 4px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	cursor: pointer;
 }
 
-.daytasks-picker-icon svg {
-	width: 1em;
-	height: 1em;
+.daytasks-chip:hover {
+	background: var(--background-modifier-hover);
 }
 
-/* Linked projects list. */
+.daytasks-chip--input {
+	cursor: default;
+	padding: 2px 8px;
+}
+
+.daytasks-chip-icon,
+.daytasks-field-icon,
+.daytasks-label-icon {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.daytasks-chip-icon svg,
+.daytasks-field-icon svg,
+.daytasks-label-icon svg {
+	width: 0.95em;
+	height: 0.95em;
+}
+
+.daytasks-chip--input input {
+	border: none;
+	background: transparent;
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	padding: 2px 0;
+}
+
+.daytasks-estimate-input {
+	width: 64px;
+}
+
+.daytasks-chip:focus-visible,
+.daytasks-chip--input input:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 1px;
+}
+
+/* ---- title + description ---- */
+.daytasks-title-input {
+	width: 100%;
+	font-size: var(--font-ui-large);
+	font-weight: 600;
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.daytasks-description-input {
+	width: 100%;
+	min-height: 60px;
+	resize: vertical;
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-family: inherit;
+}
+
+.daytasks-char-counter {
+	align-self: flex-end;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+/* ---- metadata: two-up fields ---- */
+.daytasks-field-2up {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.daytasks-field {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+}
+
+.daytasks-field input {
+	flex: 1;
+	min-width: 0;
+	border: none;
+	background: transparent;
+	color: var(--text-normal);
+}
+
+.daytasks-field input:focus-visible {
+	outline: none;
+}
+
+/* ---- projects ---- */
+.daytasks-projects-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.daytasks-projects-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.daytasks-field-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--text-normal);
+}
+
+.daytasks-add-project,
+.daytasks-placeholder-add {
+	padding: 4px 10px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
 .daytasks-projects-list {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	margin: 4px 0 8px;
 }
 
 .daytasks-project-row {
@@ -45,7 +180,7 @@
 	padding: 4px 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
-	background: var(--background-secondary);
+	background: var(--background-primary);
 }
 
 .daytasks-project-row__label {
@@ -78,4 +213,53 @@
 .daytasks-project-row__remove:focus-visible {
 	outline: 2px solid var(--interactive-accent);
 	outline-offset: 2px;
+}
+
+/* ---- detail-note toggle ---- */
+.daytasks-toggle-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+/* ---- relationship placeholders (wired in later slices) ---- */
+.daytasks-placeholders {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.daytasks-placeholder-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 8px;
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+}
+
+.daytasks-placeholder-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.daytasks-placeholder-hint {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+.daytasks-placeholder-add[disabled] {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ---- actions ---- */
+.daytasks-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
 }
