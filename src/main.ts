@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { MarkdownView, Notice, Plugin, WorkspaceLeaf } from "obsidian";
+import { MarkdownView, Notice, Plugin } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { StatusManager } from "./core/statusManager";
 import type { CreateDayTaskInput } from "./core/task";
@@ -326,13 +326,24 @@ export default class DayTasksPlugin extends Plugin {
 		// Reading mode: rebuild injected widgets.
 		this.refreshReadingViews();
 
-		// Live Preview: nudge each editor so the ViewPlugin re-renders.
-		this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
-			const view = leaf.view as { editor?: { cm?: EditorView } };
-			const cm = view.editor?.cm;
-			if (cm) {
-				cm.dispatch({});
+		// Live Preview: nudge only the editors showing a daily note so their
+		// ViewPlugin re-renders against the new dataVersion. Other editors carry
+		// no widget, so dispatching into them is wasted work.
+		this.nudgeDailyNoteEditors();
+	}
+
+	private nudgeDailyNoteEditors(): void {
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			const view = leaf.view;
+			if (!(view instanceof MarkdownView)) {
+				continue;
 			}
-		});
+			const path = view.file?.path;
+			if (!path || !resolveDailyNoteDate(path, this.settings.dailyNoteFolder)) {
+				continue;
+			}
+			const cm = (view as unknown as { editor?: { cm?: EditorView } }).editor?.cm;
+			cm?.dispatch({});
+		}
 	}
 }
