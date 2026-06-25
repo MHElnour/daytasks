@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DayTaskService } from "../../src/core/dayTaskService";
-import { DEFAULT_STATUSES } from "../../src/core/status";
+import { DEFAULT_PRIORITIES, DEFAULT_STATUSES } from "../../src/core/status";
 import { StatusManager } from "../../src/core/statusManager";
 import { MemoryTaskIndex } from "../../src/core/taskIndex";
 import { MemoryTaskStore } from "../../src/core/taskStore";
@@ -27,7 +27,7 @@ function makeService(): DayTaskService {
 describe("DailyTasksWidgetController", () => {
 	it("creates a widget model for the active daily note", async () => {
 		const service = makeService();
-		const controller = new DailyTasksWidgetController({ service, statusManager, today: () => "2026-06-24" });
+		const controller = new DailyTasksWidgetController({ service, statusManager, priorities: DEFAULT_PRIORITIES, today: () => "2026-06-24" });
 
 		await service.createTask({
 			title: "Buy milk",
@@ -56,6 +56,9 @@ describe("DailyTasksWidgetController", () => {
 					statusColor: "#808080",
 					statusIcon: "circle",
 					priority: "normal",
+					priorityLabel: "Normal",
+					priorityColor: "#e0a800",
+					priorityIcon: "flag",
 					estimateLabel: undefined,
 					scheduledLabel: "Jun 24",
 					dueDate: undefined,
@@ -72,7 +75,7 @@ describe("DailyTasksWidgetController", () => {
 
 	it("builds an empty model for a date with no tasks", () => {
 		const service = makeService();
-		const controller = new DailyTasksWidgetController({ service, statusManager, today: () => "2026-06-24" });
+		const controller = new DailyTasksWidgetController({ service, statusManager, priorities: DEFAULT_PRIORITIES, today: () => "2026-06-24" });
 
 		expect(controller.getWidgetForDate("2026-06-26")).toEqual({
 			date: "2026-06-26",

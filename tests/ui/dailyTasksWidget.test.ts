@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_STATUSES } from "../../src/core/status";
+import { DEFAULT_PRIORITIES, DEFAULT_STATUSES } from "../../src/core/status";
 import { StatusManager } from "../../src/core/statusManager";
 import type { DayTask } from "../../src/core/task";
 import { createDailyTasksWidgetModel } from "../../src/ui/todayView";
 
 const statusManager = new StatusManager(DEFAULT_STATUSES, "open");
+const priorities = DEFAULT_PRIORITIES;
 
 const task: DayTask = {
 	id: "TSK-8cA562sd",
@@ -21,7 +22,7 @@ const task: DayTask = {
 
 describe("createDailyTasksWidgetModel", () => {
 	it("creates a daily widget model from tasks for the active note date", () => {
-		expect(createDailyTasksWidgetModel("2026-06-24", [task], statusManager, "2026-06-24")).toEqual({
+		expect(createDailyTasksWidgetModel("2026-06-24", [task], statusManager, "2026-06-24", priorities)).toEqual({
 			date: "2026-06-24",
 			title: "DayTasks",
 			empty: false,
@@ -41,6 +42,9 @@ describe("createDailyTasksWidgetModel", () => {
 					statusColor: "#808080",
 					statusIcon: "circle",
 					priority: undefined,
+					priorityLabel: undefined,
+					priorityColor: undefined,
+					priorityIcon: undefined,
 					estimateLabel: undefined,
 					scheduledLabel: "Jun 24",
 					dueDate: undefined,
@@ -56,7 +60,7 @@ describe("createDailyTasksWidgetModel", () => {
 	});
 
 	it("marks the model empty when no tasks exist for the date", () => {
-		expect(createDailyTasksWidgetModel("2026-06-24", [], statusManager, "2026-06-24")).toEqual({
+		expect(createDailyTasksWidgetModel("2026-06-24", [], statusManager, "2026-06-24", priorities)).toEqual({
 			date: "2026-06-24",
 			title: "DayTasks",
 			empty: true,
@@ -76,7 +80,8 @@ describe("createDailyTasksWidgetModel", () => {
 			"2026-06-24",
 			[done, open],
 			statusManager,
-			"2026-06-24"
+			"2026-06-24",
+			priorities
 		);
 
 		expect(model.cards.map((c) => c.id)).toEqual(["TSK-open0001", "TSK-done0001"]);
@@ -96,7 +101,8 @@ describe("createDailyTasksWidgetModel", () => {
 			"2026-06-24",
 			[dueOnNoteDay],
 			statusManager,
-			"2026-06-25"
+			"2026-06-25",
+			priorities
 		);
 
 		expect(model.cards[0].dueLabel).toBe("Jun 24");

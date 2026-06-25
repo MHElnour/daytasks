@@ -44,6 +44,10 @@ const filledModel: DailyTasksWidgetModel = {
 			statusLabel: "Open",
 			statusColor: "#808080",
 			statusIcon: "circle",
+			priority: "normal",
+			priorityLabel: "Normal",
+			priorityColor: "#e0a800",
+			priorityIcon: "flag",
 			estimateLabel: "1h30m",
 			scheduledLabel: "Jun 25",
 			dueDate: "2026-06-24",
@@ -106,14 +110,26 @@ describe("renderDailyTasksWidget", () => {
 		expect(first.querySelector(".task-card__description")?.textContent).toBe(
 			"from the corner store"
 		);
-		expect(first.querySelector(".task-card__due")?.textContent).toBe("Due: Jun 24");
+		// Meta items are an icon (data-icon, filled by setIcon at runtime) + value.
+		expect(first.querySelector(".task-card__due")?.textContent).toBe("Jun 24");
+		expect(
+			first.querySelector(".task-card__due .task-card__meta-icon")?.getAttribute("data-icon")
+		).toBe("calendar-clock");
 		expect(first.querySelector(".task-card__due")?.classList.contains("is-overdue")).toBe(
 			true
 		);
-		expect(first.querySelector(".task-card__scheduled")?.textContent).toBe(
-			"Scheduled: Jun 25"
-		);
-		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("Est: 1h30m");
+		expect(first.querySelector(".task-card__scheduled")?.textContent).toBe("Jun 25");
+		expect(
+			first
+				.querySelector(".task-card__scheduled .task-card__meta-icon")
+				?.getAttribute("data-icon")
+		).toBe("calendar");
+		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("1h30m");
+		// Priority is shown on the card (icon + label).
+		expect(first.querySelector(".task-card__priority")?.textContent).toBe("Normal");
+		expect(
+			first.querySelector(".task-card__priority .task-card__meta-icon")?.getAttribute("data-icon")
+		).toBe("flag");
 		// project + context are plain meta text; tags are boxes on their own row
 		expect(first.querySelector(".task-card__project")?.textContent).toBe("↗ Home");
 		expect(first.querySelector(".task-card__context")?.textContent).toBe("@phone");

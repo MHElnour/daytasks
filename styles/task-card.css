@@ -218,6 +218,24 @@
 	border-color: color-mix(in srgb, var(--chip-color, var(--text-accent)) 30%, var(--tn-border-color));
 }
 
+/* ---- meta icons (slice A) ---- */
+
+.daytasks-plugin .task-card__meta-icon {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 4px;
+}
+
+.daytasks-plugin .task-card__meta-icon svg {
+	width: 0.95em;
+	height: 0.95em;
+}
+
+/* Priority: tinted icon + label, color supplied via --chip-color. */
+.daytasks-plugin .task-card__priority {
+	color: var(--chip-color, var(--tn-text-muted));
+}
+
 /* ---- tags row: colored boxes ---- */
 
 .daytasks-plugin .task-card__tags {

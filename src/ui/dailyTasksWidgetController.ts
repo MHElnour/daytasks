@@ -1,4 +1,5 @@
 import type { StatusManager } from "../core/statusManager";
+import type { PriorityConfig } from "../core/status";
 import type { DayTask } from "../core/task";
 import {
 	createDailyTasksWidgetModel,
@@ -12,6 +13,7 @@ export interface DailyTasksWidgetService {
 export interface DailyTasksWidgetControllerDependencies {
 	service: DailyTasksWidgetService;
 	statusManager: StatusManager;
+	priorities: PriorityConfig[];
 	/** Returns the real current date (YYYY-MM-DD) for relative due / overdue. */
 	today: () => string;
 }
@@ -29,7 +31,8 @@ export class DailyTasksWidgetController {
 			date,
 			this.dependencies.service.getTasksForDate(date),
 			this.dependencies.statusManager,
-			this.dependencies.today()
+			this.dependencies.today(),
+			this.dependencies.priorities
 		);
 	}
 }

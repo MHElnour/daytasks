@@ -1,14 +1,16 @@
-import { App, Modal, Setting, type TextComponent } from "obsidian";
+import { App, Menu, Modal, Setting, setIcon } from "obsidian";
+import { mergeUniqueProjects } from "../core/taskFactory";
 import {
 	MAX_DESCRIPTION_LENGTH,
-	applyPrimaryProjectEdit,
 	type CreateDayTaskInput,
 	type DayTask,
+	type ProjectLink,
 } from "../core/task";
 import type { DayTasksSettings } from "../settings/settings";
 import { parseEstimateMinutes } from "../util/estimate";
+import { noteBasename } from "../util/notePath";
 import { parseLabelList } from "../util/parseLabelList";
-import { addMarkdownPathPicker } from "./projectPicker";
+import { MarkdownPathSuggestModal } from "./modals";
 
 export interface TaskCreationModalOptions {
 	settings: DayTasksSettings;
@@ -28,7 +30,6 @@ export interface TaskCreationModalOptions {
 export class TaskCreationModal extends Modal {
 	private submitted = false;
 	private preview!: HTMLElement;
-	private projectInput?: TextComponent;
 
 	private title = "";
 	private status: string;
@@ -37,7 +38,7 @@ export class TaskCreationModal extends Modal {
 	private dueDate = "";
 	private tags = "";
 	private contexts = "";
-	private projectPath: string;
+	private projects: ProjectLink[];
 	private estimate = "";
 	private description = "";
 	private createDetailNote: boolean;
@@ -51,7 +52,9 @@ export class TaskCreationModal extends Modal {
 		this.status = settings.defaultStatus;
 		this.priority = settings.defaultPriority ?? "";
 		this.scheduledDate = options.scheduledDate;
-		this.projectPath = settings.defaultProjectPath;
+		this.projects = settings.defaultProjectPath
+			? [{ path: settings.defaultProjectPath }]
+			: [];
 		this.createDetailNote = settings.createDetailNoteByDefault;
 
 		if (initial) {
@@ -62,7 +65,7 @@ export class TaskCreationModal extends Modal {
 			this.dueDate = initial.dueDate ?? "";
 			this.tags = initial.tags.join(", ");
 			this.contexts = initial.contexts.join(", ");
-			this.projectPath = initial.projects[0]?.path ?? "";
+			this.projects = initial.projects.map((project) => ({ ...project }));
 			this.estimate =
 				initial.estimateMinutes !== undefined ? String(initial.estimateMinutes) : "";
 			this.description = initial.description ?? "";
@@ -87,17 +90,45 @@ export class TaskCreationModal extends Modal {
 			window.setTimeout(() => text.inputEl.focus(), 0);
 		});
 
-		new Setting(contentEl).setName("Status").addDropdown((dropdown) => {
-			for (const status of settings.statuses) {
-				dropdown.addOption(status.value, status.label);
-			}
-			dropdown.setValue(this.status).onChange((value) => {
-				this.status = value;
-				this.updatePreview();
+		const statusSetting = new Setting(contentEl).setName("Status");
+		this.addLabelIcon(statusSetting, "circle-dot");
+		statusSetting.addButton((button) => {
+			button.buttonEl.addClass("daytasks-status-picker");
+			button.buttonEl.setAttribute("aria-haspopup", "menu");
+			const refresh = (): void => {
+				const current = settings.statuses.find((s) => s.value === this.status);
+				const el = button.buttonEl;
+				el.empty();
+				const iconEl = el.createSpan({ cls: "daytasks-picker-icon" });
+				if (current?.icon) {
+					setIcon(iconEl, current.icon);
+				}
+				el.createSpan({ text: current?.label ?? this.status });
+				el.setAttribute("aria-label", `Status: ${current?.label ?? this.status}`);
+			};
+			refresh();
+			button.onClick((evt) => {
+				const menu = new Menu();
+				for (const status of settings.statuses) {
+					menu.addItem((item) => {
+						item.setTitle(status.label);
+						if (status.icon) {
+							item.setIcon(status.icon);
+						}
+						item.onClick(() => {
+							this.status = status.value;
+							refresh();
+							this.updatePreview();
+						});
+					});
+				}
+				menu.showAtMouseEvent(evt);
 			});
 		});
 
-		new Setting(contentEl).setName("Priority").addDropdown((dropdown) => {
+		const prioritySetting = new Setting(contentEl).setName("Priority");
+		this.addLabelIcon(prioritySetting, "flag");
+		prioritySetting.addDropdown((dropdown) => {
 			dropdown.addOption("", "—");
 			for (const priority of settings.priorities) {
 				dropdown.addOption(priority.value, priority.label);
@@ -108,7 +139,9 @@ export class TaskCreationModal extends Modal {
 			});
 		});
 
-		new Setting(contentEl).setName("Scheduled date").addText((text) => {
+		const scheduledSetting = new Setting(contentEl).setName("Scheduled date");
+		this.addLabelIcon(scheduledSetting, "calendar");
+		scheduledSetting.addText((text) => {
 			text.inputEl.type = "date";
 			text.setValue(this.scheduledDate).onChange((value) => {
 				this.scheduledDate = value.trim();
@@ -116,7 +149,9 @@ export class TaskCreationModal extends Modal {
 			});
 		});
 
-		new Setting(contentEl).setName("Due date").addText((text) => {
+		const dueSetting = new Setting(contentEl).setName("Due date");
+		this.addLabelIcon(dueSetting, "calendar-clock");
+		dueSetting.addText((text) => {
 			text.inputEl.type = "date";
 			text.setValue(this.dueDate).onChange((value) => {
 				this.dueDate = value.trim();
@@ -144,25 +179,41 @@ export class TaskCreationModal extends Modal {
 				})
 		);
 
-		const projectSetting = new Setting(contentEl)
-			.setName("Project")
-			.addText((text) => {
-				this.projectInput = text;
-				text.setValue(this.projectPath).onChange((value) => {
-					this.projectPath = value.trim();
+		const projectsSetting = new Setting(contentEl)
+			.setName("Projects")
+			.setDesc("Link one or more project notes.");
+		this.addLabelIcon(projectsSetting, "folder");
+		const projectsList = contentEl.createDiv({ cls: "daytasks-projects-list" });
+		const renderProjects = (): void => {
+			projectsList.empty();
+			for (const project of this.projects) {
+				const row = projectsList.createDiv({ cls: "daytasks-project-row" });
+				row.createSpan({
+					cls: "daytasks-project-row__label",
+					text: noteBasename(project.path),
+				});
+				const remove = row.createEl("button", {
+					cls: "daytasks-project-row__remove",
+				});
+				setIcon(remove, "x");
+				remove.setAttribute("aria-label", `Remove project ${noteBasename(project.path)}`);
+				remove.addEventListener("click", () => {
+					this.projects = this.projects.filter((p) => p.path !== project.path);
+					renderProjects();
 					this.updatePreview();
 				});
-				text.inputEl.addClass("daytasks-project-input");
-			});
-		addMarkdownPathPicker(
-			projectSetting,
-			this.app,
-			() => this.projectInput,
-			(path) => {
-				this.projectPath = path;
-				this.updatePreview();
 			}
+		};
+		projectsSetting.addButton((button) =>
+			button.setButtonText("Add project").onClick(() => {
+				new MarkdownPathSuggestModal(this.app, (path) => {
+					this.projects = mergeUniqueProjects(this.projects, [{ path }]);
+					renderProjects();
+					this.updatePreview();
+				}).open();
+			})
 		);
+		renderProjects();
 
 		new Setting(contentEl).setName("Estimate").setDesc("e.g. 30m, 2h, 1h30m").addText(
 			(text) =>
@@ -238,10 +289,17 @@ export class TaskCreationModal extends Modal {
 		for (const context of parseLabelList(this.contexts)) {
 			parts.push(`@${context}`);
 		}
-		if (this.projectPath) {
-			parts.push(`+${this.projectPath}`);
+		for (const project of this.projects) {
+			parts.push(`+${project.path}`);
 		}
 		this.preview.setText(parts.join(" "));
+	}
+
+	/** Prepends a small Lucide icon to a setting's name label. */
+	private addLabelIcon(setting: Setting, iconName: string): void {
+		const icon = setting.nameEl.createSpan({ cls: "daytasks-label-icon" });
+		setIcon(icon, iconName);
+		setting.nameEl.prepend(icon);
 	}
 
 	private submit(): void {
@@ -270,14 +328,8 @@ export class TaskCreationModal extends Modal {
 		if (contexts.length > 0) {
 			input.contexts = contexts;
 		}
-		// The form exposes one project field; on edit, keep any extra links the
-		// task already had so they are not silently dropped.
-		const projects = applyPrimaryProjectEdit(
-			this.projectPath,
-			this.options.initial?.projects ?? []
-		);
-		if (projects.length > 0) {
-			input.projects = projects;
+		if (this.projects.length > 0) {
+			input.projects = this.projects.map((project) => ({ ...project }));
 		}
 		const estimate = parseEstimateMinutes(this.estimate);
 		if (estimate !== undefined) {

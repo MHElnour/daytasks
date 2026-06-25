@@ -1,4 +1,5 @@
 import type { StatusManager } from "../core/statusManager";
+import type { PriorityConfig } from "../core/status";
 import type { DayTask } from "../core/task";
 import { safeCssColor } from "../util/cssColor";
 import { createTaskCardViewModel, type TaskCardViewModel } from "./taskCard";
@@ -25,7 +26,8 @@ export function createDailyTasksWidgetModel(
 	date: string,
 	tasks: DayTask[],
 	statusManager: StatusManager,
-	referenceDate: string
+	referenceDate: string,
+	priorities: PriorityConfig[]
 ): DailyTasksWidgetModel {
 	// Open tasks first, completed tasks sunk to the bottom (stable within group).
 	const ordered = [...tasks].sort(
@@ -36,7 +38,7 @@ export function createDailyTasksWidgetModel(
 	// Relative due labels / overdue are computed against the real current date
 	// (`referenceDate`), not the daily note's date.
 	const cards = ordered.map((task) =>
-		createTaskCardViewModel(task, statusManager, referenceDate)
+		createTaskCardViewModel(task, statusManager, referenceDate, priorities)
 	);
 	const doneCount = cards.filter((card) => card.checked).length;
 	const overdueCount = cards.filter((card) => card.overdue).length;

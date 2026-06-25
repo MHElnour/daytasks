@@ -70,6 +70,22 @@ function makeActivatable(element: HTMLElement, activate: () => void): void {
 	});
 }
 
+/**
+ * A metadata item shown as a Lucide icon + value. The icon span is left empty
+ * with a `data-icon` attribute; the Obsidian caller fills it via `setIcon` after
+ * render, so this stays pure DOM (and unit-testable). The icon is decorative —
+ * the value text carries the meaning.
+ */
+function metaWithIcon(className: string, iconName: string, text: string): HTMLElement {
+	const item = el("span", `task-card__meta ${className}`);
+	const icon = el("span", "task-card__meta-icon");
+	icon.dataset.icon = iconName;
+	icon.setAttribute("aria-hidden", "true");
+	item.appendChild(icon);
+	item.appendChild(el("span", "task-card__meta-text", text));
+	return item;
+}
+
 function renderMetadata(
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
@@ -78,7 +94,7 @@ function renderMetadata(
 	const metadata = el("div", "task-card__metadata");
 
 	if (card.dueLabel) {
-		const due = el("span", "task-card__meta task-card__due", `Due: ${card.dueLabel}`);
+		const due = metaWithIcon("task-card__due", "calendar-clock", card.dueLabel);
 		if (card.overdue) {
 			due.classList.add("is-overdue");
 		}
@@ -86,13 +102,21 @@ function renderMetadata(
 	}
 
 	metadata.appendChild(
-		el("span", "task-card__meta task-card__scheduled", `Scheduled: ${card.scheduledLabel}`)
+		metaWithIcon("task-card__scheduled", "calendar", card.scheduledLabel)
 	);
 
 	if (card.estimateLabel) {
-		metadata.appendChild(
-			el("span", "task-card__meta task-card__estimate", `Est: ${card.estimateLabel}`)
+		metadata.appendChild(metaWithIcon("task-card__estimate", "clock", card.estimateLabel));
+	}
+
+	if (card.priorityLabel) {
+		const priority = metaWithIcon(
+			"task-card__priority",
+			card.priorityIcon ?? "flag",
+			card.priorityLabel
 		);
+		priority.style.setProperty("--chip-color", card.priorityColor ?? "var(--text-muted)");
+		metadata.appendChild(priority);
 	}
 
 	if (options.showProjects && card.projects.length > 0) {

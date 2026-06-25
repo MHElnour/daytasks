@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { MarkdownView, Notice, Plugin } from "obsidian";
+import { MarkdownView, Notice, Plugin, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { StatusManager } from "./core/statusManager";
 import { toUpdateDayTaskInput, type CreateDayTaskInput } from "./core/task";
@@ -97,6 +97,7 @@ export default class DayTasksPlugin extends Plugin {
 		this.controller = new DailyTasksWidgetController({
 			service: this.service,
 			statusManager: this.statusManager,
+			priorities: this.settings.priorities,
 			today: () => todayDate(),
 		});
 	}
@@ -137,7 +138,22 @@ export default class DayTasksPlugin extends Plugin {
 			onOpenProject: (path) => this.openProject(path),
 			onSelectTag: (tag) => this.searchTag(tag),
 		});
+		this.applyIcons(container);
 		return true;
+	}
+
+	/**
+	 * Fills the renderer's `data-icon` placeholder spans with Lucide icons.
+	 * `setIcon` is an Obsidian API, so the pure renderer leaves placeholders and
+	 * this single post-pass (shared by Reading mode and Live Preview) draws them.
+	 */
+	private applyIcons(container: HTMLElement): void {
+		container.querySelectorAll<HTMLElement>("[data-icon]").forEach((iconEl) => {
+			const name = iconEl.getAttribute("data-icon");
+			if (name) {
+				setIcon(iconEl, name);
+			}
+		});
 	}
 
 	private scheduleReadingRefresh(): void {

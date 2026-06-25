@@ -1,0 +1,81 @@
+/* DayTasks task modal — slice A (status picker, multi-project, label icons). */
+
+.daytasks-label-icon {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 6px;
+	color: var(--text-muted);
+}
+
+.daytasks-label-icon svg {
+	width: 0.9em;
+	height: 0.9em;
+}
+
+/* Status picker button: current status icon + label, opens a menu. */
+.daytasks-status-picker {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.daytasks-picker-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.daytasks-picker-icon svg {
+	width: 1em;
+	height: 1em;
+}
+
+/* Linked projects list. */
+.daytasks-projects-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 4px 0 8px;
+}
+
+.daytasks-project-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 4px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+}
+
+.daytasks-project-row__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.daytasks-project-row__remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	background: transparent;
+	border: none;
+	color: var(--text-muted);
+	cursor: pointer;
+	border-radius: var(--radius-s);
+}
+
+.daytasks-project-row__remove:hover {
+	color: var(--text-error);
+}
+
+.daytasks-project-row__remove svg {
+	width: 1em;
+	height: 1em;
+}
+
+.daytasks-project-row__remove:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}

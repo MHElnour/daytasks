@@ -8,6 +8,7 @@
      2. task-card-note-widget.css — note widget container
      3. task-card.css            — BEM task card look (ported from TaskNotes)
      4. widget.css               — DayTasks header / date / empty / panel
+     5. modal.css                — task modal: status picker, projects, label icons
 
    Edit the source files here, then run `npm run build-css` (also runs as
    part of `npm run build` / `npm run dev`). TaskNotes is the styling source
