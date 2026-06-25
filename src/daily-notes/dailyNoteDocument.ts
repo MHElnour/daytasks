@@ -17,9 +17,10 @@ function findNextHeadingIndex(lines: string[], startIndex: number): number {
 export function upsertDailyTaskLine(
 	content: string,
 	task: DayTask,
+	completed: boolean,
 	heading: string
 ): string {
-	const taskLine = formatDailyTaskLine(task);
+	const taskLine = formatDailyTaskLine(task, completed);
 	const headingLine = `## ${heading}`;
 	const normalized = normalizeLineEndings(content);
 

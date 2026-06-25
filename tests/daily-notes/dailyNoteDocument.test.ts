@@ -7,6 +7,9 @@ const task: DayTask = {
 	title: "Buy milk",
 	status: "open",
 	scheduledDate: "2026-06-24",
+	tags: [],
+	contexts: [],
+	projects: [],
 	timeEntries: [],
 	createdAt: "2026-06-24T08:00:00.000Z",
 	updatedAt: "2026-06-24T08:00:00.000Z",
@@ -14,7 +17,7 @@ const task: DayTask = {
 
 describe("upsertDailyTaskLine", () => {
 	it("creates a task section when missing", () => {
-		expect(upsertDailyTaskLine("", task, "Tasks")).toBe(
+		expect(upsertDailyTaskLine("", task, false, "Tasks")).toBe(
 			"## Tasks\n\n- [ ] Buy milk <!-- TSK-8cA562sd -->\n"
 		);
 	});
@@ -22,16 +25,15 @@ describe("upsertDailyTaskLine", () => {
 	it("appends a task to an existing task section", () => {
 		const input = "Intro\n\n## Tasks\n\n- [ ] Existing <!-- TSK-existing1 -->\n";
 
-		expect(upsertDailyTaskLine(input, task, "Tasks")).toBe(
+		expect(upsertDailyTaskLine(input, task, false, "Tasks")).toBe(
 			"Intro\n\n## Tasks\n\n- [ ] Existing <!-- TSK-existing1 -->\n- [ ] Buy milk <!-- TSK-8cA562sd -->\n"
 		);
 	});
 
-	it("updates an existing task line by id", () => {
-		const doneTask = { ...task, status: "done" as const };
+	it("updates an existing task line by id, completion driven by the flag", () => {
 		const input = "## Tasks\n\n- [ ] Old title <!-- TSK-8cA562sd -->\n";
 
-		expect(upsertDailyTaskLine(input, doneTask, "Tasks")).toBe(
+		expect(upsertDailyTaskLine(input, task, true, "Tasks")).toBe(
 			"## Tasks\n\n- [x] Buy milk <!-- TSK-8cA562sd -->\n"
 		);
 	});
