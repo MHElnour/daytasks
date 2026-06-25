@@ -160,16 +160,20 @@ export default class DayTasksPlugin extends Plugin {
 
 	private injectReadingView(view: MarkdownView): void {
 		try {
+			// The reading-mode host only ever lives in the preview DOM, so an
+			// editor-mode leaf has nothing to clean or inject — skip the per-leaf
+			// DOM scan entirely (the common case is notes open in edit mode).
+			if (view.getMode() !== "preview") {
+				return;
+			}
 			const container = view.containerEl;
 			container
 				.querySelectorAll(`.${WIDGET_HOST_CLASS}`)
 				.forEach((node) => node.remove());
 
 			const path = view.file?.path;
-			if (!path || view.getMode() !== "preview") {
-				return;
-			}
 			if (
+				!path ||
 				!this.settings.showDailyNoteWidget ||
 				!resolveDailyNoteDate(path, this.settings.dailyNoteFolder)
 			) {
