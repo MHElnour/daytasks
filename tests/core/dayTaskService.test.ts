@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { UpdateDayTaskInput } from "../../src/core/task";
 import { DayTaskService } from "../../src/core/dayTaskService";
-import { DEFAULT_STATUSES } from "../../src/core/status";
+import { BLOCKED_STATUS_VALUE, DEFAULT_STATUSES, withBlockedStatus } from "../../src/core/status";
 import { StatusManager } from "../../src/core/statusManager";
 import { MemoryTaskIndex } from "../../src/core/taskIndex";
 import { MemoryTaskStore } from "../../src/core/taskStore";
 
-const statusManager = new StatusManager(DEFAULT_STATUSES, "open");
+const statusManager = new StatusManager(withBlockedStatus(DEFAULT_STATUSES), "open");
 
 function makeServiceWithIds(ids: string[]): DayTaskService {
 	let next = 0;
@@ -325,6 +325,71 @@ describe("DayTaskService dependencies", () => {
 		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb"); // A blocked by B
 		await service.deleteTask("TSK-bbbbbbbb");
 		const a = await service.getTask("TSK-aaaaaaaa");
+		expect(a?.blockedBy).toBeUndefined();
+	});
+
+	it("sets the dependent to blocked when a dependency is added", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		const a = await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		expect(a.status).toBe(BLOCKED_STATUS_VALUE);
+	});
+
+	it("rejects adding a dependency to or from a completed task", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.setStatus("TSK-bbbbbbbb", "done");
+		await expect(service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb")).rejects.toThrow(/completed/);
+	});
+
+	it("releases the dependent to in-progress when its only blocker completes", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb"); // A blocked by B
+		await service.setStatus("TSK-bbbbbbbb", "done");            // complete B
+		const a = await service.getTask("TSK-aaaaaaaa");
+		expect(a?.blockedBy).toBeUndefined();
+		expect(a?.status).toBe("in-progress");
+	});
+
+	it("keeps the dependent blocked until the last blocker completes", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb", "TSK-cccccccc"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "C", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		await service.addDependency("TSK-aaaaaaaa", "TSK-cccccccc");
+		await service.setStatus("TSK-bbbbbbbb", "done"); // one of two blockers
+		const mid = await service.getTask("TSK-aaaaaaaa");
+		expect(mid?.blockedBy).toEqual(["TSK-cccccccc"]);
+		expect(mid?.status).toBe(BLOCKED_STATUS_VALUE);
+		await service.setStatus("TSK-cccccccc", "done"); // last blocker
+		const done = await service.getTask("TSK-aaaaaaaa");
+		expect(done?.blockedBy).toBeUndefined();
+		expect(done?.status).toBe("in-progress");
+	});
+
+	it("releases on manual removal of the last blocker", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		const removed = await service.removeDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		expect(removed.status).toBe("in-progress");
+		expect(removed.blockedBy).toBeUndefined();
+	});
+
+	it("releases on blocker deletion when it was the last blocker", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		await service.deleteTask("TSK-bbbbbbbb");
+		const a = await service.getTask("TSK-aaaaaaaa");
+		expect(a?.status).toBe("in-progress");
 		expect(a?.blockedBy).toBeUndefined();
 	});
 });

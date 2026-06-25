@@ -14,6 +14,7 @@ import { createDayTask, mergeUniqueProjects, mergeUniqueStrings } from "./taskFa
 import type { TaskIndex } from "./taskIndex";
 import type { TaskStore } from "./taskStore";
 import { wouldCreateCycle } from "./dependencies";
+import { BLOCKED_STATUS_VALUE } from "./status";
 
 export type DayTaskServiceSettings = Pick<
 	DayTasksSettings,
@@ -109,6 +110,14 @@ export class DayTaskService {
 		this.applyCompletion(updated, task.status, status, timestamp);
 
 		await this.saveAndIndex(updated);
+
+		if (
+			this.dependencies.statusManager.isCompletedStatus(status) &&
+			!this.dependencies.statusManager.isCompletedStatus(task.status)
+		) {
+			await this.releaseDependentsOf(id, timestamp);
+		}
+
 		return updated;
 	}
 
@@ -123,9 +132,14 @@ export class DayTaskService {
 		if (wouldCreateCycle(taskId, blockerId, blockersOf)) {
 			throw new Error("Dependency would create a cycle");
 		}
+		const { statusManager } = this.dependencies;
+		if (statusManager.isCompletedStatus(task.status) || statusManager.isCompletedStatus(blocker.status)) {
+			throw new Error("Cannot add a dependency to or from a completed task");
+		}
 		const updated: DayTask = {
 			...task,
 			blockedBy: mergeUniqueStrings(task.blockedBy, [blockerId]),
+			status: BLOCKED_STATUS_VALUE,
 			updatedAt: this.now(),
 		};
 		await this.saveAndIndex(updated);
@@ -137,10 +151,18 @@ export class DayTaskService {
 		if (!task) {
 			throw new Error(`Task not found: ${taskId}`);
 		}
+		const { statusManager } = this.dependencies;
 		const remaining = (task.blockedBy ?? []).filter((id) => id !== blockerId);
 		const { blockedBy: _drop, ...rest } = task;
-		const base: DayTask = { ...rest, updatedAt: this.now() };
-		const updated: DayTask = remaining.length > 0 ? { ...base, blockedBy: remaining } : base;
+		const timestamp = this.now();
+		let updated: DayTask;
+		if (remaining.length > 0) {
+			updated = { ...rest, blockedBy: remaining, updatedAt: timestamp };
+		} else if (statusManager.isBlockedStatus(task.status)) {
+			updated = { ...rest, status: statusManager.getReleaseStatus(), updatedAt: timestamp };
+		} else {
+			updated = { ...rest, updatedAt: timestamp };
+		}
 		await this.saveAndIndex(updated);
 		return updated;
 	}
@@ -161,6 +183,7 @@ export class DayTaskService {
 			await this.saveAndIndex({ ...rest, updatedAt: timestamp });
 		}
 
+		const { statusManager } = this.dependencies;
 		for (const dependent of this.dependencies.index.byBlocker(id)) {
 			const fresh = await this.dependencies.store.get(dependent.id);
 			if (!fresh?.blockedBy) {
@@ -171,7 +194,13 @@ export class DayTaskService {
 			const next: DayTask =
 				remaining.length > 0
 					? { ...rest, blockedBy: remaining, updatedAt: timestamp }
-					: { ...rest, updatedAt: timestamp };
+					: {
+							...rest,
+							...(statusManager.isBlockedStatus(fresh.status)
+								? { status: statusManager.getReleaseStatus() }
+								: {}),
+							updatedAt: timestamp,
+					  };
 			await this.saveAndIndex(next);
 		}
 
@@ -194,6 +223,14 @@ export class DayTaskService {
 		this.applyCompletion(updated, task.status, normalized, timestamp);
 
 		await this.saveAndIndex(updated);
+
+		if (
+			statusManager.isCompletedStatus(normalized) &&
+			!statusManager.isCompletedStatus(task.status)
+		) {
+			await this.releaseDependentsOf(id, timestamp);
+		}
+
 		return updated;
 	}
 
@@ -280,6 +317,23 @@ export class DayTaskService {
 			task.completedAt = timestamp;
 		} else if (!isCompleted && wasCompleted) {
 			task.completedAt = undefined;
+		}
+	}
+
+	private async releaseDependentsOf(blockerId: string, timestamp: string): Promise<void> {
+		const { statusManager } = this.dependencies;
+		for (const dependent of this.dependencies.index.byBlocker(blockerId)) {
+			const fresh = await this.dependencies.store.get(dependent.id);
+			if (!fresh?.blockedBy) {
+				continue;
+			}
+			const remaining = fresh.blockedBy.filter((b) => b !== blockerId);
+			const { blockedBy: _drop, ...rest } = fresh;
+			const next: DayTask =
+				remaining.length > 0
+					? { ...rest, blockedBy: remaining, updatedAt: timestamp }
+					: { ...rest, status: statusManager.getReleaseStatus(), updatedAt: timestamp };
+			await this.saveAndIndex(next);
 		}
 	}
 
