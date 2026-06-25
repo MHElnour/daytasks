@@ -1,6 +1,7 @@
 import { EditorView } from "@codemirror/view";
 import { MarkdownView, Notice, Plugin, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
+import { nextPriority } from "./core/priorityCycle";
 import { StatusManager } from "./core/statusManager";
 import { toUpdateDayTaskInput, type CreateDayTaskInput } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
@@ -134,6 +135,7 @@ export default class DayTasksPlugin extends Plugin {
 		const model = this.controller.getWidgetForDate(date, this.expandedIds);
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
+			onCyclePriority: (taskId) => void this.handleCyclePriority(taskId),
 			onAddTask: () => this.openCreateModal(date),
 			onEditTask: (taskId) => void this.openEditModal(taskId),
 			onOpenProject: (path) => this.openProject(path),
@@ -231,6 +233,24 @@ export default class DayTasksPlugin extends Plugin {
 		} catch (error) {
 			console.error("DayTasks: failed to update task status", error);
 			new Notice("DayTasks: could not update that task.");
+		}
+	}
+
+	private async handleCyclePriority(taskId: string): Promise<void> {
+		try {
+			const task = await this.service.getTask(taskId);
+			if (!task) {
+				return;
+			}
+			await this.service.setPriority(
+				taskId,
+				nextPriority(task.priority, this.settings.priorities)
+			);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to change task priority", error);
+			new Notice("DayTasks: could not change that priority.");
 		}
 	}
 

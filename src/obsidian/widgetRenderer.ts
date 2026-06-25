@@ -11,6 +11,7 @@ export interface WidgetRenderOptions {
 
 export interface WidgetRenderHandlers {
 	onCycleStatus(taskId: string): void;
+	onCyclePriority?(taskId: string): void;
 	onAddTask?(): void;
 	onEditTask?(taskId: string): void;
 	onOpenProject?(path: string): void;
@@ -110,15 +111,6 @@ function renderMetadata(
 		metadata.appendChild(metaWithIcon("task-card__estimate", "clock", card.estimateLabel));
 	}
 
-	if (card.priorityLabel) {
-		const priority = metaWithIcon(
-			"task-card__priority",
-			card.priorityIcon ?? "flag",
-			card.priorityLabel
-		);
-		priority.style.setProperty("--chip-color", card.priorityColor ?? "var(--text-muted)");
-		metadata.appendChild(priority);
-	}
 
 	if (options.showProjects && card.projects.length > 0) {
 		for (const project of card.projects) {
@@ -212,6 +204,28 @@ function renderTaskCard(
 		wrap.appendChild(el("span", "task-card__progress-label", `${done}/${total}`));
 		titleRow.appendChild(wrap);
 	}
+
+	// Priority quick-change control: an always-present, colour-tinted flag the
+	// user clicks to cycle priority. The icon span is a data-icon placeholder
+	// filled by the setIcon post-pass.
+	const priorityControl = el("button", "task-card__priority-control");
+	priorityControl.style.setProperty(
+		"--chip-color",
+		card.priorityColor ?? "var(--text-muted)"
+	);
+	const priorityIcon = el("span", "task-card__priority-icon");
+	priorityIcon.dataset.icon = card.priorityIcon ?? "flag";
+	priorityIcon.setAttribute("aria-hidden", "true");
+	priorityControl.appendChild(priorityIcon);
+	priorityControl.setAttribute(
+		"aria-label",
+		`Priority: ${card.priorityLabel ?? "None"} (click to change)`
+	);
+	priorityControl.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onCyclePriority?.(card.id);
+	});
+	titleRow.appendChild(priorityControl);
 
 	const statusPill = el("button", "task-card__status");
 	statusPill.style.setProperty("--daytasks-status-color", card.statusColor);

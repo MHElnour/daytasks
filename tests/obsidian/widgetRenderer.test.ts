@@ -129,11 +129,11 @@ describe("renderDailyTasksWidget", () => {
 				?.getAttribute("data-icon")
 		).toBe("calendar");
 		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("1h30m");
-		// Priority is shown on the card (icon + label).
-		expect(first.querySelector(".task-card__priority")?.textContent).toBe("Normal");
-		expect(
-			first.querySelector(".task-card__priority .task-card__meta-icon")?.getAttribute("data-icon")
-		).toBe("flag");
+		// Priority is a quick-change control in the title row, not a meta chip.
+		expect(first.querySelector(".task-card__metadata .task-card__priority")).toBeNull();
+		const priorityControl = first.querySelector<HTMLElement>(".task-card__priority-control");
+		expect(priorityControl?.getAttribute("aria-label")).toContain("Normal");
+		expect(priorityControl?.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("flag");
 		// project + context are plain meta text; tags are boxes on their own row
 		expect(first.querySelector(".task-card__project")?.textContent).toBe("↗ Home");
 		expect(first.querySelector(".task-card__context")?.textContent).toBe("@phone");
@@ -173,6 +173,19 @@ describe("renderDailyTasksWidget", () => {
 
 		(first as HTMLElement).dispatchEvent(new Event("click", { bubbles: true }));
 		expect(onEditTask).toHaveBeenCalledWith("TSK-8cA562sd");
+	});
+
+	it("priority control cycles priority without triggering the card edit", () => {
+		const onCyclePriority = vi.fn();
+		const onEditTask = vi.fn();
+		const { root } = render(filledModel, allOn, { onCyclePriority, onEditTask });
+		const first = root.querySelectorAll(".task-card")[0];
+
+		first.querySelector<HTMLElement>(".task-card__priority-control")?.dispatchEvent(
+			new Event("click", { bubbles: true })
+		);
+		expect(onCyclePriority).toHaveBeenCalledWith("TSK-8cA562sd");
+		expect(onEditTask).not.toHaveBeenCalled();
 	});
 
 	it("tag boxes call onSelectTag and project text calls onOpenProject", () => {

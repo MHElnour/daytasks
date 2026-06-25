@@ -116,6 +116,7 @@
 	font-size: var(--tn-font-size-sm);
 	line-height: 1.25;
 	color: var(--text-faint);
+	white-space: nowrap;
 }
 
 .daytasks-plugin .task-card__description {
@@ -137,7 +138,7 @@
 	min-height: 19px;
 	flex-shrink: 0;
 	margin: 0;
-	padding: 2px 9px;
+	padding: 1px 8px;
 	border-radius: 999px;
 	border: 1px solid
 		color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 28%, transparent);
@@ -146,9 +147,9 @@
 	box-shadow: none;
 	font-family: inherit;
 	font-size: var(--tn-font-size-sm);
-	font-weight: 700;
+	font-weight: 600;
 	line-height: 1.2;
-	text-transform: uppercase;
+	text-transform: none;
 	white-space: nowrap;
 	cursor: pointer;
 	color: var(--daytasks-status-color, var(--tn-text-muted));
@@ -173,6 +174,36 @@
 	border-radius: 50%;
 	border: 1.5px solid var(--daytasks-status-color, var(--tn-text-muted));
 	background: transparent;
+}
+
+/* ---- priority quick-change control (colour-tinted flag in the title row) ---- */
+
+.daytasks-plugin .task-card__priority-control {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	flex-shrink: 0;
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	color: var(--chip-color, var(--text-muted));
+}
+
+.daytasks-plugin .task-card__priority-control:hover {
+	background: color-mix(in srgb, var(--chip-color, var(--tn-border-color)) 12%, transparent);
+}
+
+.daytasks-plugin .task-card__priority-control:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	outline: none;
+}
+
+.daytasks-plugin .task-card__priority-icon {
+	display: inline-flex;
 }
 
 /* ---- metadata row: plain inline text (due, scheduled, est, project, context) ---- */
