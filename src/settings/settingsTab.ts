@@ -1,6 +1,10 @@
 import { App, PluginSettingTab, Setting, type TextComponent } from "obsidian";
 import type DayTasksPlugin from "../main";
 import { MarkdownPathSuggestModal } from "../obsidian/modals";
+import { debounce, type DebouncedFunction } from "../util/debounce";
+
+/** Delay before a typed text setting is persisted, to coalesce keystrokes. */
+const TEXT_SAVE_DEBOUNCE_MS = 400;
 
 function parseTags(value: string): string[] {
 	return value
@@ -10,11 +14,23 @@ function parseTags(value: string): string[] {
 }
 
 export class DayTasksSettingTab extends PluginSettingTab {
+	private readonly persistDebounced: DebouncedFunction<[]>;
+
 	constructor(
 		app: App,
 		private readonly plugin: DayTasksPlugin
 	) {
 		super(app, plugin);
+		this.persistDebounced = debounce(() => {
+			void this.plugin.saveSettings().catch((error) => {
+				console.error("DayTasks: failed to save settings", error);
+			});
+		}, TEXT_SAVE_DEBOUNCE_MS);
+	}
+
+	/** Persists pending text edits when the settings pane closes. */
+	hide(): void {
+		this.persistDebounced.flush();
 	}
 
 	display(): void {
@@ -28,9 +44,9 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.setName("Daily note folder")
 			.setDesc("Only notes in this folder are treated as daily notes. Empty = any folder.")
 			.addText((text) =>
-				text.setValue(settings.dailyNoteFolder).onChange(async (value) => {
+				text.setValue(settings.dailyNoteFolder).onChange((value) => {
 					settings.dailyNoteFolder = value.trim();
-					await this.plugin.saveSettings();
+					this.persistDebounced();
 				})
 			);
 
@@ -38,9 +54,9 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.setName("Daily note date format")
 			.setDesc("Display only for v0. Detection still uses the YYYY-MM-DD filename prefix.")
 			.addText((text) =>
-				text.setValue(settings.dailyNoteDateFormat).onChange(async (value) => {
+				text.setValue(settings.dailyNoteDateFormat).onChange((value) => {
 					settings.dailyNoteDateFormat = value.trim() || "YYYY-MM-DD";
-					await this.plugin.saveSettings();
+					this.persistDebounced();
 				})
 			);
 
@@ -119,9 +135,9 @@ export class DayTasksSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder("work, errand")
 					.setValue(settings.defaultTags.join(", "))
-					.onChange(async (value) => {
+					.onChange((value) => {
 						settings.defaultTags = parseTags(value);
-						await this.plugin.saveSettings();
+						this.persistDebounced();
 					})
 			);
 
@@ -131,9 +147,9 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.setDesc("New tasks link to this note. Use the picker to search your vault.")
 			.addText((text) => {
 				projectInput = text;
-				text.setValue(settings.defaultProjectPath).onChange(async (value) => {
+				text.setValue(settings.defaultProjectPath).onChange((value) => {
 					settings.defaultProjectPath = value.trim();
-					await this.plugin.saveSettings();
+					this.persistDebounced();
 				});
 				text.inputEl.addClass("daytasks-project-input");
 			})
@@ -154,9 +170,9 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.setName("Detail notes folder")
 			.setDesc("Reserved for optional detail notes in a later milestone.")
 			.addText((text) =>
-				text.setValue(settings.detailNotesFolder).onChange(async (value) => {
+				text.setValue(settings.detailNotesFolder).onChange((value) => {
 					settings.detailNotesFolder = value.trim();
-					await this.plugin.saveSettings();
+					this.persistDebounced();
 				})
 			);
 
@@ -183,10 +199,10 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl).setName("API port").addText((text) =>
-			text.setValue(String(settings.apiPort)).onChange(async (value) => {
+			text.setValue(String(settings.apiPort)).onChange((value) => {
 				const parsed = Number(value);
 				settings.apiPort = Number.isFinite(parsed) ? parsed : settings.apiPort;
-				await this.plugin.saveSettings();
+				this.persistDebounced();
 			})
 		);
 	}

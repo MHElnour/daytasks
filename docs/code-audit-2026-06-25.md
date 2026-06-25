@@ -30,7 +30,7 @@ Source: `B` = both eyes · `CX` = Codex only · `MX` = Claude only.
 
 | ID | Sev | Src | Location | Issue | Fix | Status |
 |----|-----|-----|----------|-------|-----|--------|
-| OPT-1 | MED | CX | `settings/settingsTab.ts` (all `onChange`); `main.ts:306` | Every keystroke in a text setting awaits `saveSettings()` → rebuilds services + persists **all tasks** + `refreshViews()`. | Debounce, or save on blur/Enter; split settings-persist from task-persist. | ☐ Open |
+| OPT-1 | MED | CX | `settings/settingsTab.ts` (all `onChange`); `main.ts:306` | Every keystroke in a text setting awaits `saveSettings()` → rebuilds services + persists **all tasks** + `refreshViews()`. | Debounce, or save on blur/Enter; split settings-persist from task-persist. | ☑ Fixed |
 | OPT-2 | MED | B | `main.ts:312-325` | `refreshViews()` rebuilds all reading widgets and dispatches an empty CM transaction to **every** leaf per change. | Coalesce; target only daily-note / affected leaves. | ☐ Open |
 | OPT-3 | MED | B | `obsidian/livePreview.ts:46-67`; `obsidian/widgetInsertion.ts:75-83,98-107` | `applyBottomOffset` runs on every `ViewUpdate`; `renderedBottom` does `querySelectorAll("*")` per visible line. | Gate on geometry change; batch with `requestAnimationFrame`; measure only the last content block. | ☐ Open |
 | OPT-4 | LOW | B | `ui/todayView.ts:41-57` | Multiple passes over `tasks` for done / overdue / per-status counts; `overdue` already on cards. | Single pass; reuse `cards.filter(c => c.overdue)`. | ☐ Open |
@@ -105,4 +105,5 @@ Record each fix here as it lands (ID · commit · note).
 
 | Date | ID(s) | Commit | Note |
 |------|-------|--------|------|
-| 2026-06-25 | BAD-2 | _this commit_ | `withDefaultTag` now dedupes; fixes duplicate tags surviving edits + double index entries. TDD: `tests/core/task.test.ts` + a deduplication case in `dayTaskService.test.ts`. |
+| 2026-06-25 | BAD-2 | 8f26ae9 | `withDefaultTag` now dedupes; fixes duplicate tags surviving edits + double index entries. TDD: `tests/core/task.test.ts` + a deduplication case in `dayTaskService.test.ts`. |
+| 2026-06-25 | OPT-1 | _this commit_ | Text settings persist via a 400ms `debounce` (new `util/debounce.ts`, TDD `tests/util/debounce.test.ts`); discrete controls stay immediate; pending save flushed on `hide()`. |
