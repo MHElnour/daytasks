@@ -14,6 +14,7 @@ import { parseEstimateMinutes } from "../util/estimate";
 import { noteBasename } from "../util/notePath";
 import { parseLabelList } from "../util/parseLabelList";
 import { MarkdownPathSuggestModal } from "./modals";
+import { TaskSuggestModal } from "./taskPicker";
 
 export interface TaskCreationModalOptions {
 	settings: DayTasksSettings;
@@ -29,6 +30,16 @@ export interface TaskCreationModalOptions {
 	onAddSubtask?: (parentId: string, title: string) => Promise<void>;
 	/** Edit mode: unlink (orphan) a child task. */
 	onUnlinkSubtask?: (childId: string) => Promise<void>;
+	/** Edit mode: tasks that block this task (this task is blocked by them). */
+	getBlockedBy?: (taskId: string) => DayTask[];
+	/** Edit mode: tasks that this task is blocking. */
+	getBlocking?: (taskId: string) => DayTask[];
+	/** Edit mode: candidate tasks for adding as a dependency (excludes self + cycles). */
+	getDependencyCandidates?: (taskId: string) => DayTask[];
+	/** Edit mode: record that taskId is blocked by blockerId. */
+	onAddDependency?: (taskId: string, blockerId: string) => Promise<void>;
+	/** Edit mode: remove the blockedBy edge between taskId and blockerId. */
+	onRemoveDependency?: (taskId: string, blockerId: string) => Promise<void>;
 }
 
 interface MenuChipItem {
@@ -253,8 +264,8 @@ export class TaskCreationModal extends Modal {
 		// ---- Relationship placeholders (wired in later slices) ----
 		const placeholders = contentEl.createDiv({ cls: "daytasks-placeholders" });
 		this.buildSubtasks(placeholders);
-		this.buildPlaceholder(placeholders, "ban", "Blocked by", "Add task");
-		this.buildPlaceholder(placeholders, "arrow-right", "Blocking", "Add task");
+		this.buildDependencySection(placeholders, "blocked-by");
+		this.buildDependencySection(placeholders, "blocking");
 
 		this.preview = contentEl.createDiv({ cls: "daytasks-create-preview" });
 		this.updatePreview();
@@ -468,21 +479,61 @@ export class TaskCreationModal extends Modal {
 		addButton.addEventListener("click", () => void submitSubtask());
 	}
 
-	/** A disabled relationship row, reserving layout for a later slice. */
-	private buildPlaceholder(
-		parent: HTMLElement,
-		iconName: string,
-		label: string,
-		addLabel: string
-	): void {
-		const row = parent.createDiv({ cls: "daytasks-placeholder-row" });
-		const left = row.createDiv({ cls: "daytasks-placeholder-label" });
-		setIcon(left.createSpan({ cls: "daytasks-label-icon" }), iconName);
-		left.createSpan({ text: label });
-		left.createSpan({ cls: "daytasks-placeholder-hint", text: "Coming soon" });
-		const button = row.createEl("button", { cls: "daytasks-placeholder-add", text: addLabel });
-		button.disabled = true;
-		button.setAttribute("aria-disabled", "true");
+	private buildDependencySection(parent: HTMLElement, kind: "blocked-by" | "blocking"): void {
+		const initial = this.options.initial;
+		const isBlockedBy = kind === "blocked-by";
+		const label = isBlockedBy ? "Blocked by" : "Blocking";
+		const icon = isBlockedBy ? "ban" : "arrow-right";
+		const row = parent.createDiv({ cls: "daytasks-deps" });
+		const header = row.createDiv({ cls: "daytasks-placeholder-label" });
+		setIcon(header.createSpan({ cls: "daytasks-label-icon" }), icon);
+		header.createSpan({ text: label });
+
+		const get = isBlockedBy ? this.options.getBlockedBy : this.options.getBlocking;
+		if (!this.isEdit || !initial || !get || !this.options.onAddDependency) {
+			header.createSpan({ cls: "daytasks-placeholder-hint", text: "Save the task first to add" });
+			return;
+		}
+		const thisId = initial.id;
+		const list = row.createDiv({ cls: "daytasks-deps-list" });
+		const renderList = (): void => {
+			list.empty();
+			for (const dep of get(thisId)) {
+				const item = list.createDiv({ cls: "daytasks-dep-row" });
+				item.createSpan({ cls: "daytasks-dep-title", text: `${dep.title} (${dep.id})` });
+				const remove = item.createEl("button", { cls: "daytasks-dep-remove" });
+				setIcon(remove, "x");
+				remove.setAttribute("aria-label", `Remove ${dep.title}`);
+				remove.addEventListener("click", async () => {
+					// blocked-by: thisId blocked by dep → remove(thisId, dep.id)
+					// blocking:   dep blocked by thisId → remove(dep.id, thisId)
+					if (isBlockedBy) {
+						await this.options.onRemoveDependency?.(thisId, dep.id);
+					} else {
+						await this.options.onRemoveDependency?.(dep.id, thisId);
+					}
+					renderList();
+				});
+			}
+		};
+		renderList();
+
+		const add = row.createEl("button", { cls: "daytasks-dep-add", text: "Add task" });
+		add.addEventListener("click", () => {
+			const candidates = (this.options.getDependencyCandidates?.(thisId) ?? []).map((t) => ({
+				id: t.id,
+				title: t.title,
+				scheduledDate: t.scheduledDate,
+			}));
+			new TaskSuggestModal(this.app, candidates, async (pickedId) => {
+				if (isBlockedBy) {
+					await this.options.onAddDependency?.(thisId, pickedId);
+				} else {
+					await this.options.onAddDependency?.(pickedId, thisId);
+				}
+				renderList();
+			}).open();
+		});
 	}
 
 	private updatePreview(): void {
