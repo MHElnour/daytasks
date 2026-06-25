@@ -494,6 +494,11 @@ export class TaskCreationModal extends Modal {
 			header.createSpan({ cls: "daytasks-placeholder-hint", text: "Save the task first to add" });
 			return;
 		}
+		const statusConfig = this.options.settings.statuses.find((s) => s.value === initial.status);
+		if (statusConfig?.isCompleted) {
+			header.createSpan({ cls: "daytasks-placeholder-hint", text: "Completed tasks can't have dependencies" });
+			return;
+		}
 		const thisId = initial.id;
 		const list = row.createDiv({ cls: "daytasks-deps-list" });
 		const renderList = (): void => {
