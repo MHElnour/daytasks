@@ -204,6 +204,28 @@ describe("decodePluginData", () => {
 		const decoded = decodePluginData({ tasks: [{ ...validTask, parentId: "TSK-other0001" }] });
 		expect(decoded.tasks[0].parentId).toBe("TSK-other0001");
 	});
+
+	it("coerces blockedBy and drops self + unknown ids", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{ ...validTask, id: "TSK-aaaaaaaa", blockedBy: ["TSK-aaaaaaaa", "TSK-bbbbbbbb", 5, "TSK-ghost"] },
+				{ ...validTask, id: "TSK-bbbbbbbb" },
+			],
+		});
+		expect(decoded.tasks[0].blockedBy).toEqual(["TSK-bbbbbbbb"]);
+	});
+
+	it("breaks a cyclic blockedBy chain on load", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{ ...validTask, id: "TSK-aaaaaaaa", blockedBy: ["TSK-bbbbbbbb"] },
+				{ ...validTask, id: "TSK-bbbbbbbb", blockedBy: ["TSK-aaaaaaaa"] },
+			],
+		});
+		const edges = decoded.tasks.flatMap((t) => (t.blockedBy ?? []).map((b) => `${t.id}->${b}`));
+		// One direction is kept, the back-edge that would close the cycle is dropped.
+		expect(edges).toHaveLength(1);
+	});
 });
 
 describe("DayTasksDataStore", () => {

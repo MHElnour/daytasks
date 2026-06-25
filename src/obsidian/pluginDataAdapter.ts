@@ -1,3 +1,4 @@
+import { hasPath } from "../core/dependencies";
 import type { DayTask, ProjectLink, TimeEntry } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
 import { isRecord } from "../util/isRecord";
@@ -149,7 +150,45 @@ function normalizeStoredTask(task: Record<string, unknown>): DayTask {
 		normalized.estimateMinutes = estimateMinutes;
 	}
 
+	const blockedBy = asStringArray(task.blockedBy);
+	if (blockedBy.length > 0) {
+		normalized.blockedBy = blockedBy;
+	}
+
 	return normalized;
+}
+
+/**
+ * Second pass: drops self-refs, unknown ids, and cycle-closing edges from each
+ * task's `blockedBy`. Processes tasks in order so earlier kept edges inform
+ * cycle detection for later ones.
+ */
+function validateDependencies(tasks: DayTask[]): void {
+	const ids = new Set(tasks.map((t) => t.id));
+	const kept = new Map<string, string[]>(); // task id -> kept blockedBy
+	const blockersOf = (id: string): string[] => kept.get(id) ?? [];
+	for (const task of tasks) {
+		if (!task.blockedBy) {
+			continue;
+		}
+		const next: string[] = [];
+		for (const blockerId of task.blockedBy) {
+			if (blockerId === task.id || !ids.has(blockerId)) {
+				continue; // self or unknown
+			}
+			// Keep only if it doesn't close a cycle against edges kept so far.
+			if (hasPath(blockerId, task.id, blockersOf)) {
+				continue;
+			}
+			next.push(blockerId);
+			kept.set(task.id, next);
+		}
+		if (next.length > 0) {
+			task.blockedBy = next;
+		} else {
+			delete task.blockedBy;
+		}
+	}
 }
 
 /** Decodes raw plugin data, repairing or discarding anything malformed. */
@@ -161,6 +200,8 @@ export function decodePluginData(raw: unknown): DayTasksPluginData {
 	const tasks = Array.isArray(raw.tasks)
 		? raw.tasks.filter(isValidTask).map(normalizeStoredTask)
 		: [];
+
+	validateDependencies(tasks);
 
 	return {
 		settings: mergeSettings(raw.settings),
