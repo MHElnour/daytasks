@@ -1,6 +1,3 @@
-/** Status is a configurable string value (see StatusConfig), not a closed union. */
-export type TaskStatus = string;
-
 /** Maximum stored length for a task description. */
 export const MAX_DESCRIPTION_LENGTH = 500;
 
