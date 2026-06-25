@@ -59,6 +59,9 @@ const filledModel: DailyTasksWidgetModel = {
 			description: "from the corner store",
 			children: [],
 			expanded: false,
+			blockedBy: [],
+			blocking: [],
+			blocked: false,
 		},
 		{
 			id: "TSK-GJM4c42e",
@@ -75,6 +78,9 @@ const filledModel: DailyTasksWidgetModel = {
 			projects: [],
 			children: [],
 			expanded: false,
+			blockedBy: [],
+			blocking: [],
+			blocked: false,
 		},
 	],
 };
@@ -268,6 +274,9 @@ function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}) {
 		projects: [],
 		children: [],
 		expanded: false,
+		blockedBy: [],
+		blocking: [],
+		blocked: false,
 		...over,
 	};
 }
@@ -342,5 +351,29 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const text = root.querySelector(".task-card__title-text")?.textContent ?? "";
 		expect(text).toHaveLength(100);
 		expect(text.endsWith("…")).toBe(true);
+	});
+});
+
+describe("renderDailyTasksWidget relations", () => {
+	it("renders a blocked-by box with clickable chips", () => {
+		const ref = { id: "TSK-blocker01", title: "Blocker", scheduledDate: "2026-06-25", completed: false };
+		const parent = leafCard({ id: "TSK-aaaaaaaa", blockedBy: [ref], blocked: true });
+		const onOpenTask = vi.fn();
+		const { root } = render(modelWith([parent]), allOn, { onOpenTask });
+		const top = root.querySelector<HTMLElement>(".daytasks-cards > .daytasks-note-widget__card");
+		const box = top?.querySelector(".task-card__blocked-by");
+		expect(box).not.toBeNull();
+		const chip = box?.querySelector<HTMLElement>(".task-card__rel-chip");
+		expect(chip?.textContent).toContain("Blocker");
+		chip?.dispatchEvent(new Event("click", { bubbles: true }));
+		expect(onOpenTask).toHaveBeenCalledWith("TSK-blocker01");
+		expect(top?.querySelector(".task-card")?.classList.contains("task-card--blocked")).toBe(true);
+	});
+
+	it("renders no relation boxes when empty", () => {
+		const { root } = render(modelWith([leafCard()]));
+		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
+		expect(top?.querySelector(".task-card__blocked-by")).toBeNull();
+		expect(top?.querySelector(".task-card__blocking")).toBeNull();
 	});
 });

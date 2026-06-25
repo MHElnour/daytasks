@@ -21,6 +21,7 @@ export interface WidgetRenderHandlers {
 	onOpenProject?(path: string): void;
 	onSelectTag?(tag: string): void;
 	onToggleSubtasks?(taskId: string): void;
+	onOpenTask?(taskId: string): void;
 }
 
 /** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS. */
@@ -267,6 +268,31 @@ function renderSubtaskFooter(
 	return footer;
 }
 
+function renderRelationBox(
+	className: string,
+	label: string,
+	refs: TaskCardViewModel["blockedBy"],
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const box = el("div", `task-card__rel-box ${className}`);
+	box.appendChild(el("div", "task-card__rel-label", label));
+	const list = el("div", "task-card__rel-list");
+	for (const ref of refs) {
+		const chip = el("button", "task-card__rel-chip", `${ref.id} · ${ref.title}`);
+		if (ref.completed) {
+			chip.classList.add("is-done");
+		}
+		chip.setAttribute("aria-label", `Open ${ref.title} (${ref.id})`);
+		chip.addEventListener("click", (event) => {
+			stop(event);
+			handlers.onOpenTask?.(ref.id);
+		});
+		list.appendChild(chip);
+	}
+	box.appendChild(list);
+	return box;
+}
+
 function renderTaskCard(
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
@@ -320,6 +346,20 @@ function renderTaskCard(
 	const tags = renderTags(card, options, handlers);
 	if (tags) {
 		content.appendChild(tags);
+	}
+
+	if (card.blocked) {
+		cardEl.classList.add("task-card--blocked");
+	}
+	if (card.blockedBy.length > 0) {
+		content.appendChild(
+			renderRelationBox("task-card__blocked-by", "Blocked by", card.blockedBy, handlers)
+		);
+	}
+	if (card.blocking.length > 0) {
+		content.appendChild(
+			renderRelationBox("task-card__blocking", "Blocking", card.blocking, handlers)
+		);
 	}
 
 	// Subtask progress + chevron live in a dedicated row below the properties, so
