@@ -106,6 +106,12 @@
 	word-break: break-word;
 }
 
+/* Nested subtask cards sit in a narrower, indented column, so their titles step
+ * down a little to read as a sub-level under the parent. */
+.daytasks-plugin .task-card__subtasks .task-card__title-text {
+	font-size: calc(var(--tn-font-size-base) * 0.8125);
+}
+
 .daytasks-plugin .task-card__id {
 	font-family: var(--font-monospace);
 	font-size: var(--tn-font-size-sm);
