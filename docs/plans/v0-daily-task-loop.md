@@ -43,6 +43,7 @@ area:
 ## Task 1: Test Tooling
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Add Vitest scripts and dependencies**
@@ -86,6 +87,7 @@ git commit -m "test: add vitest"
 ## Task 2: Task IDs and Task Factory
 
 **Files:**
+
 - Modify: `src/core/task.ts`
 - Modify: `src/core/taskIds.ts`
 - Create: `src/core/taskFactory.ts`
@@ -159,6 +161,7 @@ git commit -m "feat: add task factory"
 ## Task 3: Store and Index
 
 **Files:**
+
 - Modify: `src/core/taskStore.ts`
 - Modify: `src/core/taskIndex.ts`
 - Test: `tests/core/taskStore.test.ts`
@@ -270,6 +273,7 @@ git commit -m "feat: add task store and index"
 ## Task 4: Daily Note Formatting and Document Sync
 
 **Files:**
+
 - Modify: `src/daily-notes/dailyNoteFormatter.ts`
 - Modify: `src/daily-notes/dailyNoteParser.ts`
 - Create: `src/daily-notes/dailyNoteDocument.ts`
@@ -400,6 +404,7 @@ git commit -m "feat: sync daily note task lines"
 ## Task 5: Core Daily Task Service
 
 **Files:**
+
 - Create: `src/core/dayTaskService.ts`
 - Modify: `src/daily-notes/dailyNoteService.ts`
 - Test: `tests/core/dayTaskService.test.ts`

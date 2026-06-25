@@ -59,6 +59,7 @@ verified via `npm run build:test` + the Obsidian CLI smoke checks in
 ## Findings by axis (fixed)
 
 ### Optimization
+
 | ID | Sev | Issue → fix | Commit |
 |----|-----|-------------|--------|
 | OPT-1 | med | Per-keystroke settings save rebuilt services + persisted all tasks → debounce 400 ms, flush on hide. | `77235a9` |
@@ -69,6 +70,7 @@ verified via `npm run build:test` + the Obsidian CLI smoke checks in
 | OPT-6 | low | `getStatusesByOrder` re-sorted each call → precompute in ctor. | `dad2a87` |
 
 ### Security
+
 | ID | Sev | Issue → fix | Commit |
 |----|-----|-------------|--------|
 | SEC-2 | low | Stored optional fields trusted after partial validation → per-field decoder. | `0d78b6b` |
@@ -77,6 +79,7 @@ verified via `npm run build:test` + the Obsidian CLI smoke checks in
 | SEC-6 | low | Free-form project path opened unchecked → require a resolved markdown note. | `3d1cc01` |
 
 ### Consolidation / DRY
+
 | ID | Sev | Issue → fix | Commit |
 |----|-----|-------------|--------|
 | DRY-1 | med | Two divergent token splitters → shared `parseLabelList`. | `a9f1b10` |
@@ -87,6 +90,7 @@ verified via `npm run build:test` + the Obsidian CLI smoke checks in
 | DRY-6 | low | Controller re-derived the daily-note date folder-blind → pass resolved date in. | `f0607fd` |
 
 ### Bad patterns
+
 | ID | Sev | Issue → fix | Commit |
 |----|-----|-------------|--------|
 | BAD-1 | med | Blanket `as unknown as DayTask` cast → full per-field decoder. | `0d78b6b` |
@@ -100,6 +104,7 @@ verified via `npm run build:test` + the Obsidian CLI smoke checks in
 | BAD-10 | low | Chips not keyboard-operable → `makeActivatable` (role/tabindex/Enter-Space). | `f6b9567` |
 
 ### Pass-2 fresh
+
 | ID | Sev | Issue → fix | Commit |
 |----|-----|-------------|--------|
 | P2-11 | high | Multi-project edit dropped all but the first link → `applyPrimaryProjectEdit` preserves the rest. | `3b93c6b` |

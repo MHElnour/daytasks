@@ -1,0 +1,11 @@
+{
+  // Tuned for DayTasks docs (YAML-fronted audits + prose tables).
+  "default": true,
+  // No hard line-length limit — prose wraps freely and tables run long.
+  "MD013": false,
+  // The YAML `title:` is metadata, not the document H1, so a single `#` heading
+  // is not a second top-level heading.
+  "MD025": { "front_matter_title": "" },
+  // Table pipe-spacing style is cosmetic and noisy; leave it to the author.
+  "MD060": false
+}
