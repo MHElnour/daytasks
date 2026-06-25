@@ -186,6 +186,19 @@ export class DayTaskService {
 		return updated;
 	}
 
+	/** Sets a task's priority, or clears it when `priority` is undefined. */
+	async setPriority(id: string, priority: string | undefined): Promise<DayTask> {
+		const task = await this.dependencies.store.get(id);
+		if (!task) {
+			throw new Error(`Task not found: ${id}`);
+		}
+		const { priority: _removed, ...rest } = task;
+		const base: DayTask = { ...rest, updatedAt: this.now() };
+		const updated: DayTask = priority ? { ...base, priority } : base;
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
 	/**
 	 * Stamps or clears `completedAt` when a status change crosses the completed
 	 * boundary, leaving it untouched otherwise. Mutates `task` in place.

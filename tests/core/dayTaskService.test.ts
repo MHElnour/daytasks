@@ -289,3 +289,30 @@ describe("DayTaskService subtasks", () => {
 		expect(service.getChildren(parent.id)).toEqual([]);
 	});
 });
+
+describe("DayTaskService priority", () => {
+	it("sets a priority value", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Task", scheduledDate: "2026-06-25" });
+
+		const updated = await service.setPriority("TSK-8cA562sd", "high");
+
+		expect(updated.priority).toBe("high");
+	});
+
+	it("clears the priority when given undefined", async () => {
+		const service = makeService({ defaultPriority: "normal" });
+		await service.createTask({ title: "Task", scheduledDate: "2026-06-25" });
+
+		const cleared = await service.setPriority("TSK-8cA562sd", undefined);
+
+		expect(cleared.priority).toBeUndefined();
+	});
+
+	it("throws for a missing task", async () => {
+		const service = makeService();
+		await expect(service.setPriority("TSK-missing01", "high")).rejects.toThrow(
+			"Task not found"
+		);
+	});
+});
