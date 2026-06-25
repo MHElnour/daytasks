@@ -40,21 +40,34 @@ function asFiniteNumber(value: unknown): number | undefined {
 	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+/** Coerces to a list of unique strings (duplicates would double-index the task). */
 function asStringArray(value: unknown): string[] {
-	return Array.isArray(value)
-		? value.filter((entry): entry is string => typeof entry === "string")
-		: [];
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	const seen = new Set<string>();
+	const result: string[] = [];
+	for (const entry of value) {
+		if (typeof entry === "string" && !seen.has(entry)) {
+			seen.add(entry);
+			result.push(entry);
+		}
+	}
+	return result;
 }
 
+/** Coerces to project links, deduplicated by path (first occurrence wins). */
 function asProjects(value: unknown): ProjectLink[] {
 	if (!Array.isArray(value)) {
 		return [];
 	}
+	const seen = new Set<string>();
 	const projects: ProjectLink[] = [];
 	for (const raw of value) {
-		if (!isProjectLink(raw)) {
+		if (!isProjectLink(raw) || seen.has(raw.path)) {
 			continue;
 		}
+		seen.add(raw.path);
 		const project: ProjectLink = { path: raw.path };
 		const title = asString(raw.title);
 		if (title !== undefined) {

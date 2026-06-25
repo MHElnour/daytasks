@@ -153,6 +153,28 @@ describe("decodePluginData", () => {
 		]);
 	});
 
+	it("collapses duplicate tags, contexts, and project links on decode", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{
+					...validTask,
+					tags: ["errand", "errand", "home"],
+					contexts: ["phone", "phone"],
+					projects: [
+						{ path: "a.md" },
+						{ path: "a.md", title: "dup" },
+						{ path: "b.md" },
+					],
+				},
+			],
+		});
+
+		const task = decoded.tasks[0];
+		expect(task.tags).toEqual(["errand", "home"]);
+		expect(task.contexts).toEqual(["phone"]);
+		expect(task.projects).toEqual([{ path: "a.md" }, { path: "b.md" }]);
+	});
+
 	it("defaults missing arrays to empty on stored tasks", () => {
 		const decoded = decodePluginData({
 			tasks: [
