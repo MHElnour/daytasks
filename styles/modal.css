@@ -280,3 +280,52 @@
 	justify-content: flex-end;
 	gap: 8px;
 }
+
+/* ---- subtask editor rows ---- */
+
+.daytasks-subtasks {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+}
+
+.daytasks-subtask-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.daytasks-subtask-dot {
+	inline-size: 8px;
+	block-size: 8px;
+	border-radius: 50%;
+	background: var(--daytasks-status-color, var(--text-muted));
+}
+
+.daytasks-subtask-title {
+	flex: 1;
+}
+
+.daytasks-subtask-unlink {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.daytasks-subtask-unlink:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	outline: none;
+}
+
+.daytasks-subtask-add {
+	display: flex;
+	gap: var(--size-4-2);
+}
+
+.daytasks-subtask-input {
+	flex: 1;
+}

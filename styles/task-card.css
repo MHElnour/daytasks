@@ -279,3 +279,61 @@
 		align-self: flex-start;
 	}
 }
+
+/* ---- subtask chevron, progress bar, nested list ---- */
+
+.task-card__disclosure {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	color: var(--text-muted);
+	cursor: pointer;
+	border-radius: var(--radius-s);
+}
+
+.task-card__disclosure-icon {
+	display: inline-flex;
+	transition: transform 120ms ease;
+}
+
+.task-card__disclosure.is-expanded .task-card__disclosure-icon {
+	transform: rotate(90deg);
+}
+
+.task-card__disclosure:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	outline: none;
+}
+
+.task-card__progress-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	margin-inline-start: var(--size-4-2);
+}
+
+.task-card__progress {
+	inline-size: 64px;
+	block-size: 6px;
+}
+
+.task-card__progress-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.task-card__subtasks {
+	list-style: none;
+	margin: 0;
+	padding-inline-start: var(--size-4-5);
+	border-inline-start: 1px solid var(--background-modifier-border);
+}
+
+.task-card__subtasks[hidden] {
+	display: none;
+}
