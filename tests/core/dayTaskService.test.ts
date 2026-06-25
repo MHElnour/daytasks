@@ -103,6 +103,20 @@ describe("DayTaskService", () => {
 		expect(service.getTasksForTag("shopping")).toEqual([updated]);
 	});
 
+	it("deduplicates tags on update so the index lists the task once", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });
+
+		const updated = await service.updateTask("TSK-8cA562sd", {
+			title: "Buy milk",
+			scheduledDate: "2026-06-25",
+			tags: ["shopping", "shopping"],
+		});
+
+		expect(updated.tags.filter((tag) => tag === "shopping")).toEqual(["shopping"]);
+		expect(service.getTasksForTag("shopping")).toHaveLength(1);
+	});
+
 	it("deletes a task from the store and index", async () => {
 		const service = makeService();
 		await service.createTask({

@@ -7,11 +7,17 @@ export const MAX_DESCRIPTION_LENGTH = 500;
 /** Tag added to every task by default. */
 export const DEFAULT_TASK_TAG = "daytask";
 
-/** Ensures the default tag is present (first), de-duplicated. */
+/** Ensures the default tag is present (first) and the list is de-duplicated. */
 export function withDefaultTag(tags: string[]): string[] {
-	return tags.includes(DEFAULT_TASK_TAG)
-		? [...tags]
-		: [DEFAULT_TASK_TAG, ...tags];
+	const seen = new Set<string>();
+	const result: string[] = [];
+	for (const tag of [DEFAULT_TASK_TAG, ...tags]) {
+		if (!seen.has(tag)) {
+			seen.add(tag);
+			result.push(tag);
+		}
+	}
+	return result;
 }
 
 /** Trims and clamps a description to the maximum length, or undefined if blank. */
