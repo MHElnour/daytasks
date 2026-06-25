@@ -27,4 +27,4 @@ resolution:
 
 | File | Status | Purpose |
 |------|--------|---------|
-| [code-audit-2026-06-25.md](code-audit-2026-06-25.md) | partial | Two-pass Claude+Codex audit: 31 fixed, 3 open (low) + 1 partial, 2 won't-fix, 3 deferred. |
+| [code-audit-2026-06-25.md](code-audit-2026-06-25.md) | partial | Two-pass Claude+Codex audit: 34 fixed, 0 open + 1 partial (test coverage), 2 won't-fix, 3 deferred. |

@@ -9,18 +9,19 @@ closed:
 area: [core, obsidian, settings, ui, util, daily-notes]
 passes: 2
 eyes: [claude-opus-4.8, codex]
-tests: { before: 142, after: 165 }
+tests: { before: 142, after: 171 }
 issues:
   closed: [OPT-1, OPT-2, OPT-3, OPT-4, OPT-5, OPT-6, SEC-2, SEC-3, SEC-5, SEC-6,
     DRY-1, DRY-2, DRY-3, DRY-4, DRY-5, DRY-6, BAD-1, BAD-2, BAD-3, BAD-4, BAD-5,
-    BAD-6, BAD-7, BAD-8, BAD-10, P2-1, P2-2, P2-3, P2-8, P2-9, P2-11]
-  open: [P2-12, P2-13, dead-TaskStatus]
+    BAD-6, BAD-7, BAD-8, BAD-10, P2-1, P2-2, P2-3, P2-8, P2-9, P2-11, P2-12,
+    P2-13, dead-TaskStatus]
+  open: []
   partial: [P2-10]
   wontfix: [SEC-7, BAD-11]
   deferred: [SEC-1, SEC-4, BAD-9]
 resolution: >
-  Two-pass Claude+Codex audit. 31 findings fixed (all of pass 1), 2 won't-fix,
-  3 roadmap-deferred, 3 low open + 1 partial. Build green; 142 -> 165 tests.
+  Two-pass Claude+Codex audit. 34 findings fixed, 2 won't-fix, 3 roadmap-deferred,
+  0 open + 1 partial (test coverage of Obsidian glue). Build green; 142 -> 171 tests.
 ---
 
 # Code Audit 2026-06-25
@@ -35,11 +36,10 @@ Pass-2 aliases re-scope a pass-1 item: P2-4=OPT-3, P2-5=SEC-3, P2-6=SEC-5, P2-7=
 
 ## Open · partial (actionable)
 
-| ID | Sev | Area | Issue | Fix |
-|----|-----|------|-------|-----|
-| P2-12 | low | daily-notes | `2026-13-45.md` accepted as a daily note → `formatMonthDay` renders "undefined 45" (`dailyNoteDate.ts:3`, `relativeDate.ts:9`). | Shared strict `YYYY-MM-DD` parser that range-checks month/day; use in detection + formatting. |
-| P2-13 | low | obsidian | `cm.dispatch` called through a private cast without feature detection (`main.ts:345`). | Guard `typeof cm.dispatch === "function"` before dispatch. |
-| dead-TaskStatus | low | core | `TaskStatus` type alias has zero refs anywhere (`task.ts:2`). | Delete it (tsc won't flag unused exports). |
+All defect findings are fixed. One ongoing item remains:
+
+| ID | Sev | Area | Issue | Next |
+|----|-----|------|-------|------|
 | P2-10 | low | testing | `partial` — pure-logic fixes pinned; `main.ts`/settings-tab glue still uncovered. | Keep adding pure-helper tests; verify glue via `build:test` + Obsidian CLI. |
 
 ## Won't-fix · deferred (by design)
@@ -104,11 +104,13 @@ Pass-2 aliases re-scope a pass-1 item: P2-4=OPT-3, P2-5=SEC-3, P2-6=SEC-5, P2-7=
 | P2-3 | low | `updateTask` deduped only tags → reuse factory `mergeUnique*` for contexts/projects. | `bcdd300` |
 | P2-8 | low | Reading refresh scanned every markdown leaf → skip non-preview leaves first. | `2065632` |
 | P2-9 | low | `tsconfig` lacked unused-symbol checks → enabled `noUnusedLocals/Parameters`; tsc clean. | `d0863dd` |
+| P2-12 | low | `2026-13-45.md` accepted as a daily note ("undefined 45") → shared `parseCalendarDate` (leap-aware range check) in detection + formatting. | `afd3092` |
+| P2-13 | low | `cm.dispatch` called via a private cast with no feature detection → guard `typeof cm.dispatch === "function"`. | `3817e91` |
 
 ## Dead code · reachability
 
-Swept all 98 `src/` exports. **One genuinely dead:** `TaskStatus` (`task.ts:2`) — 0 refs
-anywhere (delete candidate, open). Everything else is reachable, an `export {}` stub
+Swept all 98 `src/` exports. The one genuinely dead symbol, `TaskStatus`, was
+**deleted** (`8b04939`). Everything else is reachable, an `export {}` stub
 (`api/*`, `detailNoteService`, `vaultAdapter`, `openTodayCommand` — keep), or **unwired
 roadmap scaffold** (BAD-9 — keep): `createTaskForActiveNote`, `formatRelativeDate`,
 `getCompletionToggleTarget`, `isTaskId`, `TASK_ID_INLINE_SOURCE`, the daily-note slice
@@ -129,4 +131,5 @@ P2-9. No disagreement — complementary coverage. Codex raw output in git run lo
 `01da302` BAD-6 · `a9f1b10` DRY-1/2/5 · `dad2a87` OPT-4/6,DRY-3/4,BAD-7 · `8730da3` BAD-5 ·
 `82e084a` BAD-4 · `ff26811` BAD-8 · `f6b9567` BAD-10 · `bdaff16` OPT-5 · `7fc6c6c` OPT-2 ·
 `3b93c6b` P2-11 · `8ace5dc` P2-2 · `1496be0` OPT-3 · `52a8ccb` P2-1 · `c2994ff` SEC-3 ·
-`3d1cc01` SEC-5/6 · `bcdd300` P2-3 · `f0607fd` DRY-6 · `2065632` P2-8 · `d0863dd` P2-9.
+`3d1cc01` SEC-5/6 · `bcdd300` P2-3 · `f0607fd` DRY-6 · `2065632` P2-8 · `d0863dd` P2-9 ·
+`afd3092` P2-12 · `3817e91` P2-13 · `8b04939` dead-TaskStatus.
