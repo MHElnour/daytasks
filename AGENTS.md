@@ -85,7 +85,28 @@ DayTasks is private and English-only right now. Do not add i18n overhead unless
 the project actually becomes multilingual.
 
 When a user-facing behavior changes, add a short note to
-`docs/releases/unreleased.md`.
+`docs/releases/unreleased.md` (no entries for tests — it is user-facing).
+
+## Releasing
+
+Local, two-step (no CI). `main.js`/`styles.css` are gitignored build artifacts
+that ship as GitHub Release assets, not commits.
+
+```bash
+# 1. Build locally: bump manifest/package/versions.json, run check + build,
+#    roll unreleased.md into docs/releases/<version>.md, commit "release X.Y.Z",
+#    tag X.Y.Z. Nothing is pushed.
+npm run release -- patch        # or: minor | major | X.Y.Z
+
+# 2. Review the commit and main.js, then push the branch + tag and create the
+#    GitHub Release with assets attached.
+npm run release:publish
+```
+
+Tags are the bare version number (no `v` prefix, per Obsidian). `versions.json`
+maps each version to its `minAppVersion`. Release from `main` (the script warns
+otherwise). Bump `minAppVersion` in `manifest.json` before releasing if a new
+Obsidian API is required.
 
 ## Guardrails
 
