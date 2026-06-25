@@ -24,6 +24,38 @@ result · **medium** = degraded behavior or perf · **low** = polish / latent / 
 
 ---
 
+## Status tracker — pass-2 findings (at a glance)
+
+Every finding *raised by this pass* and its current state. (Aliases: several pass-2 IDs
+re-scope a pass-1 open item — `P2-4 = OPT-3`, `P2-5 = SEC-3`, `P2-6 = SEC-5`,
+`P2-7 = SEC-6`; and `P2-11 = NEW-1`, `P2-2 = NEW-2`, `P2-12 = NEW-3`, `P2-13 = NEW-4`.)
+Verification of the 20 prior fixes (§A) is separate — all 20 passed.
+
+`☑ Fixed` · `☐ Open` · `◐ Partial`
+
+| ID (alias) | Finding | Sev | Status | Commit |
+|------------|---------|-----|--------|--------|
+| P2-11 (NEW-1) | Multi-project edit silently drops project links | high | ☑ Fixed | `3b93c6b` |
+| P2-2 (NEW-2) | Load/decode path doesn't dedupe tags/contexts/projects | medium | ☑ Fixed | `8ace5dc` |
+| P2-4 (OPT-3) | Live Preview offset re-measures on every ViewUpdate | medium | ☑ Fixed | `1496be0` |
+| P2-1 | Cleared "Default priority" reverts to "normal" on reload | low | ☑ Fixed | `52a8ccb` |
+| P2-5 (SEC-3) | Status colors written raw into CSS vars | low | ☑ Fixed | `c2994ff` |
+| P2-6 (SEC-5) | Persisted tag interpolated into search query | low | ☑ Fixed | `3d1cc01` |
+| P2-7 (SEC-6) | Free-form project path opened unchecked | low | ☑ Fixed | `3d1cc01` |
+| P2-3 | `updateTask` dedupes only tags, not contexts/projects | low | ☐ Open | — |
+| P2-8 | `refreshReadingViews` iterates every markdown leaf | low | ☐ Open | — |
+| P2-9 | `tsconfig` lacks `noUnusedLocals`/`noUnusedParameters` | low | ☐ Open | — |
+| P2-10 | Test gaps | low | ◐ Partial | P2-1/2/11 pinned; `main.ts`/settings-tab glue still untested |
+| P2-12 (NEW-3) | Invalid calendar dates accepted (`2026-13-45`) | low | ☐ Open | — |
+| P2-13 (NEW-4) | `cm.dispatch` not feature-detected | low | ☐ Open | — |
+| dead-code | Delete genuinely-dead `TaskStatus` type (`task.ts:2`) | low | ☐ Open | — |
+
+**Tally:** 7 Fixed · 6 Open · 1 Partial. All fixes landed test-first; suite 147 → 164.
+Pass-1 open items are now all closed **except DRY-6**. Details for each finding are in
+§C (fresh findings), §D (re-scoped open items), §B (dead code), and §H (fix log).
+
+---
+
 ## A. Verification of the 20 landed fixes
 
 Each fix was re-read against its fix-log claim and grepped for regressions/orphans.
