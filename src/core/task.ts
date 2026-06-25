@@ -4,6 +4,16 @@ export type TaskStatus = string;
 /** Maximum stored length for a task description. */
 export const MAX_DESCRIPTION_LENGTH = 500;
 
+/** Tag added to every task by default. */
+export const DEFAULT_TASK_TAG = "daytask";
+
+/** Ensures the default tag is present (first), de-duplicated. */
+export function withDefaultTag(tags: string[]): string[] {
+	return tags.includes(DEFAULT_TASK_TAG)
+		? [...tags]
+		: [DEFAULT_TASK_TAG, ...tags];
+}
+
 /** Trims and clamps a description to the maximum length, or undefined if blank. */
 export function clampDescription(value: string | undefined): string | undefined {
 	if (!value) {

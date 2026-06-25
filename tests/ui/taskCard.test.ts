@@ -31,6 +31,7 @@ describe("createTaskCardViewModel", () => {
 			statusIcon: "check-circle",
 			priority: undefined,
 			estimateLabel: undefined,
+			scheduledLabel: "Jun 24",
 			dueDate: undefined,
 			dueLabel: undefined,
 			overdue: false,
@@ -63,14 +64,15 @@ describe("createTaskCardViewModel", () => {
 		expect(model.statusLabel).toBe("Open");
 	});
 
-	it("formats the estimate and a relative due label", () => {
+	it("formats the estimate and a month-day due label", () => {
 		const model = createTaskCardViewModel(
 			{ ...task, status: "open", estimateMinutes: 90, dueDate: "2026-06-23" },
 			statusManager,
 			"2026-06-24"
 		);
 		expect(model.estimateLabel).toBe("1h30m");
-		expect(model.dueLabel).toBe("Yesterday");
+		expect(model.dueLabel).toBe("Jun 23");
+		expect(model.scheduledLabel).toBe("Jun 24");
 		expect(model.overdue).toBe(true);
 	});
 });

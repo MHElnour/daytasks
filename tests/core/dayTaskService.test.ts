@@ -62,7 +62,7 @@ describe("DayTaskService", () => {
 			scheduledDate: "2026-06-25",
 		});
 
-		expect(task.tags).toEqual(["work"]);
+		expect(task.tags).toEqual(["daytask", "work"]);
 		expect(service.getTasksForProject("Projects/Home.md")).toEqual([task]);
 	});
 

@@ -28,7 +28,7 @@ describe("createDayTask", () => {
 			title: "Buy milk",
 			status: "open",
 			scheduledDate: "2026-06-25",
-			tags: ["errand", "home"],
+			tags: ["daytask", "errand", "home"],
 			contexts: [],
 			projects: [{ path: "Projects/Home.md", title: "Home" }],
 			timeEntries: [],
@@ -56,7 +56,7 @@ describe("createDayTask", () => {
 			}
 		);
 
-		expect(task.tags).toEqual(["work", "errand"]);
+		expect(task.tags).toEqual(["daytask", "work", "errand"]);
 		expect(task.projects).toEqual([{ path: "Projects/Home.md", title: "Home" }]);
 	});
 

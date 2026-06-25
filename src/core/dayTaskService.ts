@@ -1,7 +1,12 @@
 import { nowIso } from "../util/time";
 import type { DayTasksSettings } from "../settings/settings";
 import type { StatusManager } from "./statusManager";
-import { clampDescription, type CreateDayTaskInput, type DayTask } from "./task";
+import {
+	clampDescription,
+	withDefaultTag,
+	type CreateDayTaskInput,
+	type DayTask,
+} from "./task";
 import { createDayTask } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
 import type { TaskStore } from "./taskStore";
@@ -83,7 +88,7 @@ export class DayTaskService {
 			scheduledDate: input.scheduledDate || task.scheduledDate,
 			dueDate: input.dueDate,
 			priority: input.priority,
-			tags: input.tags ? [...input.tags] : [],
+			tags: withDefaultTag(input.tags ? [...input.tags] : []),
 			contexts: input.contexts ? [...input.contexts] : [],
 			projects: input.projects ? input.projects.map((p) => ({ ...p })) : [],
 			estimateMinutes: input.estimateMinutes,

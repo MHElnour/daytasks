@@ -42,6 +42,7 @@ describe("createDailyTasksWidgetModel", () => {
 					statusIcon: "circle",
 					priority: undefined,
 					estimateLabel: undefined,
+					scheduledLabel: "Jun 24",
 					dueDate: undefined,
 					dueLabel: undefined,
 					overdue: false,
@@ -98,7 +99,7 @@ describe("createDailyTasksWidgetModel", () => {
 			"2026-06-25"
 		);
 
-		expect(model.cards[0].dueLabel).toBe("Yesterday");
+		expect(model.cards[0].dueLabel).toBe("Jun 24");
 		expect(model.cards[0].overdue).toBe(true);
 		expect(model.overdueCount).toBe(1);
 	});

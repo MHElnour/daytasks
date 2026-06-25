@@ -1,6 +1,12 @@
 import { nowIso } from "../util/time";
 import type { StatusManager } from "./statusManager";
-import { clampDescription, type CreateDayTaskInput, type DayTask, type ProjectLink } from "./task";
+import {
+	clampDescription,
+	withDefaultTag,
+	type CreateDayTaskInput,
+	type DayTask,
+	type ProjectLink,
+} from "./task";
 import { generateTaskId } from "./taskIds";
 
 export interface TaskFactoryDefaults {
@@ -67,7 +73,7 @@ export function createDayTask(
 		title,
 		status,
 		scheduledDate: input.scheduledDate,
-		tags: mergeUniqueStrings(defaults.tags, input.tags),
+		tags: withDefaultTag(mergeUniqueStrings(defaults.tags, input.tags)),
 		contexts: mergeUniqueStrings(input.contexts),
 		projects: mergeUniqueProjects(defaults.projects, input.projects),
 		timeEntries: [],

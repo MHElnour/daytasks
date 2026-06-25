@@ -2,7 +2,7 @@ import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
 import { formatEstimateMinutes } from "../util/estimate";
 import { noteBasename } from "../util/notePath";
-import { formatRelativeDate, isOverdue } from "../util/relativeDate";
+import { formatMonthDay, isOverdue } from "../util/relativeDate";
 
 export interface TaskCardProjectViewModel {
 	path: string;
@@ -19,6 +19,7 @@ export interface TaskCardViewModel {
 	statusIcon?: string;
 	priority?: string;
 	estimateLabel?: string;
+	scheduledLabel: string;
 	dueDate?: string;
 	dueLabel?: string;
 	overdue: boolean;
@@ -45,10 +46,9 @@ export function createTaskCardViewModel(
 		statusIcon: config?.icon,
 		priority: task.priority,
 		estimateLabel: formatEstimateMinutes(task.estimateMinutes),
+		scheduledLabel: formatMonthDay(task.scheduledDate),
 		dueDate: task.dueDate,
-		dueLabel: task.dueDate
-			? formatRelativeDate(task.dueDate, referenceDate)
-			: undefined,
+		dueLabel: task.dueDate ? formatMonthDay(task.dueDate) : undefined,
 		overdue: isOverdue(task.dueDate, referenceDate, checked),
 		tags: [...task.tags],
 		contexts: [...task.contexts],

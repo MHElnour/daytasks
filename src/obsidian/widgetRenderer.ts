@@ -55,67 +55,69 @@ function renderMetadata(
 	handlers: WidgetRenderHandlers
 ): HTMLElement | null {
 	const metadata = el("div", "task-card__metadata");
-	let rendered = false;
 
 	if (card.dueLabel) {
-		const due = el("span", "task-card__meta-chip task-card__due", `Due: ${card.dueLabel}`);
+		const due = el("span", "task-card__meta task-card__due", `Due: ${card.dueLabel}`);
 		if (card.overdue) {
 			due.classList.add("is-overdue");
 		}
 		metadata.appendChild(due);
-		rendered = true;
 	}
 
-	if (options.showTags && card.tags.length > 0) {
-		const group = el("span", "task-card__chips");
-		for (const tag of card.tags) {
-			const chip = colorChip("task-card__chip", tag, `Tag: #${tag}`);
-			chip.addEventListener("click", (event) => {
-				stop(event);
-				handlers.onSelectTag?.(tag);
-			});
-			group.appendChild(chip);
-		}
-		metadata.appendChild(group);
-		rendered = true;
-	}
-
-	if (options.showContexts && card.contexts.length > 0) {
-		const group = el("span", "task-card__chips");
-		for (const context of card.contexts) {
-			group.appendChild(colorChip("task-card__chip", context, `Context: @${context}`));
-		}
-		metadata.appendChild(group);
-		rendered = true;
-	}
-
-	if (options.showProjects && card.projects.length > 0) {
-		const group = el("span", "task-card__chips");
-		for (const project of card.projects) {
-			const chip = colorChip(
-				"task-card__chip task-card__chip--project",
-				project.label,
-				`Project: ${project.label}`
-			);
-			chip.dataset.path = project.path;
-			chip.addEventListener("click", (event) => {
-				stop(event);
-				handlers.onOpenProject?.(project.path);
-			});
-			group.appendChild(chip);
-		}
-		metadata.appendChild(group);
-		rendered = true;
-	}
+	metadata.appendChild(
+		el("span", "task-card__meta task-card__scheduled", `Scheduled: ${card.scheduledLabel}`)
+	);
 
 	if (card.estimateLabel) {
 		metadata.appendChild(
-			el("span", "task-card__meta-chip task-card__estimate", `Est: ${card.estimateLabel}`)
+			el("span", "task-card__meta task-card__estimate", `Est: ${card.estimateLabel}`)
 		);
-		rendered = true;
 	}
 
-	return rendered ? metadata : null;
+	if (options.showProjects && card.projects.length > 0) {
+		for (const project of card.projects) {
+			const link = colorChip(
+				"task-card__meta task-card__project",
+				project.label,
+				`↗ ${project.label}`
+			);
+			link.dataset.path = project.path;
+			link.addEventListener("click", (event) => {
+				stop(event);
+				handlers.onOpenProject?.(project.path);
+			});
+			metadata.appendChild(link);
+		}
+	}
+
+	if (options.showContexts && card.contexts.length > 0) {
+		for (const context of card.contexts) {
+			metadata.appendChild(el("span", "task-card__meta task-card__context", `@${context}`));
+		}
+	}
+
+	return metadata;
+}
+
+/** Tags rendered as colored boxes on their own line below the meta row. */
+function renderTags(
+	card: TaskCardViewModel,
+	options: WidgetRenderOptions,
+	handlers: WidgetRenderHandlers
+): HTMLElement | null {
+	if (!options.showTags || card.tags.length === 0) {
+		return null;
+	}
+	const row = el("div", "task-card__tags");
+	for (const tag of card.tags) {
+		const chip = colorChip("task-card__tag", tag, `#${tag}`);
+		chip.addEventListener("click", (event) => {
+			stop(event);
+			handlers.onSelectTag?.(tag);
+		});
+		row.appendChild(chip);
+	}
+	return row;
 }
 
 function renderTaskCard(
@@ -173,6 +175,10 @@ function renderTaskCard(
 	const metadata = renderMetadata(card, options, handlers);
 	if (metadata) {
 		content.appendChild(metadata);
+	}
+	const tags = renderTags(card, options, handlers);
+	if (tags) {
+		content.appendChild(tags);
 	}
 
 	mainRow.appendChild(content);

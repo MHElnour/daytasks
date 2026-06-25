@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeDate, isOverdue } from "../../src/util/relativeDate";
+import {
+	formatMonthDay,
+	formatRelativeDate,
+	isOverdue,
+} from "../../src/util/relativeDate";
+
+describe("formatMonthDay", () => {
+	it("formats YYYY-MM-DD as 'Mon D'", () => {
+		expect(formatMonthDay("2026-06-25")).toBe("Jun 25");
+		expect(formatMonthDay("2026-01-01")).toBe("Jan 1");
+		expect(formatMonthDay("2026-12-09")).toBe("Dec 9");
+	});
+
+	it("returns the input when unparseable", () => {
+		expect(formatMonthDay("nope")).toBe("nope");
+	});
+});
 
 describe("formatRelativeDate", () => {
 	const ref = "2026-06-25";

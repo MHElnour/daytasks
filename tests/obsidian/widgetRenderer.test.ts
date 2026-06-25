@@ -46,10 +46,11 @@ const filledModel: DailyTasksWidgetModel = {
 			statusColor: "#808080",
 			statusIcon: "circle",
 			estimateLabel: "1h30m",
+			scheduledLabel: "Jun 25",
 			dueDate: "2026-06-24",
-			dueLabel: "Yesterday",
+			dueLabel: "Jun 24",
 			overdue: true,
-			tags: ["errand", "home"],
+			tags: ["daytask", "errand"],
 			contexts: ["phone"],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
 			description: "from the corner store",
@@ -62,6 +63,7 @@ const filledModel: DailyTasksWidgetModel = {
 			statusLabel: "Done",
 			statusColor: "#00aa00",
 			statusIcon: "check-circle",
+			scheduledLabel: "Jun 25",
 			overdue: false,
 			tags: [],
 			contexts: [],
@@ -105,14 +107,20 @@ describe("renderDailyTasksWidget", () => {
 		expect(first.querySelector(".task-card__description")?.textContent).toBe(
 			"from the corner store"
 		);
-		expect(first.querySelector(".task-card__due")?.textContent).toBe("Due: Yesterday");
+		expect(first.querySelector(".task-card__due")?.textContent).toBe("Due: Jun 24");
 		expect(first.querySelector(".task-card__due")?.classList.contains("is-overdue")).toBe(
 			true
 		);
+		expect(first.querySelector(".task-card__scheduled")?.textContent).toBe(
+			"Scheduled: Jun 25"
+		);
 		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("Est: 1h30m");
+		// project + context are plain meta text; tags are boxes on their own row
+		expect(first.querySelector(".task-card__project")?.textContent).toBe("↗ Home");
+		expect(first.querySelector(".task-card__context")?.textContent).toBe("@phone");
 		expect(
-			[...first.querySelectorAll(".task-card__chip")].map((chip) => chip.textContent)
-		).toEqual(["Tag: #errand", "Tag: #home", "Context: @phone", "Project: Home"]);
+			[...first.querySelectorAll(".task-card__tag")].map((chip) => chip.textContent)
+		).toEqual(["#daytask", "#errand"]);
 		expect(first.querySelector(".task-card__handle")).not.toBeNull();
 		expect(first.classList.contains("task-card--overdue")).toBe(true);
 		expect(cards[1].classList.contains("task-card--completed")).toBe(true);
@@ -127,7 +135,9 @@ describe("renderDailyTasksWidget", () => {
 		});
 		const first = root.querySelectorAll(".task-card")[0];
 		expect(first.querySelector(".task-card__id")).toBeNull();
-		expect(first.querySelector(".task-card__chip")).toBeNull();
+		expect(first.querySelector(".task-card__tag")).toBeNull();
+		expect(first.querySelector(".task-card__project")).toBeNull();
+		expect(first.querySelector(".task-card__context")).toBeNull();
 	});
 
 	it("status pill cycles status; card click edits; pill does not trigger edit", () => {
@@ -146,20 +156,20 @@ describe("renderDailyTasksWidget", () => {
 		expect(onEditTask).toHaveBeenCalledWith("TSK-8cA562sd");
 	});
 
-	it("chips call onSelectTag and onOpenProject", () => {
+	it("tag boxes call onSelectTag and project text calls onOpenProject", () => {
 		const onSelectTag = vi.fn();
 		const onOpenProject = vi.fn();
 		const { root } = render(filledModel, allOn, { onSelectTag, onOpenProject });
 		const first = root.querySelectorAll(".task-card")[0];
 
-		first.querySelector<HTMLElement>(".task-card__chip")?.dispatchEvent(
+		first.querySelector<HTMLElement>(".task-card__tag")?.dispatchEvent(
 			new Event("click", { bubbles: true })
 		);
 		first
-			.querySelector<HTMLElement>(".task-card__chip--project")
+			.querySelector<HTMLElement>(".task-card__project")
 			?.dispatchEvent(new Event("click", { bubbles: true }));
 
-		expect(onSelectTag).toHaveBeenCalledWith("errand");
+		expect(onSelectTag).toHaveBeenCalledWith("daytask");
 		expect(onOpenProject).toHaveBeenCalledWith("Projects/Home.md");
 	});
 
