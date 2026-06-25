@@ -60,3 +60,25 @@ export const DEFAULT_PRIORITIES: PriorityConfig[] = [
 
 export const DEFAULT_STATUS_VALUE = "open";
 export const DEFAULT_PRIORITY_VALUE = "normal";
+
+export const BLOCKED_STATUS_VALUE = "blocked";
+export const IN_PROGRESS_STATUS_VALUE = "in-progress";
+
+/** Reserved, plugin-managed status. Not user-editable; never the default; never
+ *  in the click cycle. Set/cleared automatically by the dependency cascade. */
+export const RESERVED_BLOCKED_STATUS: StatusConfig = {
+	id: "blocked",
+	value: BLOCKED_STATUS_VALUE,
+	label: "Blocked",
+	color: "#d9534f",
+	icon: "ban",
+	isCompleted: false,
+	order: 10,
+	excludeFromCycle: true,
+};
+
+/** Returns the active status set with the reserved blocked status guaranteed
+ *  present (any user status colliding on its value is replaced). */
+export function withBlockedStatus(statuses: StatusConfig[]): StatusConfig[] {
+	return [...statuses.filter((s) => s.value !== BLOCKED_STATUS_VALUE), RESERVED_BLOCKED_STATUS];
+}

@@ -1,4 +1,5 @@
 import type { StatusConfig } from "./status";
+import { BLOCKED_STATUS_VALUE, IN_PROGRESS_STATUS_VALUE } from "./status";
 
 export interface StatusValidationResult {
 	valid: boolean;
@@ -34,6 +35,10 @@ export class StatusManager {
 
 	isCompletedStatus(value: string): boolean {
 		return this.getStatusConfig(value)?.isCompleted ?? false;
+	}
+
+	isBlockedStatus(value: string): boolean {
+		return value === BLOCKED_STATUS_VALUE;
 	}
 
 	normalizeStatusValue(value: unknown): string {
@@ -75,6 +80,12 @@ export class StatusManager {
 			cycle.find((status) => status.order > currentConfig.order)?.value ??
 			cycle[0].value
 		);
+	}
+
+	/** Status a task returns to when released from blocked: in-progress if it exists,
+	 *  else the configured default. */
+	getReleaseStatus(): string {
+		return this.getStatusConfig(IN_PROGRESS_STATUS_VALUE)?.value ?? this.defaultStatus;
 	}
 
 	/**

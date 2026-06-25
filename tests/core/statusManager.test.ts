@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { StatusManager } from "../../src/core/statusManager";
-import { DEFAULT_STATUSES, type StatusConfig } from "../../src/core/status";
+import { DEFAULT_STATUSES, BLOCKED_STATUS_VALUE, withBlockedStatus, type StatusConfig } from "../../src/core/status";
 
 function mgr(
 	statuses: StatusConfig[] = DEFAULT_STATUSES,
@@ -120,5 +120,48 @@ describe("StatusManager validation", () => {
 			{ id: "done", value: "done", label: "D", color: "#2", isCompleted: true, order: 1 },
 		];
 		expect(new StatusManager(selfNext, "open").validate().valid).toBe(false);
+	});
+});
+
+describe("blocked status primitives", () => {
+	it("withBlockedStatus appends the reserved blocked status exactly once", () => {
+		const once = withBlockedStatus(DEFAULT_STATUSES);
+		expect(once.filter((s) => s.value === BLOCKED_STATUS_VALUE)).toHaveLength(1);
+		const twice = withBlockedStatus(once);
+		expect(twice.filter((s) => s.value === BLOCKED_STATUS_VALUE)).toHaveLength(1);
+	});
+
+	it("withBlockedStatus overrides a user status colliding on the blocked value", () => {
+		const collide = [...DEFAULT_STATUSES, { ...DEFAULT_STATUSES[0], id: "x", value: BLOCKED_STATUS_VALUE, label: "Mine" }];
+		const result = withBlockedStatus(collide);
+		const blocked = result.filter((s) => s.value === BLOCKED_STATUS_VALUE);
+		expect(blocked).toHaveLength(1);
+		expect(blocked[0].label).toBe("Blocked");
+		expect(blocked[0].excludeFromCycle).toBe(true);
+	});
+
+	it("isBlockedStatus is true only for the blocked value", () => {
+		const m = new StatusManager(withBlockedStatus(DEFAULT_STATUSES), "open");
+		expect(m.isBlockedStatus(BLOCKED_STATUS_VALUE)).toBe(true);
+		expect(m.isBlockedStatus("open")).toBe(false);
+	});
+
+	it("getReleaseStatus returns in-progress when present, else the default", () => {
+		const withIp = new StatusManager(withBlockedStatus(DEFAULT_STATUSES), "open");
+		expect(withIp.getReleaseStatus()).toBe("in-progress");
+		const noIp = new StatusManager(
+			withBlockedStatus([
+				{ id: "open", value: "open", label: "Open", color: "#888", isCompleted: false, order: 0 },
+				{ id: "done", value: "done", label: "Done", color: "#0a0", isCompleted: true, order: 1 },
+			]),
+			"open"
+		);
+		expect(noIp.getReleaseStatus()).toBe("open");
+	});
+
+	it("excludes blocked from the click cycle", () => {
+		const m = new StatusManager(withBlockedStatus(DEFAULT_STATUSES), "open");
+		expect(m.getNextStatus("open")).not.toBe(BLOCKED_STATUS_VALUE);
+		expect(m.getNextStatus(BLOCKED_STATUS_VALUE)).not.toBe(BLOCKED_STATUS_VALUE);
 	});
 });
