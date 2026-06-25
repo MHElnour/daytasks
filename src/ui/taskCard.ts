@@ -1,5 +1,6 @@
 import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
+import { safeCssColor } from "../util/cssColor";
 import { formatEstimateMinutes } from "../util/estimate";
 import { noteBasename } from "../util/notePath";
 import { formatMonthDay, isOverdue } from "../util/relativeDate";
@@ -42,7 +43,7 @@ export function createTaskCardViewModel(
 		checked,
 		status: task.status,
 		statusLabel: config?.label ?? task.status,
-		statusColor: config?.color ?? "var(--text-muted)",
+		statusColor: safeCssColor(config?.color ?? "", "var(--text-muted)"),
 		statusIcon: config?.icon,
 		priority: task.priority,
 		estimateLabel: formatEstimateMinutes(task.estimateMinutes),

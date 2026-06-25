@@ -1,5 +1,6 @@
 import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
+import { safeCssColor } from "../util/cssColor";
 import { createTaskCardViewModel, type TaskCardViewModel } from "./taskCard";
 
 export interface StatusSummaryEntry {
@@ -45,7 +46,7 @@ export function createDailyTasksWidgetModel(
 		.map((status) => ({
 			value: status.value,
 			label: status.label,
-			color: status.color,
+			color: safeCssColor(status.color, "var(--text-muted)"),
 			count: tasks.filter((task) => task.status === status.value).length,
 		}))
 		.filter((entry) => entry.count > 0);
