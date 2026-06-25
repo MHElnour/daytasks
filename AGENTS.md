@@ -96,7 +96,10 @@ that ship as GitHub Release assets, not commits.
 # 1. Build locally: bump manifest/package/versions.json, run check + build,
 #    roll unreleased.md into docs/releases/<version>.md, commit "release X.Y.Z",
 #    tag X.Y.Z. Nothing is pushed.
-npm run release -- patch        # or: minor | major | X.Y.Z
+npm run release -- patch        # bug fix:  0.1.0 -> 0.1.1
+# npm run release -- minor      # feature:  0.1.0 -> 0.2.0
+# npm run release -- major      # big:      0.1.0 -> 1.0.0
+# npm run release -- 0.3.0      # explicit (canonical semver only, no leading zeros)
 
 # 2. Review the commit and main.js, then push the branch + tag and create the
 #    GitHub Release with assets attached.

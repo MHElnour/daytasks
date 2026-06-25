@@ -34,12 +34,15 @@ if (branch !== "main") {
 
 const manifest = JSON.parse(readFileSync("manifest.json", "utf8"));
 const [maj, min, pat] = manifest.version.split(".").map(Number);
+// Canonical semver only: no leading zeros (1.2.3 ok, 0.1.01 rejected). Obsidian
+// and npm require MAJOR.MINOR.PATCH — patch = bug fix, minor = feature, major = big.
+const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 let next;
-if (/^\d+\.\d+\.\d+$/.test(arg)) next = arg;
+if (SEMVER.test(arg)) next = arg;
 else if (arg === "major") next = `${maj + 1}.0.0`;
 else if (arg === "minor") next = `${maj}.${min + 1}.0`;
 else if (arg === "patch") next = `${maj}.${min}.${pat + 1}`;
-else fail(`invalid bump "${arg}" (use patch | minor | major | X.Y.Z)`);
+else fail(`invalid bump "${arg}" — use patch (bug fix) | minor (feature) | major (big) | X.Y.Z`);
 
 if (capture("git", ["tag", "-l", next])) fail(`tag ${next} already exists.`);
 
