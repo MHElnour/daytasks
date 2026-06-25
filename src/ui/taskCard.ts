@@ -14,6 +14,12 @@ export interface TaskCardProjectViewModel {
 	label: string;
 }
 
+export interface TaskCardNesting {
+	children?: TaskCardViewModel[];
+	childProgress?: { done: number; total: number };
+	expanded?: boolean;
+}
+
 export interface TaskCardViewModel {
 	id: string;
 	title: string;
@@ -35,13 +41,17 @@ export interface TaskCardViewModel {
 	contexts: string[];
 	projects: TaskCardProjectViewModel[];
 	description?: string;
+	children: TaskCardViewModel[];
+	childProgress?: { done: number; total: number };
+	expanded: boolean;
 }
 
 export function createTaskCardViewModel(
 	task: DayTask,
 	statusManager: StatusManager,
 	referenceDate: string,
-	priorities: PriorityConfig[]
+	priorities: PriorityConfig[],
+	nesting: TaskCardNesting = {}
 ): TaskCardViewModel {
 	const config = statusManager.getStatusConfig(task.status);
 	const checked = statusManager.isCompletedStatus(task.status);
@@ -76,5 +86,8 @@ export function createTaskCardViewModel(
 			label: project.title ?? noteBasename(project.path),
 		})),
 		description: task.description,
+		children: nesting.children ?? [],
+		childProgress: nesting.childProgress,
+		expanded: nesting.expanded ?? false,
 	};
 }

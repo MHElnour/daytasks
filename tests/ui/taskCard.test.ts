@@ -43,6 +43,8 @@ describe("createTaskCardViewModel", () => {
 			contexts: [],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
 			description: undefined,
+			children: [],
+			expanded: false,
 		});
 	});
 
@@ -100,5 +102,29 @@ describe("createTaskCardViewModel", () => {
 		expect(model.priorityLabel).toBeUndefined();
 		expect(model.priorityColor).toBeUndefined();
 		expect(model.priorityIcon).toBeUndefined();
+	});
+
+	it("defaults nesting fields for a leaf", () => {
+		const model = createTaskCardViewModel(task, statusManager, "2026-06-24", priorities);
+		expect(model.children).toEqual([]);
+		expect(model.expanded).toBe(false);
+		expect(model.childProgress).toBeUndefined();
+	});
+
+	it("threads a nesting option onto the model", () => {
+		const childModel = createTaskCardViewModel(
+			{ ...task, id: "TSK-child0001" },
+			statusManager,
+			"2026-06-24",
+			priorities
+		);
+		const model = createTaskCardViewModel(task, statusManager, "2026-06-24", priorities, {
+			children: [childModel],
+			childProgress: { done: 1, total: 2 },
+			expanded: true,
+		});
+		expect(model.children).toEqual([childModel]);
+		expect(model.childProgress).toEqual({ done: 1, total: 2 });
+		expect(model.expanded).toBe(true);
 	});
 });
