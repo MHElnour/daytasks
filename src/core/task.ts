@@ -131,3 +131,24 @@ export interface UpdateDayTaskInput {
 	estimateMinutes: number | undefined;
 	description: string | undefined;
 }
+
+/**
+ * Maps the modal's `CreateDayTaskInput` onto the full-replacement
+ * `UpdateDayTaskInput`: every editable field is stated, so an omitted optional
+ * becomes `undefined` (cleared) rather than silently preserved. Centralized here
+ * so adding a field to `UpdateDayTaskInput` is a compile error until it is mapped.
+ */
+export function toUpdateDayTaskInput(input: CreateDayTaskInput): UpdateDayTaskInput {
+	return {
+		title: input.title,
+		scheduledDate: input.scheduledDate,
+		status: input.status,
+		dueDate: input.dueDate,
+		priority: input.priority,
+		tags: input.tags,
+		contexts: input.contexts,
+		projects: input.projects,
+		estimateMinutes: input.estimateMinutes,
+		description: input.description,
+	};
+}

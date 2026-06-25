@@ -2,7 +2,7 @@ import { EditorView } from "@codemirror/view";
 import { MarkdownView, Notice, Plugin } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { StatusManager } from "./core/statusManager";
-import type { CreateDayTaskInput } from "./core/task";
+import { toUpdateDayTaskInput, type CreateDayTaskInput } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
@@ -275,20 +275,8 @@ export default class DayTasksPlugin extends Plugin {
 
 	private async updateTask(id: string, input: CreateDayTaskInput): Promise<void> {
 		try {
-			// The edit modal submits the full editable state, so map every field
-			// into the (replace-semantics) UpdateDayTaskInput. Omitted = cleared.
-			await this.service.updateTask(id, {
-				title: input.title,
-				scheduledDate: input.scheduledDate,
-				status: input.status,
-				dueDate: input.dueDate,
-				priority: input.priority,
-				tags: input.tags,
-				contexts: input.contexts,
-				projects: input.projects,
-				estimateMinutes: input.estimateMinutes,
-				description: input.description,
-			});
+			// The edit modal submits the full editable state (omitted = cleared).
+			await this.service.updateTask(id, toUpdateDayTaskInput(input));
 			await this.persistTasks();
 			this.refreshViews();
 		} catch (error) {
