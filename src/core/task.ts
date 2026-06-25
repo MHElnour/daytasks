@@ -72,6 +72,7 @@ export interface DayTask {
 	archivedAt?: string;
 
 	parentId?: string;
+	blockedBy?: string[];
 	detailNotePath?: string;
 
 	tags: string[];
@@ -96,6 +97,7 @@ export interface CreateDayTaskInput {
 	priority?: string;
 
 	parentId?: string;
+	blockedBy?: string[];
 	detailNote?: boolean;
 	detailNotePath?: string;
 

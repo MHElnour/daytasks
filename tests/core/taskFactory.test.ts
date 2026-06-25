@@ -126,4 +126,20 @@ describe("createDayTask", () => {
 			)
 		).toThrow("Due date cannot be before the scheduled date");
 	});
+
+	it("sets blockedBy when provided", () => {
+		const task = createDayTask(
+			{ title: "T", scheduledDate: "2026-06-25", blockedBy: ["TSK-aaaaaaaa"] },
+			fixedDeps
+		);
+		expect(task.blockedBy).toEqual(["TSK-aaaaaaaa"]);
+	});
+
+	it("omits blockedBy when not provided", () => {
+		const task = createDayTask(
+			{ title: "T", scheduledDate: "2026-06-25" },
+			fixedDeps
+		);
+		expect(task.blockedBy).toBeUndefined();
+	});
 });

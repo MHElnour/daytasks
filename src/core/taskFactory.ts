@@ -98,6 +98,9 @@ export function createDayTask(
 	if (input.parentId) {
 		task.parentId = input.parentId;
 	}
+	if (input.blockedBy && input.blockedBy.length > 0) {
+		task.blockedBy = mergeUniqueStrings(input.blockedBy);
+	}
 	if (input.detailNotePath) {
 		task.detailNotePath = input.detailNotePath;
 	}
