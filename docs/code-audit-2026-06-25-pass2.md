@@ -43,14 +43,14 @@ Verification of the 20 prior fixes (§A) is separate — all 20 passed.
 | P2-6 (SEC-5) | Persisted tag interpolated into search query | low | ☑ Fixed | `3d1cc01` |
 | P2-7 (SEC-6) | Free-form project path opened unchecked | low | ☑ Fixed | `3d1cc01` |
 | P2-3 | `updateTask` dedupes only tags, not contexts/projects | low | ☑ Fixed | `bcdd300` |
-| P2-8 | `refreshReadingViews` iterates every markdown leaf | low | ☐ Open | — |
-| P2-9 | `tsconfig` lacks `noUnusedLocals`/`noUnusedParameters` | low | ☐ Open | — |
+| P2-8 | `refreshReadingViews` iterates every markdown leaf | low | ☑ Fixed | `2065632` |
+| P2-9 | `tsconfig` lacks `noUnusedLocals`/`noUnusedParameters` | low | ☑ Fixed | `d0863dd` |
 | P2-10 | Test gaps | low | ◐ Partial | P2-1/2/11 pinned; `main.ts`/settings-tab glue still untested |
 | P2-12 (NEW-3) | Invalid calendar dates accepted (`2026-13-45`) | low | ☐ Open | — |
 | P2-13 (NEW-4) | `cm.dispatch` not feature-detected | low | ☐ Open | — |
 | dead-code | Delete genuinely-dead `TaskStatus` type (`task.ts:2`) | low | ☐ Open | — |
 
-**Tally:** 8 Fixed · 5 Open · 1 Partial. All fixes landed test-first; suite 147 → 165.
+**Tally:** 10 Fixed · 3 Open · 1 Partial. All fixes landed test-first; suite 147 → 165.
 **All pass-1 items are now closed** (DRY-6 fixed in `f0607fd`). Details for each finding
 are in §C (fresh findings), §D (re-scoped open items), §B (dead code), and §H (fix log).
 
@@ -397,10 +397,12 @@ convention). Build green, **158 tests** passing after the sweep (was 147).
 
 After this batch the suite is at **165 tests**.
 
-**Remaining from the top-10:** P2-12 invalid calendar dates (#8) and the #10 cleanup
-cluster (delete dead `TaskStatus`, `noUnusedLocals`, P2-13 `cm.dispatch` feature-detect,
-P2-8 reading-refresh scoping, P2-9, plus `main.ts`/settings-tab glue test gaps from P2-10).
-**All pass-1 audit items are now closed.**
+| 2026-06-25 | P2-8 | `2065632` | `injectReadingView` checks preview mode before the per-leaf `querySelectorAll`, so editor-mode leaves skip the DOM scan on every refresh; the reading host only ever lives in the preview DOM, so cleanup/injection for preview leaves is unchanged. Build-verified. |
+| 2026-06-25 | P2-9 | `d0863dd` | Enabled `noUnusedLocals`/`noUnusedParameters` in `tsconfig.json`; `tsc --noEmit` is clean as-is. |
+
+**Remaining (all low):** P2-12 invalid calendar dates, P2-13 `cm.dispatch` feature-detect,
+delete dead `TaskStatus` — plus the P2-10 partial (`main.ts`/settings-tab glue test gaps).
+**All pass-1 audit items are closed.**
 
 ---
 
