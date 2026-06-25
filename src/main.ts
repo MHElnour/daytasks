@@ -6,6 +6,7 @@ import type { CreateDayTaskInput } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
+import { openGlobalSearch } from "./obsidian/globalSearch";
 import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
 import {
 	DayTasksDataStore,
@@ -288,14 +289,9 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private searchTag(tag: string): void {
-		const search = (
-			this.app as unknown as {
-				internalPlugins?: {
-					getPluginById(id: string): { instance?: { openGlobalSearch?(q: string): void } } | null;
-				};
-			}
-		).internalPlugins?.getPluginById("global-search")?.instance;
-		search?.openGlobalSearch?.(`tag:#${tag}`);
+		if (!openGlobalSearch(this.app, `tag:#${tag}`)) {
+			new Notice("DayTasks: global search is unavailable.");
+		}
 	}
 
 	private async persistTasks(): Promise<void> {
