@@ -7,6 +7,7 @@ Current design docs:
 - [Visible Obsidian Slice](visible-obsidian-slice.md) - first visible daily-note widget.
 - [Task Creation And Status Model](task-creation-status-model.md) - richer task model and status manager.
 - [Card Icons And Multi-Project](card-icons-multi-project.md) - UI slice A: card Lucide icons + multi-project modal.
+- [Task Modal Layout Redesign](modal-layout-redesign.md) - UI slice A.5: two-box modal, icon toolbar, relationship placeholders.
 
 Design docs can mention future surfaces, but current implementation priority is
 the Obsidian plugin experience.
