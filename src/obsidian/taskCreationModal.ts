@@ -442,7 +442,12 @@ export class TaskCreationModal extends Modal {
 		const add = row.createDiv({ cls: "daytasks-subtask-add" });
 		const input = add.createEl("input", {
 			cls: "daytasks-subtask-input",
-			attr: { type: "text", placeholder: "Add subtask", "aria-label": "Add subtask" },
+			attr: {
+				type: "text",
+				placeholder: "Add subtask",
+				maxlength: String(MAX_TITLE_LENGTH),
+				"aria-label": "Add subtask",
+			},
 		});
 		const submitSubtask = async (): Promise<void> => {
 			const title = input.value.trim();
