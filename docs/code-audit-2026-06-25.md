@@ -70,7 +70,7 @@ mostly future-gated to the (stubbed) API + daily-note-sync slices.
 |----|-----|-----|----------|-------|-----|--------|
 | BAD-1 | MED | B | `pluginDataAdapter.ts:19-31,45-53` | Minimal validation + `(task as unknown as DayTask)` lets malformed optional fields / `timeEntries` reach service + render. | Full decoder validating every optional field and each `timeEntries` item. | ☐ Open |
 | BAD-2 | MED | CX | `core/task.ts:10-15`; `dayTaskService.ts:91-93`; `taskIndex.ts:103-111` | `withDefaultTag` preserves duplicates when `daytask` already present; **`updateTask` does not dedupe input tags** → index lists task twice. Create path is safe (factory dedupes). | Make `withDefaultTag` always return a unique list; normalize tags/contexts before index. | ☑ Fixed |
-| BAD-3 | MED | CX | `settings/settings.ts:115-123`; `statusManager.ts:87-128` | `StatusManager.validate()` exists but is never called during merge/save — duplicate values/ids or bad `nextStatus` persist. | Run `validate()` in settings merge; fall back / surface errors. | ☐ Open |
+| BAD-3 | MED | CX | `settings/settings.ts:115-123`; `statusManager.ts:87-128` | `StatusManager.validate()` exists but is never called during merge/save — duplicate values/ids or bad `nextStatus` persist. | Run `validate()` in settings merge; fall back / surface errors. | ☑ Fixed |
 | BAD-4 | MED | CX | `settingsTab.ts` (async `onChange`); `main.ts:306-309` | Settings handlers await persistence with no local catch → save failures unhandled, in-memory state already mutated. | Centralize via guarded `saveSettingsWithNotice()`. | ☐ Open |
 | BAD-5 | MED | B | `main.ts:288-296` | `searchTag()` reaches `app.internalPlugins` through an unsafe `unknown` cast, no feature detection. | Isolate behind a typed adapter with feature detection / public API. | ☐ Open |
 | BAD-6 | MED | MX | `daily-notes/dailyNoteFormatter.ts` | Hardcoded `task.status === "done"` ignores the configurable `isCompleted` model — breaks if statuses are renamed/reconfigured. (Module unwired.) | Use `statusManager.isCompletedStatus(status)`. | ▷ Deferred (roadmap) |
@@ -106,4 +106,5 @@ Record each fix here as it lands (ID · commit · note).
 | Date | ID(s) | Commit | Note |
 |------|-------|--------|------|
 | 2026-06-25 | BAD-2 | 8f26ae9 | `withDefaultTag` now dedupes; fixes duplicate tags surviving edits + double index entries. TDD: `tests/core/task.test.ts` + a deduplication case in `dayTaskService.test.ts`. |
-| 2026-06-25 | OPT-1 | _this commit_ | Text settings persist via a 400ms `debounce` (new `util/debounce.ts`, TDD `tests/util/debounce.test.ts`); discrete controls stay immediate; pending save flushed on `hide()`. |
+| 2026-06-25 | OPT-1 | 77235a9 | Text settings persist via a 400ms `debounce` (new `util/debounce.ts`, TDD `tests/util/debounce.test.ts`); discrete controls stay immediate; pending save flushed on `hide()`. |
+| 2026-06-25 | BAD-3 | _this commit_ | `asStatuses` now runs `StatusManager.validate()`; configs with duplicate values/ids or bad `nextStatus` fall back to defaults instead of persisting. TDD: two fallback cases in `tests/settings/settings.test.ts`. |

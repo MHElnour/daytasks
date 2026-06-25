@@ -103,4 +103,38 @@ describe("mergeSettings", () => {
 		const merged = mergeSettings({ defaultStatus: "ghost" });
 		expect(merged.defaultStatus).toBe("open");
 	});
+
+	it("falls back to defaults when stored statuses have duplicate values", () => {
+		const duplicates = [
+			{ id: "a", value: "dup", label: "A", color: "#1", isCompleted: false, order: 0 },
+			{ id: "b", value: "dup", label: "B", color: "#2", isCompleted: true, order: 1 },
+		];
+		const merged = mergeSettings({ statuses: duplicates });
+		expect(merged.statuses.map((s) => s.value)).toEqual([
+			"open",
+			"in-progress",
+			"done",
+		]);
+	});
+
+	it("falls back to defaults when a status points nextStatus at an unknown value", () => {
+		const badNext = [
+			{
+				id: "todo",
+				value: "todo",
+				label: "Todo",
+				color: "#1",
+				isCompleted: false,
+				order: 0,
+				nextStatus: "ghost",
+			},
+			{ id: "done", value: "done", label: "Done", color: "#2", isCompleted: true, order: 1 },
+		];
+		const merged = mergeSettings({ statuses: badNext });
+		expect(merged.statuses.map((s) => s.value)).toEqual([
+			"open",
+			"in-progress",
+			"done",
+		]);
+	});
 });

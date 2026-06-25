@@ -6,6 +6,7 @@ import {
 	type PriorityConfig,
 	type StatusConfig,
 } from "../core/status";
+import { StatusManager } from "../core/statusManager";
 
 export type WidgetPosition = "bottom";
 
@@ -115,8 +116,14 @@ function isPriorityConfig(value: unknown): value is PriorityConfig {
 function asStatuses(value: unknown): StatusConfig[] {
 	if (Array.isArray(value)) {
 		const valid = value.filter(isStatusConfig).map((status) => ({ ...status }));
-		// Keep a usable config: enough statuses and at least one completed one.
-		if (valid.length >= 2 && valid.some((status) => status.isCompleted)) {
+		// Keep a usable config: enough statuses, at least one completed one, and
+		// no semantic errors (duplicate values/ids, bad nextStatus). The default
+		// status is resolved separately, so seed the validator with valid[0].
+		if (
+			valid.length >= 2 &&
+			valid.some((status) => status.isCompleted) &&
+			new StatusManager(valid, valid[0].value).validate().valid
+		) {
 			return valid;
 		}
 	}
