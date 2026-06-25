@@ -104,6 +104,14 @@ describe("createDayTask", () => {
 		expect(task.description).toHaveLength(500);
 	});
 
+	it("ignores an empty-string default priority instead of storing it", () => {
+		const task = createDayTask(
+			{ title: "A", scheduledDate: "2026-06-25" },
+			{ ...fixedDeps, defaults: { priority: "" } }
+		);
+		expect(task.priority).toBeUndefined();
+	});
+
 	it("rejects blank titles", () => {
 		expect(() =>
 			createDayTask({ title: "   ", scheduledDate: "2026-06-25" }, fixedDeps)

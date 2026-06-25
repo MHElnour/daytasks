@@ -69,6 +69,13 @@ describe("mergeSettings", () => {
 		expect(DEFAULT_SETTINGS.defaultTags).toEqual([]);
 	});
 
+	it("preserves a cleared default priority as none across reload", () => {
+		// "" is the persisted "no default priority" choice; it must round-trip
+		// rather than being coerced back to the "normal" default (P2-1).
+		expect(mergeSettings({ defaultPriority: "" }).defaultPriority).toBe("");
+		expect(mergeSettings({ defaultPriority: "high" }).defaultPriority).toBe("high");
+	});
+
 	it("provides default statuses and priorities", () => {
 		const merged = mergeSettings({});
 		expect(merged.statuses.map((s) => s.value)).toEqual([

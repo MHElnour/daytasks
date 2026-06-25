@@ -125,7 +125,10 @@ export class DayTasksSettingTab extends PluginSettingTab {
 					dropdown.addOption(priority.value, priority.label);
 				}
 				dropdown.setValue(settings.defaultPriority ?? "").onChange(async (value) => {
-					settings.defaultPriority = value || undefined;
+					// Persist the empty "none" choice as "" rather than undefined:
+					// undefined is dropped from data.json, so on reload mergeSettings
+					// would silently restore the "normal" default (P2-1).
+					settings.defaultPriority = value;
 					await this.saveSettingsWithNotice();
 				});
 			});

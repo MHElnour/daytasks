@@ -81,7 +81,8 @@ export function createDayTask(
 		updatedAt: timestamp,
 	};
 
-	if (priority !== undefined) {
+	// An empty string is the "no default priority" sentinel, not a real value.
+	if (priority) {
 		task.priority = priority;
 	}
 	if (input.dueDate) {
