@@ -322,11 +322,24 @@ export class TaskCreationModal extends Modal {
 		ariaLabel: string,
 		onChange: (value: string) => void
 	): void {
-		const chip = parent.createDiv({ cls: "daytasks-chip daytasks-chip--input" });
+		const chip = parent.createDiv({
+			cls: "daytasks-chip daytasks-chip--input daytasks-chip--date",
+		});
 		setIcon(chip.createSpan({ cls: "daytasks-chip-icon" }), iconName);
-		const input = chip.createEl("input", { attr: { type: "date", "aria-label": ariaLabel } });
+		const input = chip.createEl("input", {
+			attr: { type: "date", "aria-label": ariaLabel, title: ariaLabel },
+		});
 		input.value = value;
 		input.addEventListener("input", () => onChange(input.value.trim()));
+		// The native picker indicator is hidden (it duplicated our icon), so open
+		// the picker when the chip is clicked. Typing still works.
+		chip.addEventListener("click", () => {
+			try {
+				input.showPicker();
+			} catch {
+				// showPicker unavailable/blocked; the field still accepts typing.
+			}
+		});
 	}
 
 	/** A toolbar chip with a leading icon and a small text input. */
