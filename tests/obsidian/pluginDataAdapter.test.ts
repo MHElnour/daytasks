@@ -65,6 +65,94 @@ describe("decodePluginData", () => {
 		expect(decoded.tasks).toEqual([validTask]);
 	});
 
+	it("drops wrongly-typed optional fields", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{
+					...validTask,
+					priority: 5,
+					dueDate: 123,
+					estimateMinutes: "soon",
+					description: { nope: true },
+					parentId: 0,
+				},
+			],
+		});
+
+		const task = decoded.tasks[0];
+		expect(task.priority).toBeUndefined();
+		expect(task.dueDate).toBeUndefined();
+		expect(task.estimateMinutes).toBeUndefined();
+		expect(task.description).toBeUndefined();
+		expect(task.parentId).toBeUndefined();
+	});
+
+	it("keeps valid optional fields", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{
+					...validTask,
+					priority: "high",
+					dueDate: "2026-07-01",
+					estimateMinutes: 30,
+					description: "note",
+				},
+			],
+		});
+
+		const task = decoded.tasks[0];
+		expect(task.priority).toBe("high");
+		expect(task.dueDate).toBe("2026-07-01");
+		expect(task.estimateMinutes).toBe(30);
+		expect(task.description).toBe("note");
+	});
+
+	it("filters malformed time entries and keeps valid ones", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{
+					...validTask,
+					timeEntries: [
+						{ startTime: "2026-06-25T08:00:00.000Z" },
+						{
+							startTime: "2026-06-25T09:00:00.000Z",
+							endTime: "2026-06-25T10:00:00.000Z",
+							description: "work",
+						},
+						{ endTime: "no-start" },
+						null,
+						"nope",
+					],
+				},
+			],
+		});
+
+		expect(decoded.tasks[0].timeEntries).toEqual([
+			{ startTime: "2026-06-25T08:00:00.000Z" },
+			{
+				startTime: "2026-06-25T09:00:00.000Z",
+				endTime: "2026-06-25T10:00:00.000Z",
+				description: "work",
+			},
+		]);
+	});
+
+	it("drops project links missing a path and non-string titles", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{
+					...validTask,
+					projects: [{ path: "a.md", title: 5 }, { path: "b.md", title: "B" }, { nopath: true }],
+				},
+			],
+		});
+
+		expect(decoded.tasks[0].projects).toEqual([
+			{ path: "a.md" },
+			{ path: "b.md", title: "B" },
+		]);
+	});
+
 	it("defaults missing arrays to empty on stored tasks", () => {
 		const decoded = decodePluginData({
 			tasks: [

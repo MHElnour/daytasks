@@ -46,7 +46,7 @@ mostly future-gated to the (stubbed) API + daily-note-sync slices.
 | ID | Sev | Src | Location | Issue | Fix | Status |
 |----|-----|-----|----------|-------|-----|--------|
 | SEC-1 | MED | B | `settings/settings.ts:34-36,64-66`; `settingsTab.ts:185-191` | `apiToken` persisted plaintext; `apiPort` via `Number()` with no 1–65535 clamp (accepts negative/decimal/huge). API server is a stub today. | When API ships: bind `127.0.0.1`, constant-time token compare, high-entropy token, validate port range. | ▷ Deferred (roadmap) |
-| SEC-2 | LOW | MX | `obsidian/pluginDataAdapter.ts:45-53` | Stored-task scalar fields (`estimateMinutes`, `dueDate`, `priority`) trusted after partial `isValidTask`; force-cast `as unknown as DayTask`. | Validate/coerce each optional field (see BAD-1). | ☐ Open |
+| SEC-2 | LOW | MX | `obsidian/pluginDataAdapter.ts:45-53` | Stored-task scalar fields (`estimateMinutes`, `dueDate`, `priority`) trusted after partial `isValidTask`; force-cast `as unknown as DayTask`. | Validate/coerce each optional field (see BAD-1). | ☑ Fixed |
 | SEC-3 | LOW | CX | `settings/settings.ts:92-100`; `widgetRenderer.ts:161,200` | Status colors accepted as arbitrary strings, written into CSS custom properties. | Validate with `CSS.supports("color", value)` before save/render; fallback color. | ☐ Open |
 | SEC-4 | LOW | CX | `daily-notes/dailyNoteFormatter.ts`; `dailyNoteDocument.ts:22` | Task titles serialized into `<!-- id -->` task lines without escaping `-->`, `<!--`, or newlines → broken round-trip. | Normalize title to single line; escape/reject comment + newline delimiters. (Module unwired.) | ▷ Deferred (roadmap) |
 | SEC-5 | LOW | CX | `main.ts:296`; `taskCreationModal.ts:17-21`; `pluginDataAdapter.ts:38-41` | Tags interpolated directly into the global-search query (`tag:#${tag}`); crafted persisted tags could alter search syntax. | Escape/quote tag value or use a structured tag-filter API. | ☐ Open |
@@ -68,7 +68,7 @@ mostly future-gated to the (stubbed) API + daily-note-sync slices.
 
 | ID | Sev | Src | Location | Issue | Fix | Status |
 |----|-----|-----|----------|-------|-----|--------|
-| BAD-1 | MED | B | `pluginDataAdapter.ts:19-31,45-53` | Minimal validation + `(task as unknown as DayTask)` lets malformed optional fields / `timeEntries` reach service + render. | Full decoder validating every optional field and each `timeEntries` item. | ☐ Open |
+| BAD-1 | MED | B | `pluginDataAdapter.ts:19-31,45-53` | Minimal validation + `(task as unknown as DayTask)` lets malformed optional fields / `timeEntries` reach service + render. | Full decoder validating every optional field and each `timeEntries` item. | ☑ Fixed |
 | BAD-2 | MED | CX | `core/task.ts:10-15`; `dayTaskService.ts:91-93`; `taskIndex.ts:103-111` | `withDefaultTag` preserves duplicates when `daytask` already present; **`updateTask` does not dedupe input tags** → index lists task twice. Create path is safe (factory dedupes). | Make `withDefaultTag` always return a unique list; normalize tags/contexts before index. | ☑ Fixed |
 | BAD-3 | MED | CX | `settings/settings.ts:115-123`; `statusManager.ts:87-128` | `StatusManager.validate()` exists but is never called during merge/save — duplicate values/ids or bad `nextStatus` persist. | Run `validate()` in settings merge; fall back / surface errors. | ☑ Fixed |
 | BAD-4 | MED | CX | `settingsTab.ts` (async `onChange`); `main.ts:306-309` | Settings handlers await persistence with no local catch → save failures unhandled, in-memory state already mutated. | Centralize via guarded `saveSettingsWithNotice()`. | ☐ Open |
@@ -107,4 +107,5 @@ Record each fix here as it lands (ID · commit · note).
 |------|-------|--------|------|
 | 2026-06-25 | BAD-2 | 8f26ae9 | `withDefaultTag` now dedupes; fixes duplicate tags surviving edits + double index entries. TDD: `tests/core/task.test.ts` + a deduplication case in `dayTaskService.test.ts`. |
 | 2026-06-25 | OPT-1 | 77235a9 | Text settings persist via a 400ms `debounce` (new `util/debounce.ts`, TDD `tests/util/debounce.test.ts`); discrete controls stay immediate; pending save flushed on `hide()`. |
-| 2026-06-25 | BAD-3 | _this commit_ | `asStatuses` now runs `StatusManager.validate()`; configs with duplicate values/ids or bad `nextStatus` fall back to defaults instead of persisting. TDD: two fallback cases in `tests/settings/settings.test.ts`. |
+| 2026-06-25 | BAD-3 | d439c65 | `asStatuses` now runs `StatusManager.validate()`; configs with duplicate values/ids or bad `nextStatus` fall back to defaults instead of persisting. TDD: two fallback cases in `tests/settings/settings.test.ts`. |
+| 2026-06-25 | BAD-1, SEC-2 | _this commit_ | Replaced the `as unknown as DayTask` blanket cast with a per-field decoder (`normalizeStoredTask`): optional strings/`estimateMinutes` coerced or dropped, `timeEntries` + project links validated. TDD: 4 cases in `tests/obsidian/pluginDataAdapter.test.ts`. |

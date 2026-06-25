@@ -1,4 +1,4 @@
-import type { DayTask, ProjectLink } from "../core/task";
+import type { DayTask, ProjectLink, TimeEntry } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
 
 /** Minimal surface of Obsidian's `Plugin` data API, kept narrow for testing. */
@@ -35,22 +35,105 @@ function isProjectLink(value: unknown): value is ProjectLink {
 	return isRecord(value) && typeof value.path === "string";
 }
 
+function asString(value: unknown): string | undefined {
+	return typeof value === "string" ? value : undefined;
+}
+
+function asFiniteNumber(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function asStringArray(value: unknown): string[] {
 	return Array.isArray(value)
 		? value.filter((entry): entry is string => typeof entry === "string")
 		: [];
 }
 
-/** Fills the always-present arrays so stored (possibly older) tasks are valid. */
+function asProjects(value: unknown): ProjectLink[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	const projects: ProjectLink[] = [];
+	for (const raw of value) {
+		if (!isProjectLink(raw)) {
+			continue;
+		}
+		const project: ProjectLink = { path: raw.path };
+		const title = asString(raw.title);
+		if (title !== undefined) {
+			project.title = title;
+		}
+		projects.push(project);
+	}
+	return projects;
+}
+
+function asTimeEntries(value: unknown): TimeEntry[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	const entries: TimeEntry[] = [];
+	for (const raw of value) {
+		if (!isRecord(raw) || typeof raw.startTime !== "string") {
+			continue;
+		}
+		const entry: TimeEntry = { startTime: raw.startTime };
+		const endTime = asString(raw.endTime);
+		if (endTime !== undefined) {
+			entry.endTime = endTime;
+		}
+		const description = asString(raw.description);
+		if (description !== undefined) {
+			entry.description = description;
+		}
+		entries.push(entry);
+	}
+	return entries;
+}
+
+/**
+ * Builds a clean `DayTask` from a stored record whose required fields are
+ * already verified by `isValidTask`. Optional fields are validated/coerced
+ * individually so a malformed `data.json` cannot leak wrong-typed values into
+ * the service or renderer.
+ */
 function normalizeStoredTask(task: Record<string, unknown>): DayTask {
-	return {
-		...(task as unknown as DayTask),
+	const normalized: DayTask = {
+		id: task.id as string,
+		title: task.title as string,
+		status: task.status as string,
+		scheduledDate: task.scheduledDate as string,
 		tags: asStringArray(task.tags),
 		contexts: asStringArray(task.contexts),
-		projects: Array.isArray(task.projects)
-			? task.projects.filter(isProjectLink).map((project) => ({ ...project }))
-			: [],
+		projects: asProjects(task.projects),
+		timeEntries: asTimeEntries(task.timeEntries),
+		createdAt: task.createdAt as string,
+		updatedAt: task.updatedAt as string,
 	};
+
+	const optionalStrings = [
+		"priority",
+		"dueDate",
+		"completedAt",
+		"archivedAt",
+		"parentId",
+		"detailNotePath",
+		"description",
+		"sortOrder",
+	] as const;
+	for (const key of optionalStrings) {
+		const value = asString(task[key]);
+		if (value !== undefined) {
+			normalized[key] = value;
+		}
+	}
+
+	const estimateMinutes = asFiniteNumber(task.estimateMinutes);
+	if (estimateMinutes !== undefined) {
+		normalized.estimateMinutes = estimateMinutes;
+	}
+
+	return normalized;
 }
 
 /** Decodes raw plugin data, repairing or discarding anything malformed. */
