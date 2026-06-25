@@ -329,3 +329,18 @@
 .daytasks-subtask-input {
 	flex: 1;
 }
+
+.daytasks-subtasks-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+}
+
+.daytasks-subtask-add-button {
+	cursor: pointer;
+}
+
+.daytasks-subtask-add-button:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	outline: none;
+}
