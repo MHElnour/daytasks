@@ -4,6 +4,7 @@ import { DayTaskService } from "./core/dayTaskService";
 import { dependencyCandidates } from "./core/dependencies";
 import { nextPriority } from "./core/priorityCycle";
 import { StatusManager } from "./core/statusManager";
+import { withBlockedStatus } from "./core/status";
 import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
@@ -88,7 +89,7 @@ export default class DayTasksPlugin extends Plugin {
 	/** Rebuilds the status manager and services from current settings. */
 	private rebuildServices(): void {
 		this.statusManager = new StatusManager(
-			this.settings.statuses,
+			withBlockedStatus(this.settings.statuses),
 			this.settings.defaultStatus
 		);
 		this.service = new DayTaskService({
