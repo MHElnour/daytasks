@@ -36,6 +36,7 @@ export default class DayTasksPlugin extends Plugin {
 	private statusManager!: StatusManager;
 	private service!: DayTaskService;
 	private controller!: DailyTasksWidgetController;
+	private expandedIds = new Set<string>();
 	private dataVersion = 0;
 	private readingRefreshTimer: number | null = null;
 
@@ -130,13 +131,14 @@ export default class DayTasksPlugin extends Plugin {
 		if (!date) {
 			return false;
 		}
-		const model = this.controller.getWidgetForDate(date);
+		const model = this.controller.getWidgetForDate(date, this.expandedIds);
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onAddTask: () => this.openCreateModal(date),
 			onEditTask: (taskId) => void this.openEditModal(taskId),
 			onOpenProject: (path) => this.openProject(path),
 			onSelectTag: (tag) => this.searchTag(tag),
+			onToggleSubtasks: (taskId) => this.toggleSubtasks(taskId),
 		});
 		this.applyIcons(container);
 		return true;
@@ -212,6 +214,15 @@ export default class DayTasksPlugin extends Plugin {
 		}
 	}
 
+	private toggleSubtasks(taskId: string): void {
+		if (this.expandedIds.has(taskId)) {
+			this.expandedIds.delete(taskId);
+		} else {
+			this.expandedIds.add(taskId);
+		}
+		this.refreshViews();
+	}
+
 	private async handleCycleStatus(taskId: string): Promise<void> {
 		try {
 			await this.service.cycleStatus(taskId);
@@ -274,7 +285,39 @@ export default class DayTasksPlugin extends Plugin {
 				}
 			},
 			onDelete: (id) => void this.deleteTask(id),
+			getChildren: (parentId) => this.service.getChildren(parentId),
+			onAddSubtask: (parentId, title) => this.addSubtask(parentId, title),
+			onUnlinkSubtask: (childId) => this.unlinkSubtask(childId),
 		}).open();
+	}
+
+	private async addSubtask(parentId: string, title: string): Promise<void> {
+		try {
+			const parent = await this.service.getTask(parentId);
+			if (!parent) {
+				return;
+			}
+			await this.service.createSubtask(parentId, {
+				title,
+				scheduledDate: parent.scheduledDate,
+			});
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to add subtask", error);
+			new Notice("DayTasks: could not add that subtask.");
+		}
+	}
+
+	private async unlinkSubtask(childId: string): Promise<void> {
+		try {
+			await this.service.unlinkSubtask(childId);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to unlink subtask", error);
+			new Notice("DayTasks: could not unlink that subtask.");
+		}
 	}
 
 	private async deleteTask(id: string): Promise<void> {
