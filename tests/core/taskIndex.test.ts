@@ -8,8 +8,10 @@ const tasks: DayTask[] = [
 		title: "Buy milk",
 		status: "open",
 		scheduledDate: "2026-06-24",
+		dueDate: "2026-06-30",
 		parentId: "TSK-parent1",
 		tags: ["errand", "home"],
+		contexts: ["phone"],
 		projects: [{ path: "Projects/Home.md", title: "Home" }],
 		timeEntries: [],
 		createdAt: "2026-06-24T08:00:00.000Z",
@@ -20,6 +22,9 @@ const tasks: DayTask[] = [
 		title: "Send proposal",
 		status: "done",
 		scheduledDate: "2026-06-25",
+		tags: [],
+		contexts: [],
+		projects: [],
 		timeEntries: [],
 		createdAt: "2026-06-24T09:00:00.000Z",
 		updatedAt: "2026-06-24T09:00:00.000Z",
@@ -37,7 +42,26 @@ describe("MemoryTaskIndex", () => {
 		expect(index.byStatus("done")).toEqual([tasks[1]]);
 		expect(index.byParent("TSK-parent1")).toEqual([tasks[0]]);
 		expect(index.byTag("errand")).toEqual([tasks[0]]);
+		expect(index.byContext("phone")).toEqual([tasks[0]]);
+		expect(index.byDueDate("2026-06-30")).toEqual([tasks[0]]);
 		expect(index.byProject("Projects/Home.md")).toEqual([tasks[0]]);
+	});
+
+	it("upsert moves context and due-date entries when a task changes", () => {
+		const index = new MemoryTaskIndex();
+		index.upsert(tasks[0]);
+
+		const moved: DayTask = {
+			...tasks[0],
+			dueDate: "2026-07-01",
+			contexts: ["office"],
+		};
+		index.upsert(moved);
+
+		expect(index.byDueDate("2026-06-30")).toEqual([]);
+		expect(index.byDueDate("2026-07-01")).toEqual([moved]);
+		expect(index.byContext("phone")).toEqual([]);
+		expect(index.byContext("office")).toEqual([moved]);
 	});
 
 	it("upsert adds a new task to every index", () => {

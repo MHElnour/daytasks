@@ -1,4 +1,4 @@
-import type { DayTask, TaskStatus } from "../core/task";
+import type { DayTask, ProjectLink } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
 
 /** Minimal surface of Obsidian's `Plugin` data API, kept narrow for testing. */
@@ -16,23 +16,41 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null;
 }
 
-function isTaskStatus(value: unknown): value is TaskStatus {
-	return value === "open" || value === "done";
-}
-
-function isValidTask(value: unknown): value is DayTask {
+function isValidTask(value: unknown): value is Record<string, unknown> {
 	if (!isRecord(value)) {
 		return false;
 	}
 	return (
 		typeof value.id === "string" &&
 		typeof value.title === "string" &&
-		isTaskStatus(value.status) &&
+		typeof value.status === "string" &&
 		typeof value.scheduledDate === "string" &&
 		Array.isArray(value.timeEntries) &&
 		typeof value.createdAt === "string" &&
 		typeof value.updatedAt === "string"
 	);
+}
+
+function isProjectLink(value: unknown): value is ProjectLink {
+	return isRecord(value) && typeof value.path === "string";
+}
+
+function asStringArray(value: unknown): string[] {
+	return Array.isArray(value)
+		? value.filter((entry): entry is string => typeof entry === "string")
+		: [];
+}
+
+/** Fills the always-present arrays so stored (possibly older) tasks are valid. */
+function normalizeStoredTask(task: Record<string, unknown>): DayTask {
+	return {
+		...(task as unknown as DayTask),
+		tags: asStringArray(task.tags),
+		contexts: asStringArray(task.contexts),
+		projects: Array.isArray(task.projects)
+			? task.projects.filter(isProjectLink).map((project) => ({ ...project }))
+			: [],
+	};
 }
 
 /** Decodes raw plugin data, repairing or discarding anything malformed. */
@@ -41,7 +59,9 @@ export function decodePluginData(raw: unknown): DayTasksPluginData {
 		return { settings: mergeSettings(undefined), tasks: [] };
 	}
 
-	const tasks = Array.isArray(raw.tasks) ? raw.tasks.filter(isValidTask) : [];
+	const tasks = Array.isArray(raw.tasks)
+		? raw.tasks.filter(isValidTask).map(normalizeStoredTask)
+		: [];
 
 	return {
 		settings: mergeSettings(raw.settings),

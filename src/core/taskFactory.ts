@@ -1,26 +1,53 @@
-import { cloneProjects, cloneStrings } from "../util/clone";
 import { nowIso } from "../util/time";
-import type { CreateDayTaskInput, DayTask } from "./task";
+import type { StatusManager } from "./statusManager";
+import type { CreateDayTaskInput, DayTask, ProjectLink } from "./task";
 import { generateTaskId } from "./taskIds";
+
+export interface TaskFactoryDefaults {
+	status?: string;
+	priority?: string;
+	tags?: string[];
+	projects?: ProjectLink[];
+}
 
 export interface TaskFactoryDependencies {
 	now?: () => string;
 	id?: () => string;
+	statusManager: StatusManager;
+	defaults?: TaskFactoryDefaults;
 }
 
-function copyNonEmpty(values: string[] | undefined): string[] | undefined {
-	return values && values.length > 0 ? cloneStrings(values) : undefined;
+function mergeUniqueStrings(...lists: Array<string[] | undefined>): string[] {
+	const seen = new Set<string>();
+	const result: string[] = [];
+	for (const list of lists) {
+		for (const value of list ?? []) {
+			if (!seen.has(value)) {
+				seen.add(value);
+				result.push(value);
+			}
+		}
+	}
+	return result;
 }
 
-function copyProjects(input: CreateDayTaskInput): DayTask["projects"] {
-	return input.projects && input.projects.length > 0
-		? cloneProjects(input.projects)
-		: undefined;
+function mergeUniqueProjects(...lists: Array<ProjectLink[] | undefined>): ProjectLink[] {
+	const seen = new Set<string>();
+	const result: ProjectLink[] = [];
+	for (const list of lists) {
+		for (const project of list ?? []) {
+			if (!seen.has(project.path)) {
+				seen.add(project.path);
+				result.push({ ...project });
+			}
+		}
+	}
+	return result;
 }
 
 export function createDayTask(
 	input: CreateDayTaskInput,
-	dependencies: TaskFactoryDependencies = {}
+	dependencies: TaskFactoryDependencies
 ): DayTask {
 	const title = input.title.trim();
 	if (!title) {
@@ -29,18 +56,28 @@ export function createDayTask(
 
 	const now = dependencies.now ?? nowIso;
 	const id = dependencies.id ?? (() => generateTaskId());
+	const { statusManager, defaults = {} } = dependencies;
 	const timestamp = now();
+
+	const status = statusManager.normalizeStatusValue(input.status ?? defaults.status);
+	const priority = input.priority ?? defaults.priority;
 
 	const task: DayTask = {
 		id: id(),
 		title,
-		status: "open",
+		status,
 		scheduledDate: input.scheduledDate,
+		tags: mergeUniqueStrings(defaults.tags, input.tags),
+		contexts: mergeUniqueStrings(input.contexts),
+		projects: mergeUniqueProjects(defaults.projects, input.projects),
 		timeEntries: [],
 		createdAt: timestamp,
 		updatedAt: timestamp,
 	};
 
+	if (priority !== undefined) {
+		task.priority = priority;
+	}
 	if (input.dueDate) {
 		task.dueDate = input.dueDate;
 	}
@@ -50,20 +87,17 @@ export function createDayTask(
 	if (input.detailNotePath) {
 		task.detailNotePath = input.detailNotePath;
 	}
-
-	const tags = copyNonEmpty(input.tags);
-	if (tags) {
-		task.tags = tags;
+	if (input.estimateMinutes !== undefined) {
+		task.estimateMinutes = input.estimateMinutes;
 	}
-
-	const contexts = copyNonEmpty(input.contexts);
-	if (contexts) {
-		task.contexts = contexts;
+	if (input.description) {
+		task.description = input.description;
 	}
-
-	const projects = copyProjects(input);
-	if (projects) {
-		task.projects = projects;
+	if (input.sortOrder) {
+		task.sortOrder = input.sortOrder;
+	}
+	if (statusManager.isCompletedStatus(status)) {
+		task.completedAt = timestamp;
 	}
 
 	return task;

@@ -1,8 +1,6 @@
+import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
-import {
-	createTaskCardViewModel,
-	type TaskCardViewModel,
-} from "./taskCard";
+import { createTaskCardViewModel, type TaskCardViewModel } from "./taskCard";
 
 export interface DailyTasksWidgetModel {
 	date: string;
@@ -13,9 +11,10 @@ export interface DailyTasksWidgetModel {
 
 export function createDailyTasksWidgetModel(
 	date: string,
-	tasks: DayTask[]
+	tasks: DayTask[],
+	statusManager: StatusManager
 ): DailyTasksWidgetModel {
-	const cards = tasks.map(createTaskCardViewModel);
+	const cards = tasks.map((task) => createTaskCardViewModel(task, statusManager));
 
 	return {
 		date,

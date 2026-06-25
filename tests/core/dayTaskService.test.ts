@@ -1,43 +1,115 @@
 import { describe, expect, it } from "vitest";
 import { DayTaskService } from "../../src/core/dayTaskService";
+import { DEFAULT_STATUSES } from "../../src/core/status";
+import { StatusManager } from "../../src/core/statusManager";
 import { MemoryTaskIndex } from "../../src/core/taskIndex";
 import { MemoryTaskStore } from "../../src/core/taskStore";
 
+const statusManager = new StatusManager(DEFAULT_STATUSES, "open");
+
+function makeService(
+	settings: Partial<{
+		defaultStatus: string;
+		defaultPriority?: string;
+		defaultTags: string[];
+		defaultProjectPath: string;
+	}> = {}
+) {
+	return new DayTaskService({
+		store: new MemoryTaskStore(),
+		index: new MemoryTaskIndex(),
+		statusManager,
+		settings: {
+			defaultStatus: "open",
+			defaultPriority: "normal",
+			defaultTags: [],
+			defaultProjectPath: "",
+			...settings,
+		},
+		now: () => "2026-06-25T08:00:00.000Z",
+		id: () => "TSK-8cA562sd",
+	});
+}
+
 describe("DayTaskService", () => {
-	it("creates tasks in the store and index without mutating daily notes", async () => {
-		const service = new DayTaskService({
-			store: new MemoryTaskStore(),
-			index: new MemoryTaskIndex(),
-			now: () => "2026-06-24T08:00:00.000Z",
-			id: () => "TSK-8cA562sd",
-		});
+	it("creates tasks in the store and index", async () => {
+		const service = makeService();
 
 		const task = await service.createTask({
 			title: "Buy milk",
-			scheduledDate: "2026-06-24",
+			scheduledDate: "2026-06-25",
 			tags: ["errand"],
+			contexts: ["home"],
 			projects: [{ path: "Projects/Home.md", title: "Home" }],
 		});
 
 		expect(task.id).toBe("TSK-8cA562sd");
 		expect(await service.getTask("TSK-8cA562sd")).toEqual(task);
-		expect(service.getTasksForDate("2026-06-24")).toEqual([task]);
+		expect(service.getTasksForDate("2026-06-25")).toEqual([task]);
 		expect(service.getTasksForTag("errand")).toEqual([task]);
+		expect(service.getTasksForContext("home")).toEqual([task]);
 		expect(service.getTasksForProject("Projects/Home.md")).toEqual([task]);
 	});
 
-	it("toggles status and refreshes the index", async () => {
-		const service = new DayTaskService({
-			store: new MemoryTaskStore(),
-			index: new MemoryTaskIndex(),
-			now: () => "2026-06-24T08:00:00.000Z",
-			id: () => "TSK-8cA562sd",
+	it("merges default tags and project from settings", async () => {
+		const service = makeService({
+			defaultTags: ["work"],
+			defaultProjectPath: "Projects/Home.md",
 		});
 
-		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-24" });
-		const updated = await service.toggleStatus("TSK-8cA562sd");
+		const task = await service.createTask({
+			title: "Task",
+			scheduledDate: "2026-06-25",
+		});
 
+		expect(task.tags).toEqual(["work"]);
+		expect(service.getTasksForProject("Projects/Home.md")).toEqual([task]);
+	});
+
+	it("sets completedAt when status becomes completed and clears it on revert", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });
+
+		const done = await service.setStatus("TSK-8cA562sd", "done");
+		expect(done.status).toBe("done");
+		expect(done.completedAt).toBe("2026-06-25T08:00:00.000Z");
+
+		const reopened = await service.setStatus("TSK-8cA562sd", "open");
+		expect(reopened.status).toBe("open");
+		expect(reopened.completedAt).toBeUndefined();
+	});
+
+	it("updates editable fields and re-indexes tags/projects", async () => {
+		const service = makeService();
+		await service.createTask({
+			title: "Buy milk",
+			scheduledDate: "2026-06-25",
+			tags: ["errand"],
+		});
+
+		const updated = await service.updateTask("TSK-8cA562sd", {
+			title: "Buy oat milk",
+			scheduledDate: "2026-06-25",
+			status: "done",
+			tags: ["shopping"],
+			description: "from the corner store",
+		});
+
+		expect(updated.title).toBe("Buy oat milk");
 		expect(updated.status).toBe("done");
-		expect(service.getTasksForDate("2026-06-24")).toEqual([updated]);
+		expect(updated.completedAt).toBe("2026-06-25T08:00:00.000Z");
+		expect(updated.description).toBe("from the corner store");
+		expect(service.getTasksForTag("errand")).toEqual([]);
+		expect(service.getTasksForTag("shopping")).toEqual([updated]);
+	});
+
+	it("cycles status and refreshes the index", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });
+
+		const cycled = await service.cycleStatus("TSK-8cA562sd");
+
+		expect(cycled.status).toBe("in-progress");
+		expect(service.getTasksForDate("2026-06-25")).toEqual([cycled]);
 	});
 });

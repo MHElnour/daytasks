@@ -13,6 +13,8 @@ const validTask: DayTask = {
 	status: "open",
 	scheduledDate: "2026-06-25",
 	tags: ["errand"],
+	contexts: [],
+	projects: [],
 	timeEntries: [],
 	createdAt: "2026-06-25T08:00:00.000Z",
 	updatedAt: "2026-06-25T08:00:00.000Z",
@@ -61,6 +63,26 @@ describe("decodePluginData", () => {
 		});
 
 		expect(decoded.tasks).toEqual([validTask]);
+	});
+
+	it("defaults missing arrays to empty on stored tasks", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{
+					id: "TSK-legacyOld",
+					title: "Legacy",
+					status: "done",
+					scheduledDate: "2026-06-25",
+					timeEntries: [],
+					createdAt: "2026-06-25T08:00:00.000Z",
+					updatedAt: "2026-06-25T08:00:00.000Z",
+				},
+			],
+		});
+
+		expect(decoded.tasks[0].tags).toEqual([]);
+		expect(decoded.tasks[0].contexts).toEqual([]);
+		expect(decoded.tasks[0].projects).toEqual([]);
 	});
 });
 

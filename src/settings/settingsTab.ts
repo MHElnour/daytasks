@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, type TextComponent } from "obsidian";
 import type DayTasksPlugin from "../main";
 import { MarkdownPathSuggestModal } from "../obsidian/modals";
 
@@ -70,6 +70,13 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			})
 		);
 
+		new Setting(containerEl).setName("Show contexts").addToggle((toggle) =>
+			toggle.setValue(settings.showContexts).onChange(async (value) => {
+				settings.showContexts = value;
+				await this.plugin.saveSettings();
+			})
+		);
+
 		new Setting(containerEl).setName("Show projects").addToggle((toggle) =>
 			toggle.setValue(settings.showProjects).onChange(async (value) => {
 				settings.showProjects = value;
@@ -78,6 +85,32 @@ export class DayTasksSettingTab extends PluginSettingTab {
 		);
 
 		new Setting(containerEl).setName("Task defaults").setHeading();
+
+		new Setting(containerEl)
+			.setName("Default status")
+			.setDesc("Status applied to newly created tasks.")
+			.addDropdown((dropdown) => {
+				for (const status of settings.statuses) {
+					dropdown.addOption(status.value, status.label);
+				}
+				dropdown.setValue(settings.defaultStatus).onChange(async (value) => {
+					settings.defaultStatus = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Default priority")
+			.addDropdown((dropdown) => {
+				dropdown.addOption("", "—");
+				for (const priority of settings.priorities) {
+					dropdown.addOption(priority.value, priority.label);
+				}
+				dropdown.setValue(settings.defaultPriority ?? "").onChange(async (value) => {
+					settings.defaultPriority = value || undefined;
+					await this.plugin.saveSettings();
+				});
+			});
 
 		new Setting(containerEl)
 			.setName("Default tags")
@@ -92,10 +125,12 @@ export class DayTasksSettingTab extends PluginSettingTab {
 					})
 			);
 
+		let projectInput: TextComponent | undefined;
 		new Setting(containerEl)
 			.setName("Default project")
 			.setDesc("New tasks link to this note. Use the picker to search your vault.")
 			.addText((text) => {
+				projectInput = text;
 				text.setValue(settings.defaultProjectPath).onChange(async (value) => {
 					settings.defaultProjectPath = value.trim();
 					await this.plugin.saveSettings();
@@ -109,8 +144,8 @@ export class DayTasksSettingTab extends PluginSettingTab {
 					.onClick(() => {
 						new MarkdownPathSuggestModal(this.app, async (path) => {
 							settings.defaultProjectPath = path;
+							projectInput?.setValue(path);
 							await this.plugin.saveSettings();
-							this.display();
 						}).open();
 					})
 			);

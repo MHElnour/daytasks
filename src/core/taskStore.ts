@@ -1,4 +1,3 @@
-import { cloneProjects, cloneStrings } from "../util/clone";
 import type { DayTask } from "./task";
 
 export interface TaskStore {
@@ -11,9 +10,9 @@ export interface TaskStore {
 function cloneTask(task: DayTask): DayTask {
 	return {
 		...task,
-		tags: cloneStrings(task.tags),
-		contexts: cloneStrings(task.contexts),
-		projects: cloneProjects(task.projects),
+		tags: [...task.tags],
+		contexts: [...task.contexts],
+		projects: task.projects.map((project) => ({ ...project })),
 		timeEntries: task.timeEntries.map((entry) => ({ ...entry })),
 	};
 }

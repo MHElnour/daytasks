@@ -1,3 +1,4 @@
+import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
 import { getDailyNoteDateFromPath } from "../daily-notes/dailyNoteDate";
 import {
@@ -11,6 +12,7 @@ export interface DailyTasksWidgetService {
 
 export interface DailyTasksWidgetControllerDependencies {
 	service: DailyTasksWidgetService;
+	statusManager: StatusManager;
 }
 
 export class DailyTasksWidgetController {
@@ -24,7 +26,8 @@ export class DailyTasksWidgetController {
 
 		return createDailyTasksWidgetModel(
 			date,
-			this.dependencies.service.getTasksForDate(date)
+			this.dependencies.service.getTasksForDate(date),
+			this.dependencies.statusManager
 		);
 	}
 }

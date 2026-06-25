@@ -68,4 +68,39 @@ describe("mergeSettings", () => {
 
 		expect(DEFAULT_SETTINGS.defaultTags).toEqual([]);
 	});
+
+	it("provides default statuses and priorities", () => {
+		const merged = mergeSettings({});
+		expect(merged.statuses.map((s) => s.value)).toEqual([
+			"open",
+			"in-progress",
+			"done",
+		]);
+		expect(merged.defaultStatus).toBe("open");
+		expect(merged.priorities.length).toBeGreaterThan(0);
+	});
+
+	it("keeps a valid custom status config", () => {
+		const custom = [
+			{ id: "todo", value: "todo", label: "Todo", color: "#1", isCompleted: false, order: 0 },
+			{ id: "shipped", value: "shipped", label: "Shipped", color: "#2", isCompleted: true, order: 1 },
+		];
+		const merged = mergeSettings({ statuses: custom, defaultStatus: "todo" });
+		expect(merged.statuses.map((s) => s.value)).toEqual(["todo", "shipped"]);
+		expect(merged.defaultStatus).toBe("todo");
+	});
+
+	it("falls back to default statuses when stored config is broken", () => {
+		const merged = mergeSettings({ statuses: [{ nope: true }] });
+		expect(merged.statuses.map((s) => s.value)).toEqual([
+			"open",
+			"in-progress",
+			"done",
+		]);
+	});
+
+	it("coerces a default status that is not in the status list", () => {
+		const merged = mergeSettings({ defaultStatus: "ghost" });
+		expect(merged.defaultStatus).toBe("open");
+	});
 });

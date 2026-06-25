@@ -1,26 +1,27 @@
 import { EditorView } from "@codemirror/view";
 import { MarkdownView, Notice, Plugin, WorkspaceLeaf } from "obsidian";
-import { createTaskForActiveNote } from "./commands/createTaskCommand";
 import { DayTaskService } from "./core/dayTaskService";
+import { StatusManager } from "./core/statusManager";
+import type { CreateDayTaskInput } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
+import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
 import {
 	DayTasksDataStore,
 	type DayTasksPluginData,
 } from "./obsidian/pluginDataAdapter";
-import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
-import { TitleInputModal } from "./obsidian/modals";
+import { TaskCreationModal } from "./obsidian/taskCreationModal";
 import { insertWidgetAtBottom } from "./obsidian/widgetInsertion";
 import {
 	renderDailyTasksWidget,
 	type WidgetRenderOptions,
 } from "./obsidian/widgetRenderer";
-import { DayTasksSettingTab } from "./settings/settingsTab";
 import { DEFAULT_SETTINGS, type DayTasksSettings } from "./settings/settings";
+import { DayTasksSettingTab } from "./settings/settingsTab";
 import { DailyTasksWidgetController } from "./ui/dailyTasksWidgetController";
 
-const CREATE_TASK_COMMAND_ID = "create-test-task-for-current-daily-note";
+const CREATE_TASK_COMMAND_ID = "create-task-for-current-daily-note";
 const WIDGET_HOST_CLASS = "daytasks-widget-host";
 
 export default class DayTasksPlugin extends Plugin {
@@ -29,6 +30,7 @@ export default class DayTasksPlugin extends Plugin {
 	private dataStore!: DayTasksDataStore;
 	private store!: MemoryTaskStore;
 	private index!: MemoryTaskIndex;
+	private statusManager!: StatusManager;
 	private service!: DayTaskService;
 	private controller!: DailyTasksWidgetController;
 	private dataVersion = 0;
@@ -46,14 +48,13 @@ export default class DayTasksPlugin extends Plugin {
 			await this.store.save(task);
 		}
 		this.index.rebuild(await this.store.list());
-		this.service = new DayTaskService({ store: this.store, index: this.index });
-		this.controller = new DailyTasksWidgetController({ service: this.service });
+		this.rebuildServices();
 
 		this.addSettingTab(new DayTasksSettingTab(this.app, this));
 
 		this.addCommand({
 			id: CREATE_TASK_COMMAND_ID,
-			name: "Create test task for current daily note",
+			name: "Create task for current daily note",
 			callback: () => this.runCreateTaskCommand(),
 		});
 
@@ -78,6 +79,24 @@ export default class DayTasksPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => this.refreshReadingViews());
 	}
 
+	/** Rebuilds the status manager and services from current settings. */
+	private rebuildServices(): void {
+		this.statusManager = new StatusManager(
+			this.settings.statuses,
+			this.settings.defaultStatus
+		);
+		this.service = new DayTaskService({
+			store: this.store,
+			index: this.index,
+			statusManager: this.statusManager,
+			settings: this.settings,
+		});
+		this.controller = new DailyTasksWidgetController({
+			service: this.service,
+			statusManager: this.statusManager,
+		});
+	}
+
 	private async loadPluginData(): Promise<DayTasksPluginData> {
 		try {
 			return await this.dataStore.load();
@@ -92,6 +111,7 @@ export default class DayTasksPlugin extends Plugin {
 		return {
 			showTaskIds: this.settings.showTaskIds,
 			showTags: this.settings.showTags,
+			showContexts: this.settings.showContexts,
 			showProjects: this.settings.showProjects,
 		};
 	}
@@ -101,7 +121,8 @@ export default class DayTasksPlugin extends Plugin {
 		if (!this.settings.showDailyNoteWidget) {
 			return false;
 		}
-		if (!resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder)) {
+		const date = resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder);
+		if (!date) {
 			return false;
 		}
 		const model = this.controller.getWidgetForNotePath(notePath);
@@ -109,7 +130,11 @@ export default class DayTasksPlugin extends Plugin {
 			return false;
 		}
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
-			onToggleTask: (taskId) => void this.handleToggle(taskId),
+			onToggleTask: (taskId) => void this.handleCycleStatus(taskId),
+			onAddTask: () => this.openCreateModal(date),
+			onEditTask: (taskId) => void this.openEditModal(taskId),
+			onOpenProject: (path) => this.openProject(path),
+			onSelectTag: (tag) => this.searchTag(tag),
 		});
 		return true;
 	}
@@ -166,40 +191,94 @@ export default class DayTasksPlugin extends Plugin {
 		}
 	}
 
-	private async handleToggle(taskId: string): Promise<void> {
+	private async handleCycleStatus(taskId: string): Promise<void> {
 		try {
-			await this.service.toggleStatus(taskId);
+			await this.service.cycleStatus(taskId);
 			await this.persistTasks();
 			this.refreshViews();
 		} catch (error) {
-			console.error("DayTasks: failed to toggle task", error);
+			console.error("DayTasks: failed to update task status", error);
 			new Notice("DayTasks: could not update that task.");
 		}
 	}
 
 	private runCreateTaskCommand(): void {
-		new TitleInputModal(this.app, "Test task", (title) => {
-			if (title === null) {
-				return;
-			}
-			void this.createTask(title);
+		const path = this.app.workspace.getActiveFile()?.path ?? null;
+		const date = path
+			? resolveDailyNoteDate(path, this.settings.dailyNoteFolder)
+			: null;
+		if (!date) {
+			new Notice("DayTasks: open a daily note (YYYY-MM-DD) to create a task.");
+			return;
+		}
+		this.openCreateModal(date);
+	}
+
+	private openCreateModal(scheduledDate: string): void {
+		new TaskCreationModal(this.app, {
+			settings: this.settings,
+			scheduledDate,
+			onSubmit: (input) => {
+				if (input) {
+					void this.createTask(input);
+				}
+			},
 		}).open();
 	}
 
-	private async createTask(title: string): Promise<void> {
-		const task = await createTaskForActiveNote(
-			{
-				getActiveFilePath: () => this.app.workspace.getActiveFile()?.path ?? null,
-				settings: this.settings,
-				service: this.service,
-				notify: (message) => new Notice(message),
-			},
-			title
-		);
-		if (task) {
+	private async createTask(input: CreateDayTaskInput): Promise<void> {
+		try {
+			const task = await this.service.createTask(input);
 			await this.persistTasks();
 			this.refreshViews();
+			new Notice(`DayTasks: created ${task.id}.`);
+		} catch (error) {
+			console.error("DayTasks: failed to create task", error);
+			new Notice("DayTasks: could not create that task.");
 		}
+	}
+
+	private async openEditModal(taskId: string): Promise<void> {
+		const task = await this.service.getTask(taskId);
+		if (!task) {
+			return;
+		}
+		new TaskCreationModal(this.app, {
+			settings: this.settings,
+			scheduledDate: task.scheduledDate,
+			initial: task,
+			onSubmit: (input) => {
+				if (input) {
+					void this.updateTask(taskId, input);
+				}
+			},
+		}).open();
+	}
+
+	private async updateTask(id: string, input: CreateDayTaskInput): Promise<void> {
+		try {
+			await this.service.updateTask(id, input);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to update task", error);
+			new Notice("DayTasks: could not update that task.");
+		}
+	}
+
+	private openProject(path: string): void {
+		void this.app.workspace.openLinkText(path, "", false);
+	}
+
+	private searchTag(tag: string): void {
+		const search = (
+			this.app as unknown as {
+				internalPlugins?: {
+					getPluginById(id: string): { instance?: { openGlobalSearch?(q: string): void } } | null;
+				};
+			}
+		).internalPlugins?.getPluginById("global-search")?.instance;
+		search?.openGlobalSearch?.(`tag:#${tag}`);
 	}
 
 	private async persistTasks(): Promise<void> {
@@ -210,6 +289,7 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	async saveSettings(): Promise<void> {
+		this.rebuildServices();
 		await this.persistTasks();
 		this.refreshViews();
 	}

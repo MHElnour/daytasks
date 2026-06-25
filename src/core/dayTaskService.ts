@@ -1,21 +1,42 @@
 import { nowIso } from "../util/time";
+import type { DayTasksSettings } from "../settings/settings";
+import type { StatusManager } from "./statusManager";
 import type { CreateDayTaskInput, DayTask } from "./task";
-import { createDayTask, type TaskFactoryDependencies } from "./taskFactory";
+import { createDayTask } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
 import type { TaskStore } from "./taskStore";
 
-export interface DayTaskServiceDependencies extends TaskFactoryDependencies {
+export type DayTaskServiceSettings = Pick<
+	DayTasksSettings,
+	"defaultStatus" | "defaultPriority" | "defaultTags" | "defaultProjectPath"
+>;
+
+export interface DayTaskServiceDependencies {
 	store: TaskStore;
 	index: TaskIndex;
+	statusManager: StatusManager;
+	settings: DayTaskServiceSettings;
+	now?: () => string;
+	id?: () => string;
 }
 
 export class DayTaskService {
 	constructor(private readonly dependencies: DayTaskServiceDependencies) {}
 
 	async createTask(input: CreateDayTaskInput): Promise<DayTask> {
+		const { settings, statusManager } = this.dependencies;
 		const task = createDayTask(input, {
 			now: this.dependencies.now,
 			id: this.dependencies.id,
+			statusManager,
+			defaults: {
+				status: settings.defaultStatus,
+				priority: settings.defaultPriority,
+				tags: settings.defaultTags,
+				projects: settings.defaultProjectPath
+					? [{ path: settings.defaultProjectPath }]
+					: [],
+			},
 		});
 		await this.saveAndIndex(task);
 		return task;
@@ -33,23 +54,87 @@ export class DayTaskService {
 		return this.dependencies.index.byTag(tag);
 	}
 
+	getTasksForContext(context: string): DayTask[] {
+		return this.dependencies.index.byContext(context);
+	}
+
 	getTasksForProject(projectPath: string): DayTask[] {
 		return this.dependencies.index.byProject(projectPath);
 	}
 
-	async toggleStatus(id: string): Promise<DayTask> {
+	/** Applies edited fields from a creation-input to an existing task. */
+	async updateTask(id: string, input: CreateDayTaskInput): Promise<DayTask> {
 		const task = await this.dependencies.store.get(id);
 		if (!task) {
 			throw new Error(`Task not found: ${id}`);
 		}
 
-		const updatedTask: DayTask = {
+		const { statusManager } = this.dependencies;
+		const title = input.title.trim() || task.title;
+		const status = statusManager.normalizeStatusValue(input.status ?? task.status);
+		const wasCompleted = statusManager.isCompletedStatus(task.status);
+		const isCompleted = statusManager.isCompletedStatus(status);
+		const timestamp = this.now();
+
+		const updated: DayTask = {
 			...task,
-			status: task.status === "done" ? "open" : "done",
-			updatedAt: this.now(),
+			title,
+			status,
+			scheduledDate: input.scheduledDate || task.scheduledDate,
+			dueDate: input.dueDate,
+			priority: input.priority,
+			tags: input.tags ? [...input.tags] : [],
+			contexts: input.contexts ? [...input.contexts] : [],
+			projects: input.projects ? input.projects.map((p) => ({ ...p })) : [],
+			estimateMinutes: input.estimateMinutes,
+			description: input.description,
+			updatedAt: timestamp,
 		};
-		await this.saveAndIndex(updatedTask);
-		return updatedTask;
+
+		if (isCompleted && !wasCompleted) {
+			updated.completedAt = timestamp;
+		} else if (!isCompleted && wasCompleted) {
+			updated.completedAt = undefined;
+		}
+
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
+	/** Sets an explicit status, applying completion side-effects on completedAt. */
+	async setStatus(id: string, status: string): Promise<DayTask> {
+		const task = await this.dependencies.store.get(id);
+		if (!task) {
+			throw new Error(`Task not found: ${id}`);
+		}
+
+		const { statusManager } = this.dependencies;
+		const normalized = statusManager.normalizeStatusValue(status);
+		const wasCompleted = statusManager.isCompletedStatus(task.status);
+		const isCompleted = statusManager.isCompletedStatus(normalized);
+		const timestamp = this.now();
+
+		const updated: DayTask = { ...task, status: normalized, updatedAt: timestamp };
+		if (isCompleted && !wasCompleted) {
+			updated.completedAt = timestamp;
+		} else if (!isCompleted && wasCompleted) {
+			updated.completedAt = undefined;
+		}
+
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
+	/** Advances a task to the next status in the configured cycle. */
+	async cycleStatus(id: string): Promise<DayTask> {
+		const task = await this.dependencies.store.get(id);
+		if (!task) {
+			throw new Error(`Task not found: ${id}`);
+		}
+		return this.setStatus(
+			id,
+			this.dependencies.statusManager.getNextStatus(task.status)
+		);
 	}
 
 	private async saveAndIndex(task: DayTask): Promise<void> {
