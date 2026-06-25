@@ -23,7 +23,7 @@ export interface TaskFactoryDependencies {
 	defaults?: TaskFactoryDefaults;
 }
 
-function mergeUniqueStrings(...lists: Array<string[] | undefined>): string[] {
+export function mergeUniqueStrings(...lists: Array<string[] | undefined>): string[] {
 	const seen = new Set<string>();
 	const result: string[] = [];
 	for (const list of lists) {
@@ -37,7 +37,9 @@ function mergeUniqueStrings(...lists: Array<string[] | undefined>): string[] {
 	return result;
 }
 
-function mergeUniqueProjects(...lists: Array<ProjectLink[] | undefined>): ProjectLink[] {
+export function mergeUniqueProjects(
+	...lists: Array<ProjectLink[] | undefined>
+): ProjectLink[] {
 	const seen = new Set<string>();
 	const result: ProjectLink[] = [];
 	for (const list of lists) {

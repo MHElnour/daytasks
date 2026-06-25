@@ -142,6 +142,26 @@ describe("DayTaskService", () => {
 		expect(service.getTasksForTag("shopping")).toHaveLength(1);
 	});
 
+	it("deduplicates contexts and projects on update so the index lists the task once", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });
+
+		const updated = await service.updateTask(
+			"TSK-8cA562sd",
+			update({
+				title: "Buy milk",
+				scheduledDate: "2026-06-25",
+				contexts: ["home", "home"],
+				projects: [{ path: "P.md" }, { path: "P.md", title: "dup" }],
+			})
+		);
+
+		expect(updated.contexts).toEqual(["home"]);
+		expect(updated.projects).toEqual([{ path: "P.md" }]);
+		expect(service.getTasksForContext("home")).toHaveLength(1);
+		expect(service.getTasksForProject("P.md")).toHaveLength(1);
+	});
+
 	it("deletes a task from the store and index", async () => {
 		const service = makeService();
 		await service.createTask({

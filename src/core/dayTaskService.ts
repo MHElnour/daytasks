@@ -8,7 +8,7 @@ import {
 	type DayTask,
 	type UpdateDayTaskInput,
 } from "./task";
-import { createDayTask } from "./taskFactory";
+import { createDayTask, mergeUniqueProjects, mergeUniqueStrings } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
 import type { TaskStore } from "./taskStore";
 
@@ -91,9 +91,9 @@ export class DayTaskService {
 			scheduledDate: input.scheduledDate || task.scheduledDate,
 			dueDate: input.dueDate,
 			priority: input.priority,
-			tags: withDefaultTag(input.tags ? [...input.tags] : []),
-			contexts: input.contexts ? [...input.contexts] : [],
-			projects: input.projects ? input.projects.map((p) => ({ ...p })) : [],
+			tags: withDefaultTag(mergeUniqueStrings(input.tags)),
+			contexts: mergeUniqueStrings(input.contexts),
+			projects: mergeUniqueProjects(input.projects),
 			estimateMinutes: input.estimateMinutes,
 			description: clampDescription(input.description),
 			updatedAt: timestamp,
