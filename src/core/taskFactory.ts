@@ -2,6 +2,7 @@ import { nowIso } from "../util/time";
 import type { StatusManager } from "./statusManager";
 import {
 	clampDescription,
+	dueBeforeScheduled,
 	withDefaultTag,
 	type CreateDayTaskInput,
 	type DayTask,
@@ -60,6 +61,9 @@ export function createDayTask(
 	const title = input.title.trim();
 	if (!title) {
 		throw new Error("Task title is required");
+	}
+	if (dueBeforeScheduled(input.scheduledDate, input.dueDate)) {
+		throw new Error("Due date cannot be before the scheduled date");
 	}
 
 	const now = dependencies.now ?? nowIso;

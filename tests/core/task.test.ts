@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_TASK_TAG,
+	dueBeforeScheduled,
 	toUpdateDayTaskInput,
 	withDefaultTag,
 	type CreateDayTaskInput,
@@ -31,6 +32,19 @@ describe("withDefaultTag", () => {
 			DEFAULT_TASK_TAG,
 			"shopping",
 		]);
+	});
+});
+
+describe("dueBeforeScheduled", () => {
+	it("is true only when a due date precedes the scheduled date", () => {
+		expect(dueBeforeScheduled("2026-06-25", "2026-06-24")).toBe(true);
+		expect(dueBeforeScheduled("2026-06-25", "2026-06-25")).toBe(false);
+		expect(dueBeforeScheduled("2026-06-25", "2026-06-26")).toBe(false);
+	});
+
+	it("is false when there is no due date", () => {
+		expect(dueBeforeScheduled("2026-06-25", undefined)).toBe(false);
+		expect(dueBeforeScheduled("2026-06-25", "")).toBe(false);
 	});
 });
 

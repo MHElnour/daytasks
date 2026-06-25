@@ -162,6 +162,22 @@ describe("DayTaskService", () => {
 		expect(service.getTasksForProject("P.md")).toHaveLength(1);
 	});
 
+	it("rejects an update whose due date precedes the scheduled date", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Buy milk", scheduledDate: "2026-06-25" });
+
+		await expect(
+			service.updateTask(
+				"TSK-8cA562sd",
+				update({
+					title: "Buy milk",
+					scheduledDate: "2026-06-25",
+					dueDate: "2026-06-24",
+				})
+			)
+		).rejects.toThrow("Due date cannot be before the scheduled date");
+	});
+
 	it("deletes a task from the store and index", async () => {
 		const service = makeService();
 		await service.createTask({

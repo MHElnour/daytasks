@@ -3,6 +3,7 @@ import type { DayTasksSettings } from "../settings/settings";
 import type { StatusManager } from "./statusManager";
 import {
 	clampDescription,
+	dueBeforeScheduled,
 	withDefaultTag,
 	type CreateDayTaskInput,
 	type DayTask,
@@ -82,13 +83,17 @@ export class DayTaskService {
 		const { statusManager } = this.dependencies;
 		const title = input.title.trim() || task.title;
 		const status = statusManager.normalizeStatusValue(input.status ?? task.status);
+		const scheduledDate = input.scheduledDate || task.scheduledDate;
+		if (dueBeforeScheduled(scheduledDate, input.dueDate)) {
+			throw new Error("Due date cannot be before the scheduled date");
+		}
 		const timestamp = this.now();
 
 		const updated: DayTask = {
 			...task,
 			title,
 			status,
-			scheduledDate: input.scheduledDate || task.scheduledDate,
+			scheduledDate,
 			dueDate: input.dueDate,
 			priority: input.priority,
 			tags: withDefaultTag(mergeUniqueStrings(input.tags)),

@@ -117,4 +117,13 @@ describe("createDayTask", () => {
 			createDayTask({ title: "   ", scheduledDate: "2026-06-25" }, fixedDeps)
 		).toThrow("Task title is required");
 	});
+
+	it("rejects a due date before the scheduled date", () => {
+		expect(() =>
+			createDayTask(
+				{ title: "A", scheduledDate: "2026-06-25", dueDate: "2026-06-24" },
+				fixedDeps
+			)
+		).toThrow("Due date cannot be before the scheduled date");
+	});
 });

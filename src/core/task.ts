@@ -17,6 +17,18 @@ export function withDefaultTag(tags: string[]): string[] {
 	return result;
 }
 
+/**
+ * True when a due date falls before the scheduled date — an invalid task, since
+ * a deadline cannot precede the day work is planned. `YYYY-MM-DD` compares
+ * chronologically as plain strings.
+ */
+export function dueBeforeScheduled(
+	scheduledDate: string,
+	dueDate: string | undefined
+): boolean {
+	return !!dueDate && dueDate < scheduledDate;
+}
+
 /** Trims and clamps a description to the maximum length, or undefined if blank. */
 export function clampDescription(value: string | undefined): string | undefined {
 	if (!value) {

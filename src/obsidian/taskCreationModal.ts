@@ -2,6 +2,7 @@ import { App, Menu, Modal, setIcon } from "obsidian";
 import { mergeUniqueProjects } from "../core/taskFactory";
 import {
 	MAX_DESCRIPTION_LENGTH,
+	dueBeforeScheduled,
 	type CreateDayTaskInput,
 	type DayTask,
 	type ProjectLink,
@@ -417,6 +418,10 @@ export class TaskCreationModal extends Modal {
 		const title = this.title.trim();
 		if (!title || !this.scheduledDate) {
 			this.preview.setText("A title and scheduled date are required.");
+			return;
+		}
+		if (dueBeforeScheduled(this.scheduledDate, this.dueDate)) {
+			this.preview.setText("Due date cannot be before the scheduled date.");
 			return;
 		}
 
