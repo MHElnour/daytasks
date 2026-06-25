@@ -290,6 +290,45 @@ describe("DayTaskService subtasks", () => {
 	});
 });
 
+describe("DayTaskService dependencies", () => {
+	it("adds a blockedBy edge", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		const a = await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		expect(a.blockedBy).toEqual(["TSK-bbbbbbbb"]);
+	});
+
+	it("rejects a dependency that would create a cycle", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb"); // A blocked by B
+		await expect(service.addDependency("TSK-bbbbbbbb", "TSK-aaaaaaaa")).rejects.toThrow(
+			"cycle"
+		);
+	});
+
+	it("removes a blockedBy edge", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		const a = await service.removeDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		expect(a.blockedBy).toBeUndefined();
+	});
+
+	it("strips inbound edges when a blocker is deleted", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb"); // A blocked by B
+		await service.deleteTask("TSK-bbbbbbbb");
+		const a = await service.getTask("TSK-aaaaaaaa");
+		expect(a?.blockedBy).toBeUndefined();
+	});
+});
+
 describe("DayTaskService priority", () => {
 	it("sets a priority value", async () => {
 		const service = makeService();

@@ -13,6 +13,7 @@ import {
 import { createDayTask, mergeUniqueProjects, mergeUniqueStrings } from "./taskFactory";
 import type { TaskIndex } from "./taskIndex";
 import type { TaskStore } from "./taskStore";
+import { wouldCreateCycle } from "./dependencies";
 
 export type DayTaskServiceSettings = Pick<
 	DayTasksSettings,
@@ -111,6 +112,39 @@ export class DayTaskService {
 		return updated;
 	}
 
+	async addDependency(taskId: string, blockerId: string): Promise<DayTask> {
+		const task = await this.dependencies.store.get(taskId);
+		const blocker = await this.dependencies.store.get(blockerId);
+		if (!task || !blocker) {
+			throw new Error(`Task not found: ${!task ? taskId : blockerId}`);
+		}
+		const blockersOf = (id: string): string[] =>
+			this.dependencies.index.byId(id)?.blockedBy ?? [];
+		if (wouldCreateCycle(taskId, blockerId, blockersOf)) {
+			throw new Error("Dependency would create a cycle");
+		}
+		const updated: DayTask = {
+			...task,
+			blockedBy: mergeUniqueStrings(task.blockedBy, [blockerId]),
+			updatedAt: this.now(),
+		};
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
+	async removeDependency(taskId: string, blockerId: string): Promise<DayTask> {
+		const task = await this.dependencies.store.get(taskId);
+		if (!task) {
+			throw new Error(`Task not found: ${taskId}`);
+		}
+		const remaining = (task.blockedBy ?? []).filter((id) => id !== blockerId);
+		const { blockedBy: _drop, ...rest } = task;
+		const base: DayTask = { ...rest, updatedAt: this.now() };
+		const updated: DayTask = remaining.length > 0 ? { ...base, blockedBy: remaining } : base;
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
 	/**
 	 * Removes a task. Children are orphaned (their `parentId` is cleared) rather
 	 * than cascade-deleted, so no task is left pointing at a missing parent.
@@ -125,6 +159,20 @@ export class DayTaskService {
 			}
 			const { parentId: _removed, ...rest } = fresh;
 			await this.saveAndIndex({ ...rest, updatedAt: timestamp });
+		}
+
+		for (const dependent of this.dependencies.index.byBlocker(id)) {
+			const fresh = await this.dependencies.store.get(dependent.id);
+			if (!fresh?.blockedBy) {
+				continue;
+			}
+			const remaining = fresh.blockedBy.filter((b) => b !== id);
+			const { blockedBy: _drop, ...rest } = fresh;
+			const next: DayTask =
+				remaining.length > 0
+					? { ...rest, blockedBy: remaining, updatedAt: timestamp }
+					: { ...rest, updatedAt: timestamp };
+			await this.saveAndIndex(next);
 		}
 
 		await this.dependencies.store.delete(id);
