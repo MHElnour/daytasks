@@ -88,7 +88,8 @@ if (existsSync(unreleasedPath)) {
 // 4. Commit + tag (main.js/styles.css stay gitignored — they ship as assets).
 run("git", ["add", ...staged]);
 run("git", ["commit", "-m", `release ${next}`]);
-run("git", ["tag", next]);
+// Annotated tag (some git configs require a message; Obsidian accepts either).
+run("git", ["tag", "-a", next, "-m", `DayTasks ${next}`]);
 
 console.log(`\nrelease: committed + tagged ${next}.`);
 console.log("Review the commit and main.js, then publish:  npm run release:publish");

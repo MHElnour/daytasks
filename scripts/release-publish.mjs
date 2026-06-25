@@ -26,7 +26,8 @@ if (capture("git", ["status", "--porcelain"])) fail("working tree is not clean."
 if (!capture("git", ["tag", "-l", version])) {
 	fail(`tag ${version} not found — run "npm run release -- <bump>" first.`);
 }
-if (capture("git", ["rev-parse", version]) !== capture("git", ["rev-parse", "HEAD"])) {
+// `^{commit}` dereferences an annotated tag to its commit for the comparison.
+if (capture("git", ["rev-parse", `${version}^{commit}`]) !== capture("git", ["rev-parse", "HEAD"])) {
 	fail(`tag ${version} is not at HEAD — re-run the release step.`);
 }
 for (const asset of ["main.js", "manifest.json", "styles.css"]) {
