@@ -1,9 +1,10 @@
 import { EditorView } from "@codemirror/view";
 import { MarkdownView, Notice, Plugin, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
+import { dependencyCandidates } from "./core/dependencies";
 import { nextPriority } from "./core/priorityCycle";
 import { StatusManager } from "./core/statusManager";
-import { toUpdateDayTaskInput, type CreateDayTaskInput } from "./core/task";
+import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
@@ -139,6 +140,7 @@ export default class DayTasksPlugin extends Plugin {
 			onAddTask: () => this.openCreateModal(date),
 			onEditTask: (taskId) => void this.openEditModal(taskId),
 			onOpenProject: (path) => this.openProject(path),
+			onOpenTask: (taskId) => this.openTaskNote(taskId),
 			onSelectTag: (tag) => this.searchTag(tag),
 			onToggleSubtasks: (taskId) => this.toggleSubtasks(taskId),
 		});
@@ -308,6 +310,16 @@ export default class DayTasksPlugin extends Plugin {
 			getChildren: (parentId) => this.service.getChildren(parentId),
 			onAddSubtask: (parentId, title) => this.addSubtask(parentId, title),
 			onUnlinkSubtask: (childId) => this.unlinkSubtask(childId),
+			getBlockedBy: (id) => {
+				const t = this.index.byId(id);
+				return (t?.blockedBy ?? [])
+					.map((b) => this.index.byId(b))
+					.filter((x): x is NonNullable<typeof x> => x != null);
+			},
+			getBlocking: (id) => this.index.byBlocker(id),
+			getDependencyCandidates: (id) => this.getDependencyCandidates(id),
+			onAddDependency: (tid, bid) => this.addDependency(tid, bid),
+			onRemoveDependency: (tid, bid) => this.removeDependency(tid, bid),
 		}).open();
 	}
 
@@ -361,6 +373,43 @@ export default class DayTasksPlugin extends Plugin {
 		} catch (error) {
 			console.error("DayTasks: failed to update task", error);
 			new Notice("DayTasks: could not update that task.");
+		}
+	}
+
+	private openTaskNote(taskId: string): void {
+		const task = this.index.byId(taskId);
+		if (!task) {
+			return;
+		}
+		this.app.workspace.openLinkText(task.scheduledDate, "", false).catch((error) => {
+			console.error("DayTasks: failed to open task note", error);
+		});
+	}
+
+	private getDependencyCandidates(taskId: string): DayTask[] {
+		const blockersOf = (id: string): string[] => this.index.byId(id)?.blockedBy ?? [];
+		return dependencyCandidates(taskId, this.service.allTasks(), blockersOf);
+	}
+
+	private async addDependency(taskId: string, blockerId: string): Promise<void> {
+		try {
+			await this.service.addDependency(taskId, blockerId);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to add dependency", error);
+			new Notice("DayTasks: could not add that dependency.");
+		}
+	}
+
+	private async removeDependency(taskId: string, blockerId: string): Promise<void> {
+		try {
+			await this.service.removeDependency(taskId, blockerId);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to remove dependency", error);
+			new Notice("DayTasks: could not remove that dependency.");
 		}
 	}
 

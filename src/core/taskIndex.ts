@@ -4,6 +4,7 @@ export interface TaskIndex {
 	rebuild(tasks: DayTask[]): void;
 	upsert(task: DayTask): void;
 	remove(id: string): void;
+	all(): DayTask[];
 	byId(id: string): DayTask | null;
 	byDate(date: string): DayTask[];
 	byDueDate(date: string): DayTask[];
@@ -60,6 +61,10 @@ export class MemoryTaskIndex implements TaskIndex {
 
 		this.removeFromSecondaryMaps(existing);
 		this.byIdMap.delete(id);
+	}
+
+	all(): DayTask[] {
+		return [...this.byIdMap.values()];
 	}
 
 	byId(id: string): DayTask | null {

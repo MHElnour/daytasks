@@ -214,6 +214,11 @@ export class DayTaskService {
 		return this.dependencies.index.byParent(parentId);
 	}
 
+	/** Returns all tasks currently in the index as a snapshot. */
+	allTasks(): DayTask[] {
+		return this.dependencies.index.all();
+	}
+
 	/** Returns the task with the given id, or null if not found. */
 	getById(id: string): DayTask | null {
 		return this.dependencies.index.byId(id);

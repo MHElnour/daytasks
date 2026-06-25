@@ -355,3 +355,20 @@ describe("DayTaskService priority", () => {
 		);
 	});
 });
+
+describe("DayTaskService allTasks", () => {
+	it("returns an empty array when no tasks exist", () => {
+		const service = makeService();
+		expect(service.allTasks()).toEqual([]);
+	});
+
+	it("returns all created tasks as a snapshot", async () => {
+		const service = makeServiceWithIds(["TSK-001", "TSK-002"]);
+		await service.createTask({ title: "First", scheduledDate: "2026-06-26" });
+		await service.createTask({ title: "Second", scheduledDate: "2026-06-26" });
+
+		const all = service.allTasks();
+		expect(all).toHaveLength(2);
+		expect(all.map((t) => t.id).sort()).toEqual(["TSK-001", "TSK-002"]);
+	});
+});
