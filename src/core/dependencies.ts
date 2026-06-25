@@ -52,7 +52,13 @@ export function wouldCreateCycle(
 export function dependencyCandidates(
  taskId: string,
  all: DayTask[],
- blockersOf: (id: string) => string[]
+ blockersOf: (id: string) => string[],
+ isCompleted: (status: string) => boolean
 ): DayTask[] {
- return all.filter((t) => t.id !== taskId && !wouldCreateCycle(taskId, t.id, blockersOf));
+ return all.filter(
+  (t) =>
+   t.id !== taskId &&
+   !isCompleted(t.status) &&
+   !wouldCreateCycle(taskId, t.id, blockersOf)
+ );
 }

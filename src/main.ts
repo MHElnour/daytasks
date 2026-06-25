@@ -390,7 +390,12 @@ export default class DayTasksPlugin extends Plugin {
 
 	private getDependencyCandidates(taskId: string): DayTask[] {
 		const blockersOf = (id: string): string[] => this.index.byId(id)?.blockedBy ?? [];
-		return dependencyCandidates(taskId, this.service.allTasks(), blockersOf);
+		return dependencyCandidates(
+			taskId,
+			this.service.allTasks(),
+			blockersOf,
+			(status) => this.statusManager.isCompletedStatus(status)
+		);
 	}
 
 	private async addDependency(taskId: string, blockerId: string): Promise<void> {
