@@ -15,6 +15,7 @@ export interface WidgetRenderHandlers {
 	onEditTask?(taskId: string): void;
 	onOpenProject?(path: string): void;
 	onSelectTag?(tag: string): void;
+	onToggleSubtasks?(taskId: string): void;
 }
 
 /** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS. */
@@ -189,12 +190,47 @@ function renderTaskCard(
 	const content = el("div", "task-card__content");
 
 	const titleRow = el("div", "task-card__title-row");
+
+	if (card.children.length > 0) {
+		const disclosure = el("button", "task-card__disclosure");
+		disclosure.setAttribute("aria-expanded", String(card.expanded));
+		disclosure.setAttribute("aria-controls", `subtasks-${card.id}`);
+		disclosure.setAttribute(
+			"aria-label",
+			card.expanded ? "Collapse subtasks" : "Expand subtasks"
+		);
+		if (card.expanded) {
+			disclosure.classList.add("is-expanded");
+		}
+		const chevron = el("span", "task-card__disclosure-icon");
+		chevron.dataset.icon = "chevron-right";
+		chevron.setAttribute("aria-hidden", "true");
+		disclosure.appendChild(chevron);
+		disclosure.addEventListener("click", (event) => {
+			stop(event);
+			handlers.onToggleSubtasks?.(card.id);
+		});
+		titleRow.appendChild(disclosure);
+	}
+
 	const titleBlock = el("div", "task-card__title-block");
 	titleBlock.appendChild(el("span", "task-card__title-text", card.title));
 	if (options.showTaskIds) {
 		titleBlock.appendChild(el("div", "task-card__id", `Task ID: ${card.id}`));
 	}
 	titleRow.appendChild(titleBlock);
+
+	if (card.childProgress) {
+		const { done, total } = card.childProgress;
+		const wrap = el("div", "task-card__progress-wrap");
+		const bar = el("progress", "task-card__progress");
+		bar.max = total;
+		bar.value = done;
+		bar.setAttribute("aria-label", `${done} of ${total} subtasks done`);
+		wrap.appendChild(bar);
+		wrap.appendChild(el("span", "task-card__progress-label", `${done}/${total}`));
+		titleRow.appendChild(wrap);
+	}
 
 	const statusPill = el("button", "task-card__status");
 	statusPill.style.setProperty("--daytasks-status-color", card.statusColor);
@@ -223,6 +259,19 @@ function renderTaskCard(
 	mainRow.appendChild(content);
 	cardEl.appendChild(mainRow);
 	wrapper.appendChild(cardEl);
+
+	if (card.children.length > 0) {
+		const sublist = el("ul", "task-card__subtasks");
+		sublist.id = `subtasks-${card.id}`;
+		if (!card.expanded) {
+			sublist.setAttribute("hidden", "");
+		}
+		for (const child of card.children) {
+			sublist.appendChild(renderTaskCard(child, options, handlers));
+		}
+		wrapper.appendChild(sublist);
+	}
+
 	return wrapper;
 }
 

@@ -57,6 +57,8 @@ const filledModel: DailyTasksWidgetModel = {
 			contexts: ["phone"],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
 			description: "from the corner store",
+			children: [],
+			expanded: false,
 		},
 		{
 			id: "TSK-GJM4c42e",
@@ -71,6 +73,8 @@ const filledModel: DailyTasksWidgetModel = {
 			tags: [],
 			contexts: [],
 			projects: [],
+			children: [],
+			expanded: false,
 		},
 	],
 };
@@ -228,5 +232,82 @@ describe("renderDailyTasksWidget", () => {
 		expect(
 			root.querySelector(".daytasks-widget__legend-item--overdue")?.textContent
 		).toContain("1 Overdue");
+	});
+});
+
+function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}) {
+	return {
+		id: "TSK-leaf00001",
+		title: "Leaf",
+		checked: false,
+		status: "open",
+		statusLabel: "Open",
+		statusColor: "#808080",
+		statusIcon: "circle",
+		scheduledLabel: "Jun 25",
+		overdue: false,
+		tags: [],
+		contexts: [],
+		projects: [],
+		children: [],
+		expanded: false,
+		...over,
+	};
+}
+
+function modelWith(cards: DailyTasksWidgetModel["cards"]): DailyTasksWidgetModel {
+	return { ...filledModel, cards, totalCount: cards.length, empty: cards.length === 0 };
+}
+
+describe("renderDailyTasksWidget subtasks", () => {
+	it("renders a progress bar and collapsed subtasks for a parent", () => {
+		const child = leafCard({ id: "TSK-child0001", title: "Child" });
+		const parent = leafCard({
+			id: "TSK-parent01",
+			title: "Parent",
+			children: [child],
+			childProgress: { done: 1, total: 2 },
+			expanded: false,
+		});
+		const onToggleSubtasks = vi.fn();
+		const { root } = render(modelWith([parent]), allOn, { onToggleSubtasks });
+
+		const top = root.querySelector<HTMLElement>(".daytasks-cards > .daytasks-note-widget__card");
+		expect(top?.querySelector(".task-card__progress-label")?.textContent).toBe("1/2");
+		const bar = top?.querySelector<HTMLProgressElement>("progress.task-card__progress");
+		expect(bar?.max).toBe(2);
+		expect(bar?.value).toBe(1);
+
+		const disclosure = top?.querySelector<HTMLElement>(".task-card__disclosure");
+		expect(disclosure?.getAttribute("aria-expanded")).toBe("false");
+
+		const sublist = top?.querySelector<HTMLElement>("ul.task-card__subtasks");
+		expect(sublist?.hasAttribute("hidden")).toBe(true);
+		expect(sublist?.querySelector(".task-card__title-text")?.textContent).toBe("Child");
+
+		disclosure?.dispatchEvent(new Event("click", { bubbles: true }));
+		expect(onToggleSubtasks).toHaveBeenCalledWith("TSK-parent01");
+	});
+
+	it("shows expanded subtasks without the hidden attribute", () => {
+		const child = leafCard({ id: "TSK-child0001", title: "Child" });
+		const parent = leafCard({
+			id: "TSK-parent01",
+			children: [child],
+			childProgress: { done: 0, total: 1 },
+			expanded: true,
+		});
+		const { root } = render(modelWith([parent]));
+		const top = root.querySelector<HTMLElement>(".daytasks-cards > .daytasks-note-widget__card");
+		expect(top?.querySelector(".task-card__disclosure")?.getAttribute("aria-expanded")).toBe("true");
+		expect(top?.querySelector("ul.task-card__subtasks")?.hasAttribute("hidden")).toBe(false);
+	});
+
+	it("renders no disclosure or progress bar for a leaf", () => {
+		const { root } = render(modelWith([leafCard()]));
+		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
+		expect(top?.querySelector(".task-card__disclosure")).toBeNull();
+		expect(top?.querySelector("progress.task-card__progress")).toBeNull();
+		expect(top?.querySelector("ul.task-card__subtasks")).toBeNull();
 	});
 });
