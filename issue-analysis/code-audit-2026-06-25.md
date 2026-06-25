@@ -2,26 +2,26 @@
 id: code-audit-2026-06-25
 title: Code Audit 2026-06-25
 type: audit
-status: partial
+status: resolved
 severity: medium
 opened: 2026-06-25
 closed:
 area: [core, obsidian, settings, ui, util, daily-notes]
 passes: 2
 eyes: [claude-opus-4.8, codex]
-tests: { before: 142, after: 171 }
+tests: { before: 142, after: 173 }
 issues:
   closed: [OPT-1, OPT-2, OPT-3, OPT-4, OPT-5, OPT-6, SEC-2, SEC-3, SEC-5, SEC-6,
     DRY-1, DRY-2, DRY-3, DRY-4, DRY-5, DRY-6, BAD-1, BAD-2, BAD-3, BAD-4, BAD-5,
     BAD-6, BAD-7, BAD-8, BAD-10, P2-1, P2-2, P2-3, P2-8, P2-9, P2-11, P2-12,
-    P2-13, dead-TaskStatus]
+    P2-13, dead-TaskStatus, P2-10]
   open: []
-  partial: [P2-10]
+  partial: []
   wontfix: [SEC-7, BAD-11]
   deferred: [SEC-1, SEC-4, BAD-9]
 resolution: >
-  Two-pass Claude+Codex audit. 34 findings fixed, 2 won't-fix, 3 roadmap-deferred,
-  0 open + 1 partial (test coverage of Obsidian glue). Build green; 142 -> 171 tests.
+  Two-pass Claude+Codex audit. 35 findings closed (P2-10 resolved by strategy),
+  2 won't-fix, 3 roadmap-deferred, 0 open. Build green; 142 -> 173 tests.
 ---
 
 # Code Audit 2026-06-25
@@ -34,13 +34,17 @@ All fixes landed test-first. `npm run check` green.
 `severity`: critical=data loss/exploit · high=crash/silent wrong · medium=degraded · low=polish.
 Pass-2 aliases re-scope a pass-1 item: P2-4=OPT-3, P2-5=SEC-3, P2-6=SEC-5, P2-7=SEC-6.
 
-## Open · partial (actionable)
+## Open
 
-All defect findings are fixed. One ongoing item remains:
+None. All findings are closed; won't-fix and deferred items below are by design.
 
-| ID | Sev | Area | Issue | Next |
-|----|-----|------|-------|------|
-| P2-10 | low | testing | `partial` — pure-logic fixes pinned; `main.ts`/settings-tab glue still uncovered. | Keep adding pure-helper tests; verify glue via `build:test` + Obsidian CLI. |
+**P2-10 (test coverage) — resolved by strategy:** the audit's decision logic was
+extracted into pure, unit-tested helpers (`buildTagSearchQuery`,
+`resolvesToMarkdownNote`, `applyPrimaryProjectEdit`, `parseCalendarDate`,
+`toUpdateDayTaskInput`, …). The remaining `main.ts`/`settingsTab.ts` code is
+Obsidian-API orchestration with no branchy logic; it cannot load in vitest and is
+verified via `npm run build:test` + the Obsidian CLI smoke checks in
+`docs/development/testing.md`.
 
 ## Won't-fix · deferred (by design)
 
@@ -132,4 +136,4 @@ P2-9. No disagreement — complementary coverage. Codex raw output in git run lo
 `82e084a` BAD-4 · `ff26811` BAD-8 · `f6b9567` BAD-10 · `bdaff16` OPT-5 · `7fc6c6c` OPT-2 ·
 `3b93c6b` P2-11 · `8ace5dc` P2-2 · `1496be0` OPT-3 · `52a8ccb` P2-1 · `c2994ff` SEC-3 ·
 `3d1cc01` SEC-5/6 · `bcdd300` P2-3 · `f0607fd` DRY-6 · `2065632` P2-8 · `d0863dd` P2-9 ·
-`afd3092` P2-12 · `3817e91` P2-13 · `8b04939` dead-TaskStatus.
+`afd3092` P2-12 · `3817e91` P2-13 · `8b04939` dead-TaskStatus · `81cc09f` P2-10.

@@ -94,3 +94,8 @@ from Obsidian's Community Plugins UI.
 - `tests/util/` - parsing, date, CSS color, debounce, estimate helpers.
 
 Prefer adding focused tests around pure logic before touching Obsidian glue.
+
+`main.ts` and `settings/settingsTab.ts` import the Obsidian runtime and cannot
+load in vitest, so they are intentionally not unit-tested. Their decision logic is
+extracted into the pure, tested helpers above; what remains is API orchestration,
+verified with `npm run build:test` and the Obsidian CLI smoke checks above.
