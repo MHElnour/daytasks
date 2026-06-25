@@ -344,3 +344,38 @@
 	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 	outline: none;
 }
+
+/* ---- dependency rows (mirror the subtask rows) ---- */
+
+.daytasks-deps {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+}
+
+.daytasks-deps-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+}
+
+.daytasks-dep-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.daytasks-dep-title {
+	flex: 1;
+}
+
+.daytasks-dep-remove,
+.daytasks-dep-add {
+	cursor: pointer;
+}
+
+.daytasks-dep-remove:focus-visible,
+.daytasks-dep-add:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	outline: none;
+}
