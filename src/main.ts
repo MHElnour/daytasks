@@ -229,6 +229,14 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private async handleCycleStatus(taskId: string): Promise<void> {
+		const task = await this.service.getTask(taskId);
+		if (!task) {
+			return;
+		}
+		if (this.statusManager.isBlockedStatus(task.status)) {
+			new Notice("DayTasks: this task is blocked by another task.");
+			return;
+		}
 		try {
 			await this.service.cycleStatus(taskId);
 			await this.persistTasks();
