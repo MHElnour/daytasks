@@ -191,28 +191,6 @@ function renderTaskCard(
 
 	const titleRow = el("div", "task-card__title-row");
 
-	if (card.children.length > 0) {
-		const disclosure = el("button", "task-card__disclosure");
-		disclosure.setAttribute("aria-expanded", String(card.expanded));
-		disclosure.setAttribute("aria-controls", `subtasks-${card.id}`);
-		disclosure.setAttribute(
-			"aria-label",
-			card.expanded ? "Collapse subtasks" : "Expand subtasks"
-		);
-		if (card.expanded) {
-			disclosure.classList.add("is-expanded");
-		}
-		const chevron = el("span", "task-card__disclosure-icon");
-		chevron.dataset.icon = "chevron-right";
-		chevron.setAttribute("aria-hidden", "true");
-		disclosure.appendChild(chevron);
-		disclosure.addEventListener("click", (event) => {
-			stop(event);
-			handlers.onToggleSubtasks?.(card.id);
-		});
-		titleRow.appendChild(disclosure);
-	}
-
 	const titleBlock = el("div", "task-card__title-block");
 	titleBlock.appendChild(el("span", "task-card__title-text", card.title));
 	if (options.showTaskIds) {
@@ -257,6 +235,33 @@ function renderTaskCard(
 	}
 
 	mainRow.appendChild(content);
+
+	// Subtask disclosure sits in a right-edge action column, vertically centered
+	// against the whole card (mirrors where TaskNotes places its card icons).
+	if (card.children.length > 0) {
+		const actions = el("div", "task-card__actions");
+		const disclosure = el("button", "task-card__disclosure");
+		disclosure.setAttribute("aria-expanded", String(card.expanded));
+		disclosure.setAttribute("aria-controls", `subtasks-${card.id}`);
+		disclosure.setAttribute(
+			"aria-label",
+			card.expanded ? "Collapse subtasks" : "Expand subtasks"
+		);
+		if (card.expanded) {
+			disclosure.classList.add("is-expanded");
+		}
+		const chevron = el("span", "task-card__disclosure-icon");
+		chevron.dataset.icon = "chevron-right";
+		chevron.setAttribute("aria-hidden", "true");
+		disclosure.appendChild(chevron);
+		disclosure.addEventListener("click", (event) => {
+			stop(event);
+			handlers.onToggleSubtasks?.(card.id);
+		});
+		actions.appendChild(disclosure);
+		mainRow.appendChild(actions);
+	}
+
 	cardEl.appendChild(mainRow);
 	wrapper.appendChild(cardEl);
 

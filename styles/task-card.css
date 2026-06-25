@@ -282,6 +282,14 @@
 
 /* ---- subtask chevron, progress bar, nested list ---- */
 
+/* Right-edge action column, vertically centered against the whole card. */
+.task-card__actions {
+	display: flex;
+	align-items: center;
+	align-self: center;
+	flex: 0 0 auto;
+}
+
 .task-card__disclosure {
 	display: inline-flex;
 	align-items: center;

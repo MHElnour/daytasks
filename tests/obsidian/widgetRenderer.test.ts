@@ -280,6 +280,9 @@ describe("renderDailyTasksWidget subtasks", () => {
 
 		const disclosure = top?.querySelector<HTMLElement>(".task-card__disclosure");
 		expect(disclosure?.getAttribute("aria-expanded")).toBe("false");
+		// Chevron lives in the right-edge action column, not in the title row.
+		expect(top?.querySelector(".task-card__actions .task-card__disclosure")).not.toBeNull();
+		expect(top?.querySelector(".task-card__title-row .task-card__disclosure")).toBeNull();
 
 		const sublist = top?.querySelector<HTMLElement>("ul.task-card__subtasks");
 		expect(sublist?.hasAttribute("hidden")).toBe(true);
@@ -307,6 +310,7 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const { root } = render(modelWith([leafCard()]));
 		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
 		expect(top?.querySelector(".task-card__disclosure")).toBeNull();
+		expect(top?.querySelector(".task-card__actions")).toBeNull();
 		expect(top?.querySelector("progress.task-card__progress")).toBeNull();
 		expect(top?.querySelector("ul.task-card__subtasks")).toBeNull();
 	});
