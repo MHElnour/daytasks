@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	dailyNotePathForDate,
 	getDailyNoteDateFromPath,
 	resolveDailyNoteDate,
 } from "../../src/daily-notes/dailyNoteDate";
@@ -43,5 +44,36 @@ describe("resolveDailyNoteDate", () => {
 
 	it("still requires a daily-note filename inside the folder", () => {
 		expect(resolveDailyNoteDate("Daily/notes.md", "Daily")).toBeNull();
+	});
+});
+
+describe("dailyNotePathForDate", () => {
+	it("returns bare date when folder is empty", () => {
+		expect(dailyNotePathForDate("2026-06-25", "")).toBe("2026-06-25");
+	});
+
+	it("prepends folder when folder is set", () => {
+		expect(dailyNotePathForDate("2026-06-25", "journal")).toBe("journal/2026-06-25");
+	});
+
+	it("strips trailing slash from folder", () => {
+		expect(dailyNotePathForDate("2026-06-25", "journal/")).toBe("journal/2026-06-25");
+	});
+
+	it("handles nested folders", () => {
+		expect(dailyNotePathForDate("2026-06-25", "a/b")).toBe("a/b/2026-06-25");
+	});
+
+	it("round-trips with resolveDailyNoteDate (empty folder)", () => {
+		const d = "2026-06-25";
+		const path = dailyNotePathForDate(d, "") + ".md";
+		expect(resolveDailyNoteDate(path, "")).toBe(d);
+	});
+
+	it("round-trips with resolveDailyNoteDate (configured folder)", () => {
+		const d = "2026-06-25";
+		const folder = "Daily";
+		const path = dailyNotePathForDate(d, folder) + ".md";
+		expect(resolveDailyNoteDate(path, folder)).toBe(d);
 	});
 });

@@ -7,7 +7,7 @@ import { StatusManager } from "./core/statusManager";
 import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
-import { resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
+import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
 import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
 import {
@@ -381,7 +381,8 @@ export default class DayTasksPlugin extends Plugin {
 		if (!task) {
 			return;
 		}
-		this.app.workspace.openLinkText(task.scheduledDate, "", false).catch((error) => {
+		const linkText = dailyNotePathForDate(task.scheduledDate, this.settings.dailyNoteFolder);
+		this.app.workspace.openLinkText(linkText, "", false).catch((error) => {
 			console.error("DayTasks: failed to open task note", error);
 		});
 	}

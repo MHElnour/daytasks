@@ -22,6 +22,19 @@ export function isWithinDailyNoteFolder(path: string, folder: string): boolean {
 }
 
 /**
+ * Returns the link target (path without .md extension) for a daily note on
+ * `date`, honoring the configured `folder`. The inverse of `resolveDailyNoteDate`:
+ * `resolveDailyNoteDate(dailyNotePathForDate(d, f) + ".md", f) === d`.
+ */
+export function dailyNotePathForDate(date: string, folder: string): string {
+	const normalized = folder.replace(/\/+$/, "");
+	if (!normalized) {
+		return date;
+	}
+	return `${normalized}/${date}`;
+}
+
+/**
  * Resolves a daily-note date from a path, honoring the configured daily-note
  * folder. Returns null when the note is outside the folder or its filename is
  * not a `YYYY-MM-DD` daily note.
