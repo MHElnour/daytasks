@@ -1,6 +1,10 @@
 import { chipColor } from "../util/chipColor";
+import { truncate } from "../util/truncate";
 import type { TaskCardViewModel } from "../ui/taskCard";
 import type { DailyTasksWidgetModel } from "../ui/todayView";
+
+/** Card titles are capped so the top row stays a single, predictable height. */
+const MAX_TITLE_LENGTH = 100;
 
 export interface WidgetRenderOptions {
 	showTaskIds: boolean;
@@ -152,6 +156,112 @@ function renderTags(
 	return row;
 }
 
+/** Icon-only status control: the status icon, tinted; the label shows on hover. */
+function renderStatusControl(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const button = el("button", "task-card__status");
+	button.style.setProperty("--daytasks-status-color", card.statusColor);
+	const icon = el("span", "task-card__status-icon");
+	icon.dataset.icon = card.statusIcon ?? "circle";
+	icon.setAttribute("aria-hidden", "true");
+	button.appendChild(icon);
+	button.setAttribute("aria-label", `Status: ${card.statusLabel} (click to advance)`);
+	button.setAttribute("title", card.statusLabel);
+	button.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onCycleStatus(card.id);
+	});
+	return button;
+}
+
+/** Always-present priority flag; click cycles the priority. */
+function renderPriorityControl(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const button = el("button", "task-card__priority-control");
+	button.style.setProperty("--chip-color", card.priorityColor ?? "var(--text-muted)");
+	const icon = el("span", "task-card__priority-icon");
+	icon.dataset.icon = card.priorityIcon ?? "flag";
+	icon.setAttribute("aria-hidden", "true");
+	button.appendChild(icon);
+	const label = card.priorityLabel ?? "None";
+	button.setAttribute("aria-label", `Priority: ${label} (click to change)`);
+	button.setAttribute("title", `Priority: ${label}`);
+	button.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onCyclePriority?.(card.id);
+	});
+	return button;
+}
+
+/** Subtask disclosure chevron (parent cards only). */
+function renderDisclosure(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const button = el("button", "task-card__disclosure");
+	button.setAttribute("aria-expanded", String(card.expanded));
+	button.setAttribute("aria-controls", `subtasks-${card.id}`);
+	button.setAttribute("aria-label", card.expanded ? "Collapse subtasks" : "Expand subtasks");
+	if (card.expanded) {
+		button.classList.add("is-expanded");
+	}
+	const chevron = el("span", "task-card__disclosure-icon");
+	chevron.dataset.icon = "chevron-right";
+	chevron.setAttribute("aria-hidden", "true");
+	button.appendChild(chevron);
+	button.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onToggleSubtasks?.(card.id);
+	});
+	return button;
+}
+
+/** Subtask progress bar with a `done/total` label. */
+function renderProgress(progress: { done: number; total: number }): HTMLElement {
+	const wrap = el("div", "task-card__progress-wrap");
+	const bar = el("progress", "task-card__progress");
+	bar.max = progress.total;
+	bar.value = progress.done;
+	bar.setAttribute("aria-label", `${progress.done} of ${progress.total} subtasks done`);
+	wrap.appendChild(bar);
+	wrap.appendChild(el("span", "task-card__progress-label", `${progress.done}/${progress.total}`));
+	return wrap;
+}
+
+/**
+ * Fixed right-rail: state controls (priority, status) pinned to the top, subtask
+ * controls (progress, chevron) pinned to the bottom, so their location never
+ * shifts with card content.
+ */
+function renderCardRail(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const rail = el("div", "task-card__rail");
+
+	const top = el("div", "task-card__rail-top");
+	top.appendChild(renderPriorityControl(card, handlers));
+	top.appendChild(renderStatusControl(card, handlers));
+	rail.appendChild(top);
+
+	if (card.childProgress || card.children.length > 0) {
+		const bottom = el("div", "task-card__rail-bottom");
+		if (card.childProgress) {
+			bottom.appendChild(renderProgress(card.childProgress));
+		}
+		if (card.children.length > 0) {
+			bottom.appendChild(renderDisclosure(card, handlers));
+		}
+		rail.appendChild(bottom);
+	}
+
+	return rail;
+}
+
 function renderTaskCard(
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
@@ -184,59 +294,15 @@ function renderTaskCard(
 
 	const content = el("div", "task-card__content");
 
+	// Top row is the title only (capped); the state + subtask controls live in a
+	// fixed right-rail so their position never shifts with card content.
 	const titleRow = el("div", "task-card__title-row");
-
 	const titleBlock = el("div", "task-card__title-block");
-	titleBlock.appendChild(el("span", "task-card__title-text", card.title));
+	titleBlock.appendChild(el("span", "task-card__title-text", truncate(card.title, MAX_TITLE_LENGTH)));
 	if (options.showTaskIds) {
 		titleBlock.appendChild(el("div", "task-card__id", `Task ID: ${card.id}`));
 	}
 	titleRow.appendChild(titleBlock);
-
-	if (card.childProgress) {
-		const { done, total } = card.childProgress;
-		const wrap = el("div", "task-card__progress-wrap");
-		const bar = el("progress", "task-card__progress");
-		bar.max = total;
-		bar.value = done;
-		bar.setAttribute("aria-label", `${done} of ${total} subtasks done`);
-		wrap.appendChild(bar);
-		wrap.appendChild(el("span", "task-card__progress-label", `${done}/${total}`));
-		titleRow.appendChild(wrap);
-	}
-
-	// Priority quick-change control: an always-present, colour-tinted flag the
-	// user clicks to cycle priority. The icon span is a data-icon placeholder
-	// filled by the setIcon post-pass.
-	const priorityControl = el("button", "task-card__priority-control");
-	priorityControl.style.setProperty(
-		"--chip-color",
-		card.priorityColor ?? "var(--text-muted)"
-	);
-	const priorityIcon = el("span", "task-card__priority-icon");
-	priorityIcon.dataset.icon = card.priorityIcon ?? "flag";
-	priorityIcon.setAttribute("aria-hidden", "true");
-	priorityControl.appendChild(priorityIcon);
-	priorityControl.setAttribute(
-		"aria-label",
-		`Priority: ${card.priorityLabel ?? "None"} (click to change)`
-	);
-	priorityControl.addEventListener("click", (event) => {
-		stop(event);
-		handlers.onCyclePriority?.(card.id);
-	});
-	titleRow.appendChild(priorityControl);
-
-	const statusPill = el("button", "task-card__status");
-	statusPill.style.setProperty("--daytasks-status-color", card.statusColor);
-	statusPill.appendChild(el("span", "task-card__status-dot"));
-	statusPill.appendChild(el("span", "task-card__status-label", card.statusLabel));
-	statusPill.setAttribute("aria-label", `Status: ${card.statusLabel} (click to advance)`);
-	statusPill.addEventListener("click", (event) => {
-		stop(event);
-		handlers.onCycleStatus(card.id);
-	});
-	titleRow.appendChild(statusPill);
 	content.appendChild(titleRow);
 
 	if (card.description) {
@@ -252,32 +318,7 @@ function renderTaskCard(
 	}
 
 	mainRow.appendChild(content);
-
-	// Subtask disclosure sits in a right-edge action column, vertically centered
-	// against the whole card (mirrors where TaskNotes places its card icons).
-	if (card.children.length > 0) {
-		const actions = el("div", "task-card__actions");
-		const disclosure = el("button", "task-card__disclosure");
-		disclosure.setAttribute("aria-expanded", String(card.expanded));
-		disclosure.setAttribute("aria-controls", `subtasks-${card.id}`);
-		disclosure.setAttribute(
-			"aria-label",
-			card.expanded ? "Collapse subtasks" : "Expand subtasks"
-		);
-		if (card.expanded) {
-			disclosure.classList.add("is-expanded");
-		}
-		const chevron = el("span", "task-card__disclosure-icon");
-		chevron.dataset.icon = "chevron-right";
-		chevron.setAttribute("aria-hidden", "true");
-		disclosure.appendChild(chevron);
-		disclosure.addEventListener("click", (event) => {
-			stop(event);
-			handlers.onToggleSubtasks?.(card.id);
-		});
-		actions.appendChild(disclosure);
-		mainRow.appendChild(actions);
-	}
+	mainRow.appendChild(renderCardRail(card, handlers));
 
 	cardEl.appendChild(mainRow);
 	wrapper.appendChild(cardEl);

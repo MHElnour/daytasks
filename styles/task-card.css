@@ -128,37 +128,30 @@
 	word-break: break-word;
 }
 
-/* ---- status pill ---- */
+/* ---- status control (icon-only; label shows on hover) ---- */
 
 .daytasks-plugin .task-card__status {
 	appearance: none;
 	display: inline-flex;
 	align-items: center;
-	gap: 5px;
-	min-height: 19px;
-	flex-shrink: 0;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
 	margin: 0;
-	padding: 1px 8px;
+	flex-shrink: 0;
 	border-radius: 999px;
 	border: 1px solid
-		color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 28%, transparent);
+		color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 30%, transparent);
 	background: transparent;
-	background-image: none;
 	box-shadow: none;
-	font-family: inherit;
-	font-size: var(--tn-font-size-sm);
-	font-weight: 600;
-	line-height: 1.2;
-	text-transform: none;
-	white-space: nowrap;
 	cursor: pointer;
 	color: var(--daytasks-status-color, var(--tn-text-muted));
 }
 
 .daytasks-plugin .task-card__status:hover {
-	border-color: color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 42%, transparent);
-	background: color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 7%, transparent);
-	box-shadow: none;
+	border-color: color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 45%, transparent);
+	background: color-mix(in srgb, var(--daytasks-status-color, var(--tn-border-color)) 10%, transparent);
 }
 
 .daytasks-plugin .task-card__status:focus-visible {
@@ -167,13 +160,16 @@
 	outline-offset: 2px;
 }
 
-.daytasks-plugin .task-card__status-dot {
-	box-sizing: border-box;
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	border: 1.5px solid var(--daytasks-status-color, var(--tn-text-muted));
-	background: transparent;
+.daytasks-plugin .task-card__status-icon {
+	display: inline-flex;
+}
+
+/* Keep the control glyphs a consistent, compact size. */
+.daytasks-plugin .task-card__status-icon svg,
+.daytasks-plugin .task-card__priority-icon svg,
+.daytasks-plugin .task-card__disclosure-icon svg {
+	width: 15px;
+	height: 15px;
 }
 
 /* ---- priority quick-change control (colour-tinted flag in the title row) ---- */
@@ -310,20 +306,32 @@
 		flex-direction: column;
 		gap: 6px;
 	}
-
-	.daytasks-plugin .task-card__status {
-		align-self: flex-start;
-	}
 }
 
 /* ---- subtask chevron, progress bar, nested list ---- */
 
-/* Right-edge action column, vertically centered against the whole card. */
-.task-card__actions {
+/* Fixed right rail: state controls pinned top, subtask controls pinned bottom. */
+.daytasks-plugin .task-card__rail {
+	display: flex;
+	flex-direction: column;
+	align-self: stretch;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.daytasks-plugin .task-card__rail-top {
 	display: flex;
 	align-items: center;
-	align-self: center;
-	flex: 0 0 auto;
+	gap: 4px;
+}
+
+.daytasks-plugin .task-card__rail-bottom {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: auto;
 }
 
 .task-card__disclosure {
@@ -358,7 +366,6 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--size-4-1);
-	margin-inline-start: var(--size-4-2);
 }
 
 .task-card__progress {

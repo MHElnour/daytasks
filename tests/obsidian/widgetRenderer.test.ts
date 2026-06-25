@@ -109,7 +109,11 @@ describe("renderDailyTasksWidget", () => {
 		const first = cards[0];
 		expect(first.querySelector(".task-card__title-text")?.textContent).toBe("Buy milk");
 		expect(first.querySelector(".task-card__checkbox")).toBeNull();
-		expect(first.querySelector(".task-card__status-label")?.textContent).toBe("Open");
+		// Status is an icon-only control in the rail; the label shows on hover (title).
+		const statusControl = first.querySelector<HTMLElement>(".task-card__rail-top .task-card__status");
+		expect(statusControl?.querySelector("[data-icon]")?.getAttribute("data-icon")).toBe("circle");
+		expect(statusControl?.getAttribute("title")).toBe("Open");
+		expect(first.querySelector(".task-card__status-label")).toBeNull();
 		expect(first.querySelector(".task-card__id")?.textContent).toBe("Task ID: TSK-8cA562sd");
 		expect(first.querySelector(".task-card__description")?.textContent).toBe(
 			"from the corner store"
@@ -293,9 +297,11 @@ describe("renderDailyTasksWidget subtasks", () => {
 
 		const disclosure = top?.querySelector<HTMLElement>(".task-card__disclosure");
 		expect(disclosure?.getAttribute("aria-expanded")).toBe("false");
-		// Chevron lives in the right-edge action column, not in the title row.
-		expect(top?.querySelector(".task-card__actions .task-card__disclosure")).not.toBeNull();
+		// Chevron lives in the bottom of the right rail, not in the title row.
+		expect(top?.querySelector(".task-card__rail-bottom .task-card__disclosure")).not.toBeNull();
 		expect(top?.querySelector(".task-card__title-row .task-card__disclosure")).toBeNull();
+		// Progress bar sits in the bottom of the rail too.
+		expect(top?.querySelector(".task-card__rail-bottom .task-card__progress")).not.toBeNull();
 		// A parent (has subtasks) gets a class so its title can shrink to wrap less.
 		expect(top?.querySelector(".task-card")?.classList.contains("task-card--parent")).toBe(true);
 
@@ -325,9 +331,16 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const { root } = render(modelWith([leafCard()]));
 		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
 		expect(top?.querySelector(".task-card__disclosure")).toBeNull();
-		expect(top?.querySelector(".task-card__actions")).toBeNull();
+		expect(top?.querySelector(".task-card__rail-bottom")).toBeNull();
 		expect(top?.querySelector(".task-card")?.classList.contains("task-card--parent")).toBe(false);
 		expect(top?.querySelector("progress.task-card__progress")).toBeNull();
 		expect(top?.querySelector("ul.task-card__subtasks")).toBeNull();
+	});
+
+	it("caps a long card title at 100 characters", () => {
+		const { root } = render(modelWith([leafCard({ title: "z".repeat(150) })]));
+		const text = root.querySelector(".task-card__title-text")?.textContent ?? "";
+		expect(text).toHaveLength(100);
+		expect(text.endsWith("…")).toBe(true);
 	});
 });

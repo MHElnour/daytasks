@@ -17,5 +17,8 @@ required.
 - Subtasks: a task can now own child subtasks. Add and unlink them from the task
   editor; parent cards show a progress bar and a chevron to reveal nested
   subtasks in the daily-note widget.
-- Card controls: the status pill is slimmer (no more full-width uppercase block),
-  priority is a click-to-cycle flag next to it, and the task id stays on one line.
+- Card layout: status and priority are now compact icon controls fixed to the
+  card's top-right (status shows its label on hover, click to advance; the
+  priority flag cycles on click). Subtask progress and the expand chevron sit at
+  the bottom-right. The title row holds only the title (capped at 100 characters)
+  and the task id stays on one line.
