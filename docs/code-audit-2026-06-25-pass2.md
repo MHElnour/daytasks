@@ -358,12 +358,15 @@ convention). Build green, **158 tests** passing after the sweep (was 147).
 | 2026-06-25 | OPT-3 | `1496be0` | `livePreview` `sync()` takes a `measureOffset` flag; `update()` passes `docChanged \|\| geometryChanged`, so selection-only updates skip the re-measure and the rest route through the existing rAF helper instead of running synchronously per `ViewUpdate`. Build-verified (CM glue). |
 | 2026-06-25 | P2-1 | `52a8ccb` | Cleared "Default priority" now persists as `""` (round-trips) instead of `undefined` (dropped → silently restored to "normal"); factory truthy-guards priority so the `""` sentinel never lands an empty priority on a task. TDD: factory empty-priority case + `mergeSettings` round-trip pin. |
 | 2026-06-25 | SEC-3 | `c2994ff` | New pure `safeCssColor(value, fallback)` gates status colors through `CSS.supports("color", …)` before they reach `--daytasks-status-color`, with a safe fallback; passes through when `CSS.supports` is absent. Applied at the task-card pill + legend-dot boundaries. TDD: 4 cases in `tests/util/cssColor.test.ts`. |
+| 2026-06-25 | SEC-5 | `3d1cc01` | New pure `buildTagSearchQuery(tag)` reduces a persisted tag to valid tag characters before `tag:#<safe>`, blocking search-operator injection; `main.searchTag` routes through it. TDD: `tests/obsidian/globalSearch.test.ts`. |
+| 2026-06-25 | SEC-6 | `3d1cc01` | New pure `resolvesToMarkdownNote(metadataCache, path)` resolves a project link as `openLinkText` would and requires a markdown destination; `main.openProject` shows a Notice and skips otherwise. TDD: `tests/obsidian/vaultNote.test.ts`. |
 
-**Remaining from the top-10 (not in this sweep):** SEC-5 (#6), SEC-6 (#7), P2-12 invalid
-calendar dates (#8), DRY-6 (#9), and the #10 cleanup cluster (delete dead `TaskStatus`,
-`noUnusedLocals`, P2-3 update-path dedup consistency, P2-13 `cm.dispatch` feature-detect,
-P2-8/P2-9, pin-tests). The corresponding pass-1 open items (OPT-3, SEC-3) are now resolved;
-SEC-5, SEC-6, DRY-6 stay open.
+After this second batch the suite is at **164 tests**.
+
+**Remaining from the top-10:** P2-12 invalid calendar dates (#8), DRY-6 (#9), and the #10
+cleanup cluster (delete dead `TaskStatus`, `noUnusedLocals`, P2-3 update-path dedup
+consistency, P2-13 `cm.dispatch` feature-detect, P2-8/P2-9, pin-tests). Of the pass-1 open
+items, **only DRY-6 remains** — OPT-3, SEC-3, SEC-5, SEC-6 are all resolved.
 
 ---
 
