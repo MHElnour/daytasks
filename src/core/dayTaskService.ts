@@ -160,6 +160,32 @@ export class DayTaskService {
 		);
 	}
 
+	/** Direct children of a task (from the index). */
+	getChildren(parentId: string): DayTask[] {
+		return this.dependencies.index.byParent(parentId);
+	}
+
+	/** Creates a child task linked to `parentId`. Throws if the parent is unknown. */
+	async createSubtask(parentId: string, input: CreateDayTaskInput): Promise<DayTask> {
+		const parent = await this.dependencies.store.get(parentId);
+		if (!parent) {
+			throw new Error(`Parent task not found: ${parentId}`);
+		}
+		return this.createTask({ ...input, parentId });
+	}
+
+	/** Clears a child's parentId (orphans it), mirroring deleteTask's semantics. */
+	async unlinkSubtask(childId: string): Promise<DayTask> {
+		const child = await this.dependencies.store.get(childId);
+		if (!child) {
+			throw new Error(`Task not found: ${childId}`);
+		}
+		const { parentId: _removed, ...rest } = child;
+		const updated: DayTask = { ...rest, updatedAt: this.now() };
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
 	/**
 	 * Stamps or clears `completedAt` when a status change crosses the completed
 	 * boundary, leaving it untouched otherwise. Mutates `task` in place.

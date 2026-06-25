@@ -8,6 +8,23 @@ import { MemoryTaskStore } from "../../src/core/taskStore";
 
 const statusManager = new StatusManager(DEFAULT_STATUSES, "open");
 
+function makeServiceWithIds(ids: string[]): DayTaskService {
+	let next = 0;
+	return new DayTaskService({
+		store: new MemoryTaskStore(),
+		index: new MemoryTaskIndex(),
+		statusManager,
+		settings: {
+			defaultStatus: "open",
+			defaultPriority: "normal",
+			defaultTags: [],
+			defaultProjectPath: "",
+		},
+		now: () => "2026-06-25T08:00:00.000Z",
+		id: () => ids[next++],
+	});
+}
+
 function makeService(
 	settings: Partial<{
 		defaultStatus: string;
@@ -234,5 +251,41 @@ describe("DayTaskService", () => {
 
 		expect(cycled.status).toBe("in-progress");
 		expect(service.getTasksForDate("2026-06-25")).toEqual([cycled]);
+	});
+});
+
+describe("DayTaskService subtasks", () => {
+	it("creates a subtask linked to its parent and lists it", async () => {
+		const service = makeServiceWithIds(["TSK-parent01", "TSK-child0001"]);
+		const parent = await service.createTask({ title: "Parent", scheduledDate: "2026-06-25" });
+
+		const child = await service.createSubtask(parent.id, {
+			title: "Child",
+			scheduledDate: "2026-06-25",
+		});
+
+		expect(child.parentId).toBe("TSK-parent01");
+		expect(service.getChildren(parent.id)).toEqual([child]);
+	});
+
+	it("rejects a subtask for a missing parent", async () => {
+		const service = makeServiceWithIds(["TSK-child0001"]);
+		await expect(
+			service.createSubtask("TSK-missing01", { title: "Child", scheduledDate: "2026-06-25" })
+		).rejects.toThrow("Parent task not found");
+	});
+
+	it("unlinks a subtask, clearing its parentId", async () => {
+		const service = makeServiceWithIds(["TSK-parent01", "TSK-child0001"]);
+		const parent = await service.createTask({ title: "Parent", scheduledDate: "2026-06-25" });
+		const child = await service.createSubtask(parent.id, {
+			title: "Child",
+			scheduledDate: "2026-06-25",
+		});
+
+		const unlinked = await service.unlinkSubtask(child.id);
+
+		expect(unlinked.parentId).toBeUndefined();
+		expect(service.getChildren(parent.id)).toEqual([]);
 	});
 });
