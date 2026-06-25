@@ -129,10 +129,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (!date) {
 			return false;
 		}
-		const model = this.controller.getWidgetForNotePath(notePath);
-		if (!model) {
-			return false;
-		}
+		const model = this.controller.getWidgetForDate(date);
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onAddTask: () => this.openCreateModal(date),

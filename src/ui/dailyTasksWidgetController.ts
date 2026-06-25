@@ -1,6 +1,5 @@
 import type { StatusManager } from "../core/statusManager";
 import type { DayTask } from "../core/task";
-import { getDailyNoteDateFromPath } from "../daily-notes/dailyNoteDate";
 import {
 	createDailyTasksWidgetModel,
 	type DailyTasksWidgetModel,
@@ -20,12 +19,12 @@ export interface DailyTasksWidgetControllerDependencies {
 export class DailyTasksWidgetController {
 	constructor(private readonly dependencies: DailyTasksWidgetControllerDependencies) {}
 
-	getWidgetForNotePath(notePath: string): DailyTasksWidgetModel | null {
-		const date = getDailyNoteDateFromPath(notePath);
-		if (!date) {
-			return null;
-		}
-
+	/**
+	 * Builds the widget model for an already-resolved daily-note date. The caller
+	 * owns daily-note / folder detection (one folder-aware resolver), so the date
+	 * is not re-derived here.
+	 */
+	getWidgetForDate(date: string): DailyTasksWidgetModel {
 		return createDailyTasksWidgetModel(
 			date,
 			this.dependencies.service.getTasksForDate(date),

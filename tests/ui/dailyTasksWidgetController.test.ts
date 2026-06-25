@@ -36,7 +36,7 @@ describe("DailyTasksWidgetController", () => {
 			projects: [{ path: "Projects/Home.md", title: "Home" }],
 		});
 
-		expect(controller.getWidgetForNotePath("Daily/2026-06-24.md")).toEqual({
+		expect(controller.getWidgetForDate("2026-06-24")).toEqual({
 			date: "2026-06-24",
 			title: "DayTasks",
 			empty: false,
@@ -70,10 +70,19 @@ describe("DailyTasksWidgetController", () => {
 		});
 	});
 
-	it("does not create a widget model for non-daily notes", () => {
+	it("builds an empty model for a date with no tasks", () => {
 		const service = makeService();
 		const controller = new DailyTasksWidgetController({ service, statusManager, today: () => "2026-06-24" });
 
-		expect(controller.getWidgetForNotePath("Projects/Home.md")).toBeNull();
+		expect(controller.getWidgetForDate("2026-06-26")).toEqual({
+			date: "2026-06-26",
+			title: "DayTasks",
+			empty: true,
+			totalCount: 0,
+			doneCount: 0,
+			overdueCount: 0,
+			statusSummary: [],
+			cards: [],
+		});
 	});
 });
