@@ -45,6 +45,9 @@ describe("createTaskCardViewModel", () => {
 			description: undefined,
 			children: [],
 			expanded: false,
+			blockedBy: [],
+			blocking: [],
+			blocked: false,
 		});
 	});
 
@@ -126,5 +129,27 @@ describe("createTaskCardViewModel", () => {
 		expect(model.children).toEqual([childModel]);
 		expect(model.childProgress).toEqual({ done: 1, total: 2 });
 		expect(model.expanded).toBe(true);
+	});
+
+	it("resolves blockedBy + blocking refs and the blocked flag", () => {
+		const blocker = { ...task, id: "TSK-blocker01", title: "Blocker", status: "open" };
+		const blocked = { ...task, id: "TSK-blocked01", title: "Dependent", status: "open", blockedBy: ["TSK-blocker01"] };
+		const model = createTaskCardViewModel(blocked, statusManager, "2026-06-24", priorities, {}, {
+			resolve: (id) => (id === "TSK-blocker01" ? blocker : undefined),
+			blocking: [],
+		});
+		expect(model.blockedBy.map((r) => r.id)).toEqual(["TSK-blocker01"]);
+		expect(model.blockedBy[0].title).toBe("Blocker");
+		expect(model.blocked).toBe(true); // blocker is open (not completed)
+	});
+
+	it("is not blocked when all blockers are completed", () => {
+		const blocker = { ...task, id: "TSK-blocker01", status: "done" };
+		const blocked = { ...task, id: "TSK-blocked01", blockedBy: ["TSK-blocker01"] };
+		const model = createTaskCardViewModel(blocked, statusManager, "2026-06-24", priorities, {}, {
+			resolve: () => blocker,
+			blocking: [],
+		});
+		expect(model.blocked).toBe(false);
 	});
 });

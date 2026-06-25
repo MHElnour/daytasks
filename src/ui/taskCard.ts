@@ -20,6 +20,18 @@ export interface TaskCardNesting {
 	expanded?: boolean;
 }
 
+export interface TaskRef {
+	id: string;
+	title: string;
+	scheduledDate: string;
+	completed: boolean;
+}
+
+export interface TaskCardRelations {
+	resolve?: (id: string) => DayTask | undefined;
+	blocking?: DayTask[];
+}
+
 export interface TaskCardViewModel {
 	id: string;
 	title: string;
@@ -44,6 +56,9 @@ export interface TaskCardViewModel {
 	children: TaskCardViewModel[];
 	childProgress?: { done: number; total: number };
 	expanded: boolean;
+	blockedBy: TaskRef[];
+	blocking: TaskRef[];
+	blocked: boolean;
 }
 
 export function createTaskCardViewModel(
@@ -51,13 +66,29 @@ export function createTaskCardViewModel(
 	statusManager: StatusManager,
 	referenceDate: string,
 	priorities: PriorityConfig[],
-	nesting: TaskCardNesting = {}
+	nesting: TaskCardNesting = {},
+	relations: TaskCardRelations = {}
 ): TaskCardViewModel {
 	const config = statusManager.getStatusConfig(task.status);
 	const checked = statusManager.isCompletedStatus(task.status);
 	const priorityConfig = task.priority
 		? priorities.find((priority) => priority.value === task.priority)
 		: undefined;
+
+	const toRef = (t: DayTask): TaskRef => ({
+		id: t.id,
+		title: t.title,
+		scheduledDate: t.scheduledDate,
+		completed: statusManager.isCompletedStatus(t.status),
+	});
+
+	const blockedByTasks = (task.blockedBy ?? [])
+		.map((id) => relations.resolve?.(id))
+		.filter((t): t is DayTask => t !== undefined);
+	const blockedBy = blockedByTasks.map(toRef);
+	const blocking = (relations.blocking ?? []).map(toRef);
+	const blocked = blockedBy.some((ref) => !ref.completed);
+
 	return {
 		id: task.id,
 		title: task.title,
@@ -89,5 +120,8 @@ export function createTaskCardViewModel(
 		children: nesting.children ?? [],
 		childProgress: nesting.childProgress,
 		expanded: nesting.expanded ?? false,
+		blockedBy,
+		blocking,
+		blocked,
 	};
 }

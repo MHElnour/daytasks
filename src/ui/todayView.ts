@@ -30,7 +30,9 @@ export function createDailyTasksWidgetModel(
 	referenceDate: string,
 	priorities: PriorityConfig[],
 	getChildren: (id: string) => DayTask[] = () => [],
-	expandedIds: ReadonlySet<string> = new Set()
+	expandedIds: ReadonlySet<string> = new Set(),
+	getById: (id: string) => DayTask | undefined = () => undefined,
+	getBlocking: (id: string) => DayTask[] = () => []
 ): DailyTasksWidgetModel {
 	const isCompleted = (status: string): boolean => statusManager.isCompletedStatus(status);
 
@@ -38,11 +40,18 @@ export function createDailyTasksWidgetModel(
 		const directChildren = getChildren(node.task.id);
 		const childProgress =
 			directChildren.length > 0 ? computeChildProgress(directChildren, isCompleted) : undefined;
-		return createTaskCardViewModel(node.task, statusManager, referenceDate, priorities, {
-			children: node.children.map(toCard),
-			childProgress,
-			expanded: expandedIds.has(node.task.id),
-		});
+		return createTaskCardViewModel(
+			node.task,
+			statusManager,
+			referenceDate,
+			priorities,
+			{
+				children: node.children.map(toCard),
+				childProgress,
+				expanded: expandedIds.has(node.task.id),
+			},
+			{ resolve: getById, blocking: getBlocking(node.task.id) }
+		);
 	};
 
 	const cards = buildTaskForest(tasks, isCompleted).map(toCard);

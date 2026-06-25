@@ -70,6 +70,9 @@ describe("DailyTasksWidgetController", () => {
 					description: undefined,
 					children: [],
 					expanded: false,
+					blockedBy: [],
+					blocking: [],
+					blocked: false,
 				},
 			],
 		});

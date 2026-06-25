@@ -9,6 +9,8 @@ import {
 export interface DailyTasksWidgetService {
 	getTasksForDate(date: string): DayTask[];
 	getChildren(parentId: string): DayTask[];
+	getById(id: string): DayTask | null;
+	byBlocker(id: string): DayTask[];
 }
 
 export interface DailyTasksWidgetControllerDependencies {
@@ -38,7 +40,9 @@ export class DailyTasksWidgetController {
 			this.dependencies.today(),
 			this.dependencies.priorities,
 			(id) => this.dependencies.service.getChildren(id),
-			expandedIds
+			expandedIds,
+			(id) => this.dependencies.service.getById(id) ?? undefined,
+			(id) => this.dependencies.service.byBlocker(id)
 		);
 	}
 }

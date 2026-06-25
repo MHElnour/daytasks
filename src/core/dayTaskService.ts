@@ -214,6 +214,16 @@ export class DayTaskService {
 		return this.dependencies.index.byParent(parentId);
 	}
 
+	/** Returns the task with the given id, or null if not found. */
+	getById(id: string): DayTask | null {
+		return this.dependencies.index.byId(id);
+	}
+
+	/** Returns tasks that are blocked by the given task id. */
+	byBlocker(id: string): DayTask[] {
+		return this.dependencies.index.byBlocker(id);
+	}
+
 	/** Creates a child task linked to `parentId`. Throws if the parent is unknown. */
 	async createSubtask(parentId: string, input: CreateDayTaskInput): Promise<DayTask> {
 		const parent = await this.dependencies.store.get(parentId);
