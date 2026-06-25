@@ -40,18 +40,21 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 			private lastKey = "";
 
 			constructor(view: EditorView) {
-				this.sync(view);
+				this.sync(view, true);
 			}
 
 			update(update: ViewUpdate): void {
-				this.sync(update.view);
+				// Selection-only updates (cursor moves) cannot change content height,
+				// so skip the bottom-offset re-measure for them and only re-measure
+				// when the document or editor geometry actually changed.
+				this.sync(update.view, update.docChanged || update.geometryChanged);
 			}
 
 			destroy(): void {
 				this.remove();
 			}
 
-			private sync(view: EditorView): void {
+			private sync(view: EditorView, measureOffset: boolean): void {
 				const container = findSizer(view);
 				const path = notePathFromView(view);
 				if (!host.isEnabled() || !path || !container) {
@@ -62,8 +65,12 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 				const key = `${path}|${host.version()}`;
 				const attached = this.widget?.parentElement != null;
 				if (this.widget && attached && key === this.lastKey) {
-					// Content height changes as the user types — keep the gap trimmed.
-					applyBottomOffset(container, this.widget);
+					// Content height changes as the user types — keep the gap trimmed,
+					// but only when geometry could have changed (rAF-batched, never
+					// synchronously on every keystroke/cursor move).
+					if (measureOffset) {
+						this.scheduleOffsetRefresh(container, this.widget);
+					}
 					return;
 				}
 
