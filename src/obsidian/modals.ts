@@ -4,6 +4,10 @@ import { noteBasename } from "../util/notePath";
 
 /** Searchable picker over the vault's markdown files. */
 export class MarkdownPathSuggestModal extends FuzzySuggestModal<string> {
+	/** Cached for the modal's lifetime — FuzzySuggestModal calls getItems() on
+	 * every keystroke, and the vault file list is stable while the modal is open. */
+	private cachedItems?: string[];
+
 	constructor(
 		app: App,
 		private readonly onChoose: (path: string) => void
@@ -13,12 +17,15 @@ export class MarkdownPathSuggestModal extends FuzzySuggestModal<string> {
 	}
 
 	getItems(): string[] {
-		const paths = this.app.vault
-			.getFiles()
-			.filter((file: TFile) => file.extension === "md")
-			.map((file: TFile) => file.path);
-		// Pre-sort with our shared util so the empty-query list is stable.
-		return filterMarkdownPaths(paths, "");
+		if (!this.cachedItems) {
+			const paths = this.app.vault
+				.getFiles()
+				.filter((file: TFile) => file.extension === "md")
+				.map((file: TFile) => file.path);
+			// Pre-sort with our shared util so the empty-query list is stable.
+			this.cachedItems = filterMarkdownPaths(paths, "");
+		}
+		return this.cachedItems;
 	}
 
 	getItemText(item: string): string {
