@@ -3,6 +3,7 @@ import type { DayTasksSettings } from "../settings/settings";
 import type { StatusManager } from "./statusManager";
 import {
 	clampDescription,
+	clampTitle,
 	dueBeforeScheduled,
 	withDefaultTag,
 	type CreateDayTaskInput,
@@ -81,7 +82,7 @@ export class DayTaskService {
 		}
 
 		const { statusManager } = this.dependencies;
-		const title = input.title.trim() || task.title;
+		const title = clampTitle(input.title) || task.title;
 		const status = statusManager.normalizeStatusValue(input.status ?? task.status);
 		const scheduledDate = input.scheduledDate || task.scheduledDate;
 		if (dueBeforeScheduled(scheduledDate, input.dueDate)) {

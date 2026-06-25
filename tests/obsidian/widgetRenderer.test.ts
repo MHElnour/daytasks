@@ -298,10 +298,10 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const disclosure = top?.querySelector<HTMLElement>(".task-card__disclosure");
 		expect(disclosure?.getAttribute("aria-expanded")).toBe("false");
 		// Chevron lives in the bottom of the right rail, not in the title row.
-		expect(top?.querySelector(".task-card__rail-bottom .task-card__disclosure")).not.toBeNull();
+		expect(top?.querySelector(".task-card__subtask-footer .task-card__disclosure")).not.toBeNull();
 		expect(top?.querySelector(".task-card__title-row .task-card__disclosure")).toBeNull();
 		// Progress bar sits in the bottom of the rail too.
-		expect(top?.querySelector(".task-card__rail-bottom .task-card__progress")).not.toBeNull();
+		expect(top?.querySelector(".task-card__subtask-footer .task-card__progress")).not.toBeNull();
 		// A parent (has subtasks) gets a class so its title can shrink to wrap less.
 		expect(top?.querySelector(".task-card")?.classList.contains("task-card--parent")).toBe(true);
 
@@ -331,7 +331,7 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const { root } = render(modelWith([leafCard()]));
 		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
 		expect(top?.querySelector(".task-card__disclosure")).toBeNull();
-		expect(top?.querySelector(".task-card__rail-bottom")).toBeNull();
+		expect(top?.querySelector(".task-card__subtask-footer")).toBeNull();
 		expect(top?.querySelector(".task-card")?.classList.contains("task-card--parent")).toBe(false);
 		expect(top?.querySelector("progress.task-card__progress")).toBeNull();
 		expect(top?.querySelector("ul.task-card__subtasks")).toBeNull();

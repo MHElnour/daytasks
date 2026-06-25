@@ -2,6 +2,7 @@ import { App, Menu, Modal, setIcon } from "obsidian";
 import { mergeUniqueProjects } from "../core/taskFactory";
 import {
 	MAX_DESCRIPTION_LENGTH,
+	MAX_TITLE_LENGTH,
 	dueBeforeScheduled,
 	type CreateDayTaskInput,
 	type DayTask,
@@ -153,11 +154,21 @@ export class TaskCreationModal extends Modal {
 
 		const titleInput = box1.createEl("input", {
 			cls: "daytasks-title-input",
-			attr: { type: "text", placeholder: "Buy milk", "aria-label": "Title" },
+			attr: {
+				type: "text",
+				placeholder: "Buy milk",
+				maxlength: String(MAX_TITLE_LENGTH),
+				"aria-label": "Title",
+			},
 		});
-		titleInput.value = this.title;
+		titleInput.value = this.title.slice(0, MAX_TITLE_LENGTH);
+		const titleCounter = box1.createDiv({
+			cls: "daytasks-char-counter",
+			text: `${titleInput.value.length}/${MAX_TITLE_LENGTH}`,
+		});
 		titleInput.addEventListener("input", () => {
-			this.title = titleInput.value;
+			this.title = titleInput.value.slice(0, MAX_TITLE_LENGTH);
+			titleCounter.setText(`${this.title.length}/${MAX_TITLE_LENGTH}`);
 			this.updatePreview();
 		});
 		window.setTimeout(() => titleInput.focus(), 0);

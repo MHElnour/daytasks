@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_TASK_TAG,
+	MAX_TITLE_LENGTH,
+	clampTitle,
 	dueBeforeScheduled,
 	toUpdateDayTaskInput,
 	withDefaultTag,
 	type CreateDayTaskInput,
 } from "../../src/core/task";
+
+describe("clampTitle", () => {
+	it("trims and leaves a short title unchanged", () => {
+		expect(clampTitle("  Buy milk  ")).toBe("Buy milk");
+	});
+
+	it("caps a long title at the maximum length", () => {
+		const result = clampTitle("z".repeat(150));
+		expect(result).toHaveLength(MAX_TITLE_LENGTH);
+		expect(result).toBe("z".repeat(MAX_TITLE_LENGTH));
+	});
+});
 
 describe("withDefaultTag", () => {
 	it("prepends the default tag when absent", () => {

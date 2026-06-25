@@ -1,6 +1,14 @@
 /** Maximum stored length for a task description. */
 export const MAX_DESCRIPTION_LENGTH = 500;
 
+/** Maximum stored length for a task title. */
+export const MAX_TITLE_LENGTH = 100;
+
+/** Trims a title and clamps it to the maximum length. */
+export function clampTitle(value: string): string {
+	return value.trim().slice(0, MAX_TITLE_LENGTH);
+}
+
 /** Tag added to every task by default. */
 export const DEFAULT_TASK_TAG = "daytask";
 

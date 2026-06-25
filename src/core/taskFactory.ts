@@ -2,6 +2,7 @@ import { nowIso } from "../util/time";
 import type { StatusManager } from "./statusManager";
 import {
 	clampDescription,
+	clampTitle,
 	dueBeforeScheduled,
 	withDefaultTag,
 	type CreateDayTaskInput,
@@ -58,7 +59,7 @@ export function createDayTask(
 	input: CreateDayTaskInput,
 	dependencies: TaskFactoryDependencies
 ): DayTask {
-	const title = input.title.trim();
+	const title = clampTitle(input.title);
 	if (!title) {
 		throw new Error("Task title is required");
 	}

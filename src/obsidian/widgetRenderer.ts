@@ -247,24 +247,24 @@ function renderRailTop(
 }
 
 /**
- * Bottom-right control cluster (subtask progress + expand chevron), or `null` for
- * a leaf card. Absolutely positioned via CSS.
+ * Dedicated subtask footer row (progress + chevron), rendered in flow below the
+ * card's properties so tags can never overlay it. `null` for a leaf card.
  */
-function renderRailBottom(
+function renderSubtaskFooter(
 	card: TaskCardViewModel,
 	handlers: WidgetRenderHandlers
 ): HTMLElement | null {
 	if (!card.childProgress && card.children.length === 0) {
 		return null;
 	}
-	const bottom = el("div", "task-card__rail-bottom");
+	const footer = el("div", "task-card__subtask-footer");
 	if (card.childProgress) {
-		bottom.appendChild(renderProgress(card.childProgress));
+		footer.appendChild(renderProgress(card.childProgress));
 	}
 	if (card.children.length > 0) {
-		bottom.appendChild(renderDisclosure(card, handlers));
+		footer.appendChild(renderDisclosure(card, handlers));
 	}
-	return bottom;
+	return footer;
 }
 
 function renderTaskCard(
@@ -322,16 +322,19 @@ function renderTaskCard(
 		content.appendChild(tags);
 	}
 
+	// Subtask progress + chevron live in a dedicated row below the properties, so
+	// tags can never render on top of them.
+	const footer = renderSubtaskFooter(card, handlers);
+	if (footer) {
+		content.appendChild(footer);
+	}
+
 	mainRow.appendChild(content);
 	cardEl.appendChild(mainRow);
 
-	// Control clusters are absolutely positioned (CSS), so they never steal flow
-	// width from the title or metadata.
+	// Priority + status are pinned to the top-right corner (absolute), so they
+	// never steal flow width from the title.
 	cardEl.appendChild(renderRailTop(card, handlers));
-	const railBottom = renderRailBottom(card, handlers);
-	if (railBottom) {
-		cardEl.appendChild(railBottom);
-	}
 
 	wrapper.appendChild(cardEl);
 

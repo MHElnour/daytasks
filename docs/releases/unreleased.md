@@ -19,6 +19,8 @@ required.
   subtasks in the daily-note widget.
 - Card layout: status and priority are now compact icon controls fixed to the
   card's top-right (status shows its label on hover, click to advance; the
-  priority flag cycles on click). Subtask progress and the expand chevron sit at
-  the bottom-right. The title row holds only the title (capped at 100 characters)
-  and the task id stays on one line.
+  priority flag cycles on click). Subtask progress and the expand chevron get
+  their own row below the task's properties, so tags never overlap them. The
+  title row holds only the title and the task id stays on one line.
+- Titles are capped at 100 characters, enforced in the editor (with a counter)
+  and on save.

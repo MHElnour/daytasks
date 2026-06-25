@@ -311,9 +311,9 @@
 /* ---- subtask chevron, progress bar, nested list ---- */
 
 /*
- * Control clusters are pinned to fixed corners (absolute), so they never take
- * flow width from the content. The content keeps the full card width; only the
- * rows that would sit under a cluster reserve space for it (see padding below).
+ * Priority + status are pinned to the top-right corner (absolute) so they never
+ * take flow width from the title. The title row reserves room for that cluster;
+ * everything else keeps the full card width.
  */
 .daytasks-plugin .task-card__rail-top {
 	position: absolute;
@@ -324,27 +324,30 @@
 	gap: 4px;
 }
 
-.daytasks-plugin .task-card__rail-bottom {
-	position: absolute;
-	bottom: 8px;
-	inset-inline-end: 10px;
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
 /* Title clears the top-right cluster (≈ a flag + status icon) with a small gap. */
 .daytasks-plugin .task-card__title-row {
 	padding-inline-end: 64px;
 }
 
-/* On parent cards the bottom-right cluster (progress + chevron) overlays the
- * lower rows, so those rows reserve room for it. Leaf cards have no bottom
- * cluster and keep the full width. */
-.daytasks-plugin .task-card--parent .task-card__metadata,
-.daytasks-plugin .task-card--parent .task-card__tags,
-.daytasks-plugin .task-card--parent .task-card__description {
-	padding-inline-end: 116px;
+/* Subtask progress + chevron get their own row below the properties, in flow, so
+ * tags can never render on top of them. */
+.daytasks-plugin .task-card__subtask-footer {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+}
+
+/* In the footer the bar fills the available width; the chevron stays at the end. */
+.daytasks-plugin .task-card__subtask-footer .task-card__progress-wrap {
+	flex: 1;
+}
+
+.daytasks-plugin .task-card__subtask-footer .task-card__progress {
+	flex: 1;
+	inline-size: auto;
+	width: auto;
+	max-inline-size: none;
 }
 
 .daytasks-plugin .task-card__disclosure {
