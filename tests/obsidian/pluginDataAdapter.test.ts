@@ -194,6 +194,16 @@ describe("decodePluginData", () => {
 		expect(decoded.tasks[0].contexts).toEqual([]);
 		expect(decoded.tasks[0].projects).toEqual([]);
 	});
+
+	it("drops a self-referential parentId", () => {
+		const decoded = decodePluginData({ tasks: [{ ...validTask, parentId: validTask.id }] });
+		expect(decoded.tasks[0].parentId).toBeUndefined();
+	});
+
+	it("keeps a parentId that points at another task", () => {
+		const decoded = decodePluginData({ tasks: [{ ...validTask, parentId: "TSK-other0001" }] });
+		expect(decoded.tasks[0].parentId).toBe("TSK-other0001");
+	});
 });
 
 describe("DayTasksDataStore", () => {

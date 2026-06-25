@@ -138,6 +138,12 @@ function normalizeStoredTask(task: Record<string, unknown>): DayTask {
 		}
 	}
 
+	// A task cannot be its own parent; drop a corrupt self-reference so it can't
+	// loop the renderer. (Transitive parent cycles are pruned in Slice C.)
+	if (normalized.parentId === normalized.id) {
+		delete normalized.parentId;
+	}
+
 	const estimateMinutes = asFiniteNumber(task.estimateMinutes);
 	if (estimateMinutes !== undefined) {
 		normalized.estimateMinutes = estimateMinutes;
