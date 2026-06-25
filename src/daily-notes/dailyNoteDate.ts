@@ -1,11 +1,15 @@
+import { isValidCalendarDate } from "../util/calendarDate";
 import { noteBasename } from "../util/notePath";
 
 const DAILY_NOTE_DATE_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:$|\s)/;
 
 export function getDailyNoteDateFromPath(path: string): string | null {
 	const match = noteBasename(path).match(DAILY_NOTE_DATE_PATTERN);
-
-	return match ? match[1] : null;
+	// A YYYY-MM-DD shape is not enough — reject impossible dates (e.g. 2026-13-45).
+	if (!match || !isValidCalendarDate(match[1])) {
+		return null;
+	}
+	return match[1];
 }
 
 /** True when `path` lives inside `folder` (empty folder matches anything). */

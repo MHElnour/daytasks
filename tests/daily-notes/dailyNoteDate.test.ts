@@ -17,6 +17,11 @@ describe("getDailyNoteDateFromPath", () => {
 		expect(getDailyNoteDateFromPath("Notes/random.md")).toBeNull();
 		expect(getDailyNoteDateFromPath("Daily/June 24 2026.md")).toBeNull();
 	});
+
+	it("rejects a YYYY-MM-DD shape that is not a real calendar date", () => {
+		expect(getDailyNoteDateFromPath("2026-13-45.md")).toBeNull();
+		expect(getDailyNoteDateFromPath("2026-02-29.md")).toBeNull();
+	});
 });
 
 describe("resolveDailyNoteDate", () => {

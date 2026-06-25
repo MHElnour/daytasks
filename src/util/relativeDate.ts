@@ -1,4 +1,4 @@
-const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+import { parseCalendarDate } from "./calendarDate";
 
 const MONTHS = [
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -7,19 +7,19 @@ const MONTHS = [
 
 /** Formats a YYYY-MM-DD date as "Jun 25". Returns the input if unparseable. */
 export function formatMonthDay(date: string): string {
-	const match = date.match(DATE_PATTERN);
-	if (!match) {
+	const parsed = parseCalendarDate(date);
+	if (!parsed) {
 		return date;
 	}
-	return `${MONTHS[Number(match[2]) - 1]} ${Number(match[3])}`;
+	return `${MONTHS[parsed.month - 1]} ${parsed.day}`;
 }
 
 function toUtcDays(date: string): number | null {
-	const match = date.match(DATE_PATTERN);
-	if (!match) {
+	const parsed = parseCalendarDate(date);
+	if (!parsed) {
 		return null;
 	}
-	const ms = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+	const ms = Date.UTC(parsed.year, parsed.month - 1, parsed.day);
 	return Math.floor(ms / 86400000);
 }
 
