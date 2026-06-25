@@ -106,11 +106,6 @@
 	word-break: break-word;
 }
 
-/* Parent cards lose width to the chevron column, so shrink the title a notch. */
-.daytasks-plugin .task-card--parent .task-card__title-text {
-	font-size: var(--tn-font-size-md);
-}
-
 .daytasks-plugin .task-card__id {
 	font-family: var(--font-monospace);
 	font-size: var(--tn-font-size-sm);
