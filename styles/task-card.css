@@ -445,11 +445,6 @@
 	font-size: var(--font-ui-smaller);
 }
 
-.daytasks-plugin .task-card__rel-chip.is-done {
-	text-decoration: line-through;
-	color: var(--text-muted);
-}
-
 .daytasks-plugin .task-card__rel-chip:focus-visible {
 	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 	outline: none;

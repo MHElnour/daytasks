@@ -364,7 +364,7 @@ describe("renderDailyTasksWidget relations", () => {
 		const box = top?.querySelector(".task-card__blocked-by");
 		expect(box).not.toBeNull();
 		const chip = box?.querySelector<HTMLElement>(".task-card__rel-chip");
-		expect(chip?.textContent).toContain("Blocker");
+		expect(chip?.textContent?.trim()).toBe("TSK-blocker01");
 		chip?.dispatchEvent(new Event("click", { bubbles: true }));
 		expect(onOpenTask).toHaveBeenCalledWith("TSK-blocker01");
 		expect(top?.querySelector(".task-card")?.classList.contains("task-card--blocked")).toBe(true);

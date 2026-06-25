@@ -278,10 +278,7 @@ function renderRelationBox(
 	box.appendChild(el("div", "task-card__rel-label", label));
 	const list = el("div", "task-card__rel-list");
 	for (const ref of refs) {
-		const chip = el("button", "task-card__rel-chip", `${ref.id} · ${ref.title}`);
-		if (ref.completed) {
-			chip.classList.add("is-done");
-		}
+		const chip = el("button", "task-card__rel-chip", ref.id);
 		chip.setAttribute("aria-label", `Open ${ref.title} (${ref.id})`);
 		chip.addEventListener("click", (event) => {
 			stop(event);
