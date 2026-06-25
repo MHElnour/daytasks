@@ -8,6 +8,7 @@ import {
 
 export interface DailyTasksWidgetService {
 	getTasksForDate(date: string): DayTask[];
+	getChildren(parentId: string): DayTask[];
 }
 
 export interface DailyTasksWidgetControllerDependencies {
@@ -26,13 +27,18 @@ export class DailyTasksWidgetController {
 	 * owns daily-note / folder detection (one folder-aware resolver), so the date
 	 * is not re-derived here.
 	 */
-	getWidgetForDate(date: string): DailyTasksWidgetModel {
+	getWidgetForDate(
+		date: string,
+		expandedIds: ReadonlySet<string> = new Set()
+	): DailyTasksWidgetModel {
 		return createDailyTasksWidgetModel(
 			date,
 			this.dependencies.service.getTasksForDate(date),
 			this.dependencies.statusManager,
 			this.dependencies.today(),
-			this.dependencies.priorities
+			this.dependencies.priorities,
+			(id) => this.dependencies.service.getChildren(id),
+			expandedIds
 		);
 	}
 }

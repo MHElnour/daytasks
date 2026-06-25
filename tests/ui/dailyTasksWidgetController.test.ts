@@ -68,6 +68,8 @@ describe("DailyTasksWidgetController", () => {
 					contexts: [],
 					projects: [{ path: "Projects/Home.md", label: "Home" }],
 					description: undefined,
+					children: [],
+					expanded: false,
 				},
 			],
 		});
@@ -87,5 +89,39 @@ describe("DailyTasksWidgetController", () => {
 			statusSummary: [],
 			cards: [],
 		});
+	});
+
+	it("nests children and reflects expandedIds", async () => {
+		let next = 0;
+		const ids = ["TSK-parent01", "TSK-child0001"];
+		const service = new DayTaskService({
+			store: new MemoryTaskStore(),
+			index: new MemoryTaskIndex(),
+			statusManager,
+			settings: {
+				defaultStatus: "open",
+				defaultPriority: "normal",
+				defaultTags: [],
+				defaultProjectPath: "",
+			},
+			now: () => "2026-06-24T08:00:00.000Z",
+			id: () => ids[next++],
+		});
+		const controller = new DailyTasksWidgetController({
+			service,
+			statusManager,
+			priorities: DEFAULT_PRIORITIES,
+			today: () => "2026-06-24",
+		});
+
+		const parent = await service.createTask({ title: "Parent", scheduledDate: "2026-06-24" });
+		await service.createSubtask(parent.id, { title: "Child", scheduledDate: "2026-06-24" });
+
+		const model = controller.getWidgetForDate("2026-06-24", new Set([parent.id]));
+
+		expect(model.cards.map((c) => c.id)).toEqual(["TSK-parent01"]);
+		expect(model.cards[0].children.map((c) => c.id)).toEqual(["TSK-child0001"]);
+		expect(model.cards[0].childProgress).toEqual({ done: 0, total: 1 });
+		expect(model.cards[0].expanded).toBe(true);
 	});
 });
