@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, type TextComponent } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting, type TextComponent } from "obsidian";
 import type DayTasksPlugin from "../main";
 import { addMarkdownPathPicker } from "../obsidian/projectPicker";
 import { debounce, type DebouncedFunction } from "../util/debounce";
@@ -16,15 +16,23 @@ export class DayTasksSettingTab extends PluginSettingTab {
 	) {
 		super(app, plugin);
 		this.persistDebounced = debounce(() => {
-			void this.plugin.saveSettings().catch((error) => {
-				console.error("DayTasks: failed to save settings", error);
-			});
+			void this.saveSettingsWithNotice();
 		}, TEXT_SAVE_DEBOUNCE_MS);
 	}
 
 	/** Persists pending text edits when the settings pane closes. */
 	hide(): void {
 		this.persistDebounced.flush();
+	}
+
+	/** Saves settings, surfacing a failure instead of swallowing the rejection. */
+	private async saveSettingsWithNotice(): Promise<void> {
+		try {
+			await this.plugin.saveSettings();
+		} catch (error) {
+			console.error("DayTasks: failed to save settings", error);
+			new Notice("DayTasks: could not save settings.");
+		}
 	}
 
 	display(): void {
@@ -62,35 +70,35 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.addToggle((toggle) =>
 				toggle.setValue(settings.showDailyNoteWidget).onChange(async (value) => {
 					settings.showDailyNoteWidget = value;
-					await this.plugin.saveSettings();
+					await this.saveSettingsWithNotice();
 				})
 			);
 
 		new Setting(containerEl).setName("Show task IDs").addToggle((toggle) =>
 			toggle.setValue(settings.showTaskIds).onChange(async (value) => {
 				settings.showTaskIds = value;
-				await this.plugin.saveSettings();
+				await this.saveSettingsWithNotice();
 			})
 		);
 
 		new Setting(containerEl).setName("Show tags").addToggle((toggle) =>
 			toggle.setValue(settings.showTags).onChange(async (value) => {
 				settings.showTags = value;
-				await this.plugin.saveSettings();
+				await this.saveSettingsWithNotice();
 			})
 		);
 
 		new Setting(containerEl).setName("Show contexts").addToggle((toggle) =>
 			toggle.setValue(settings.showContexts).onChange(async (value) => {
 				settings.showContexts = value;
-				await this.plugin.saveSettings();
+				await this.saveSettingsWithNotice();
 			})
 		);
 
 		new Setting(containerEl).setName("Show projects").addToggle((toggle) =>
 			toggle.setValue(settings.showProjects).onChange(async (value) => {
 				settings.showProjects = value;
-				await this.plugin.saveSettings();
+				await this.saveSettingsWithNotice();
 			})
 		);
 
@@ -105,7 +113,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 				}
 				dropdown.setValue(settings.defaultStatus).onChange(async (value) => {
 					settings.defaultStatus = value;
-					await this.plugin.saveSettings();
+					await this.saveSettingsWithNotice();
 				});
 			});
 
@@ -118,7 +126,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 				}
 				dropdown.setValue(settings.defaultPriority ?? "").onChange(async (value) => {
 					settings.defaultPriority = value || undefined;
-					await this.plugin.saveSettings();
+					await this.saveSettingsWithNotice();
 				});
 			});
 
@@ -153,9 +161,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			() => projectInput,
 			(path) => {
 				settings.defaultProjectPath = path;
-				void this.plugin.saveSettings().catch((error) => {
-					console.error("DayTasks: failed to save settings", error);
-				});
+				void this.saveSettingsWithNotice();
 			}
 		);
 
@@ -175,7 +181,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.addToggle((toggle) =>
 				toggle.setValue(settings.createDetailNoteByDefault).onChange(async (value) => {
 					settings.createDetailNoteByDefault = value;
-					await this.plugin.saveSettings();
+					await this.saveSettingsWithNotice();
 				})
 			);
 
@@ -187,7 +193,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			.addToggle((toggle) =>
 				toggle.setValue(settings.apiEnabled).onChange(async (value) => {
 					settings.apiEnabled = value;
-					await this.plugin.saveSettings();
+					await this.saveSettingsWithNotice();
 				})
 			);
 
