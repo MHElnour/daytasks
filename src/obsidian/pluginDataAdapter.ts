@@ -1,4 +1,4 @@
-import { hasPath } from "../core/dependencies";
+import { hasPath, reconcileBlockedStatuses } from "../core/dependencies";
 import type { DayTask, ProjectLink, TimeEntry } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
 import { isRecord } from "../util/isRecord";
@@ -203,8 +203,17 @@ export function decodePluginData(raw: unknown): DayTasksPluginData {
 
 	validateDependencies(tasks);
 
+	const settings = mergeSettings(raw.settings);
+	const completedValues = new Set(
+		settings.statuses.filter((s) => s.isCompleted).map((s) => s.value)
+	);
+	const releaseStatus = settings.statuses.some((s) => s.value === "in-progress")
+		? "in-progress"
+		: settings.defaultStatus;
+	reconcileBlockedStatuses(tasks, (status) => completedValues.has(status), releaseStatus);
+
 	return {
-		settings: mergeSettings(raw.settings),
+		settings,
 		tasks,
 	};
 }

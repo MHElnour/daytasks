@@ -1,4 +1,5 @@
 import type { DayTask } from "./task";
+import { BLOCKED_STATUS_VALUE } from "./status";
 
 /**
  * True when `toId` is reachable from `fromId` by following `blockedBy` edges
@@ -43,6 +44,28 @@ export function wouldCreateCycle(
   return true;
  }
  return hasPath(blockerId, taskId, blockersOf);
+}
+
+/**
+ * Reconciles each task's stored `status` against the live edge set. After
+ * `validateDependencies` may have pruned edges, some tasks' statuses can drift:
+ * - A task with blockers that is not completed and not already blocked → `blocked`.
+ * - A task with no blockers that IS `blocked` → `releaseStatus`.
+ * Tasks that are completed are left untouched regardless of their blockers.
+ */
+export function reconcileBlockedStatuses(
+	tasks: DayTask[],
+	isCompleted: (status: string) => boolean,
+	releaseStatus: string
+): void {
+	for (const task of tasks) {
+		const hasBlockers = (task.blockedBy?.length ?? 0) > 0;
+		if (hasBlockers && !isCompleted(task.status) && task.status !== BLOCKED_STATUS_VALUE) {
+			task.status = BLOCKED_STATUS_VALUE;
+		} else if (!hasBlockers && task.status === BLOCKED_STATUS_VALUE) {
+			task.status = releaseStatus;
+		}
+	}
 }
 
 /**

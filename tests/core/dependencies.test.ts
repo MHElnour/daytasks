@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { hasPath, wouldCreateCycle, dependencyCandidates } from "../../src/core/dependencies";
+import { hasPath, wouldCreateCycle, dependencyCandidates, reconcileBlockedStatuses } from "../../src/core/dependencies";
 import type { DayTask } from "../../src/core/task";
+import { BLOCKED_STATUS_VALUE } from "../../src/core/status";
 
 // a blockedBy b, b blockedBy c  (blockersOf returns who a node is blocked by)
 const edges: Record<string, string[]> = { a: ["b"], b: ["c"], c: [] };
@@ -91,4 +92,16 @@ describe("dependencyCandidates", () => {
   expect(ids).not.toContain("TSK-cccccccc"); // completed excluded
   expect(ids).not.toContain("TSK-aaaaaaaa"); // self excluded
  });
+});
+
+it("reconciles blocked status against the edge set", () => {
+ const tasks = [
+  { id: "TSK-aaaaaaaa", status: "open", blockedBy: ["TSK-bbbbbbbb"] },     // has blocker, not blocked → blocked
+  { id: "TSK-bbbbbbbb", status: BLOCKED_STATUS_VALUE },                    // no blockers, stale blocked → released
+  { id: "TSK-cccccccc", status: "done", blockedBy: ["TSK-bbbbbbbb"] },     // completed → left alone
+ ] as unknown as DayTask[];
+ reconcileBlockedStatuses(tasks, (s) => s === "done", "in-progress");
+ expect(tasks[0].status).toBe(BLOCKED_STATUS_VALUE);
+ expect(tasks[1].status).toBe("in-progress");
+ expect(tasks[2].status).toBe("done");
 });
