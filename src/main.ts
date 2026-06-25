@@ -351,7 +351,10 @@ export default class DayTasksPlugin extends Plugin {
 				continue;
 			}
 			const cm = (view as unknown as { editor?: { cm?: EditorView } }).editor?.cm;
-			cm?.dispatch({});
+			// Feature-detect: `cm` is a private shape, so confirm dispatch is callable.
+			if (cm && typeof cm.dispatch === "function") {
+				cm.dispatch({});
+			}
 		}
 	}
 }
