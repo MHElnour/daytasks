@@ -42,7 +42,7 @@ Verification of the 20 prior fixes (§A) is separate — all 20 passed.
 | P2-5 (SEC-3) | Status colors written raw into CSS vars | low | ☑ Fixed | `c2994ff` |
 | P2-6 (SEC-5) | Persisted tag interpolated into search query | low | ☑ Fixed | `3d1cc01` |
 | P2-7 (SEC-6) | Free-form project path opened unchecked | low | ☑ Fixed | `3d1cc01` |
-| P2-3 | `updateTask` dedupes only tags, not contexts/projects | low | ☐ Open | — |
+| P2-3 | `updateTask` dedupes only tags, not contexts/projects | low | ☑ Fixed | `bcdd300` |
 | P2-8 | `refreshReadingViews` iterates every markdown leaf | low | ☐ Open | — |
 | P2-9 | `tsconfig` lacks `noUnusedLocals`/`noUnusedParameters` | low | ☐ Open | — |
 | P2-10 | Test gaps | low | ◐ Partial | P2-1/2/11 pinned; `main.ts`/settings-tab glue still untested |
@@ -50,9 +50,9 @@ Verification of the 20 prior fixes (§A) is separate — all 20 passed.
 | P2-13 (NEW-4) | `cm.dispatch` not feature-detected | low | ☐ Open | — |
 | dead-code | Delete genuinely-dead `TaskStatus` type (`task.ts:2`) | low | ☐ Open | — |
 
-**Tally:** 7 Fixed · 6 Open · 1 Partial. All fixes landed test-first; suite 147 → 164.
-Pass-1 open items are now all closed **except DRY-6**. Details for each finding are in
-§C (fresh findings), §D (re-scoped open items), §B (dead code), and §H (fix log).
+**Tally:** 8 Fixed · 5 Open · 1 Partial. All fixes landed test-first; suite 147 → 165.
+**All pass-1 items are now closed** (DRY-6 fixed in `f0607fd`). Details for each finding
+are in §C (fresh findings), §D (re-scoped open items), §B (dead code), and §H (fix log).
 
 ---
 
@@ -392,13 +392,15 @@ convention). Build green, **158 tests** passing after the sweep (was 147).
 | 2026-06-25 | SEC-3 | `c2994ff` | New pure `safeCssColor(value, fallback)` gates status colors through `CSS.supports("color", …)` before they reach `--daytasks-status-color`, with a safe fallback; passes through when `CSS.supports` is absent. Applied at the task-card pill + legend-dot boundaries. TDD: 4 cases in `tests/util/cssColor.test.ts`. |
 | 2026-06-25 | SEC-5 | `3d1cc01` | New pure `buildTagSearchQuery(tag)` reduces a persisted tag to valid tag characters before `tag:#<safe>`, blocking search-operator injection; `main.searchTag` routes through it. TDD: `tests/obsidian/globalSearch.test.ts`. |
 | 2026-06-25 | SEC-6 | `3d1cc01` | New pure `resolvesToMarkdownNote(metadataCache, path)` resolves a project link as `openLinkText` would and requires a markdown destination; `main.openProject` shows a Notice and skips otherwise. TDD: `tests/obsidian/vaultNote.test.ts`. |
+| 2026-06-25 | P2-3 | `bcdd300` | `updateTask` reuses the factory's exported `mergeUniqueStrings`/`mergeUniqueProjects` to dedupe contexts and projects (not just tags), matching the create path. TDD: context/project dedupe case in `tests/core/dayTaskService.test.ts`. |
+| 2026-06-25 | DRY-6 | `f0607fd` | Controller now exposes `getWidgetForDate(date)`; `main` resolves the daily-note date once (folder-aware) and passes it down, removing the controller's duplicate folder-blind derivation. TDD: controller test switched to `getWidgetForDate` + empty-day case. |
 
-After this second batch the suite is at **164 tests**.
+After this batch the suite is at **165 tests**.
 
-**Remaining from the top-10:** P2-12 invalid calendar dates (#8), DRY-6 (#9), and the #10
-cleanup cluster (delete dead `TaskStatus`, `noUnusedLocals`, P2-3 update-path dedup
-consistency, P2-13 `cm.dispatch` feature-detect, P2-8/P2-9, pin-tests). Of the pass-1 open
-items, **only DRY-6 remains** — OPT-3, SEC-3, SEC-5, SEC-6 are all resolved.
+**Remaining from the top-10:** P2-12 invalid calendar dates (#8) and the #10 cleanup
+cluster (delete dead `TaskStatus`, `noUnusedLocals`, P2-13 `cm.dispatch` feature-detect,
+P2-8 reading-refresh scoping, P2-9, plus `main.ts`/settings-tab glue test gaps from P2-10).
+**All pass-1 audit items are now closed.**
 
 ---
 
