@@ -8,11 +8,11 @@ import Sortable from "sortablejs";
 export function siblingOrder(listEl: HTMLElement): string[] {
 	const ids: string[] = [];
 	for (const li of Array.from(listEl.children)) {
-		if (!(li instanceof HTMLElement) || !li.classList.contains("daytasks-note-widget__card")) {
+		if (!li.classList.contains("daytasks-note-widget__card")) {
 			continue;
 		}
-		const card = li.querySelector<HTMLElement>(":scope > .task-card");
-		const id = card?.dataset.taskId;
+		const card = li.querySelector(":scope > .task-card");
+		const id = card?.getAttribute("data-task-id");
 		if (id) {
 			ids.push(id);
 		}
