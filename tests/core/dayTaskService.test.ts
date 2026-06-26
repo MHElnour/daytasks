@@ -421,6 +421,51 @@ describe("DayTaskService priority", () => {
 	});
 });
 
+describe("DayTaskService updateTask blocked-status invariant", () => {
+	it("updateTask releases a stale-blocked task that no longer has blockers", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		await service.removeDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		// A is now unblocked; simulate a stale modal save that carries the old "blocked" status
+		const result = await service.updateTask(
+			"TSK-aaaaaaaa",
+			update({ title: "A", scheduledDate: "2026-06-25", status: BLOCKED_STATUS_VALUE })
+		);
+		expect(result.status).toBe("in-progress");
+		expect(result.blockedBy).toBeUndefined();
+	});
+
+	it("updateTask cannot move a task with blockers out of blocked", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		// Try to manually move A to in-progress while it still has a blocker
+		const result = await service.updateTask(
+			"TSK-aaaaaaaa",
+			update({ title: "A", scheduledDate: "2026-06-25", status: "in-progress" })
+		);
+		expect(result.status).toBe(BLOCKED_STATUS_VALUE);
+	});
+
+	it("updateTask completing a blocker releases its dependent", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb");
+		// Complete B via updateTask (the modal path)
+		await service.updateTask(
+			"TSK-bbbbbbbb",
+			update({ title: "B", scheduledDate: "2026-06-25", status: "done" })
+		);
+		const a = await service.getTask("TSK-aaaaaaaa");
+		expect(a?.status).toBe("in-progress");
+		expect(a?.blockedBy).toBeUndefined();
+	});
+});
+
 describe("DayTaskService allTasks", () => {
 	it("returns an empty array when no tasks exist", () => {
 		const service = makeService();

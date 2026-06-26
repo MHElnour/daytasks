@@ -85,7 +85,13 @@ export class DayTaskService {
 
 		const { statusManager } = this.dependencies;
 		const title = clampTitle(input.title) || task.title;
-		const status = statusManager.normalizeStatusValue(input.status ?? task.status);
+		const requested = statusManager.normalizeStatusValue(input.status ?? task.status);
+		const hasBlockers = (task.blockedBy?.length ?? 0) > 0;
+		const status = hasBlockers
+			? BLOCKED_STATUS_VALUE
+			: statusManager.isBlockedStatus(requested)
+				? statusManager.getReleaseStatus()
+				: requested;
 		const scheduledDate = input.scheduledDate || task.scheduledDate;
 		if (dueBeforeScheduled(scheduledDate, input.dueDate)) {
 			throw new Error("Due date cannot be before the scheduled date");

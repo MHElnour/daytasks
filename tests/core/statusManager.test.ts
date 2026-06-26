@@ -159,6 +159,15 @@ describe("blocked status primitives", () => {
 		expect(noIp.getReleaseStatus()).toBe("open");
 	});
 
+	it("getReleaseStatus returns first non-completed status when in-progress is absent", () => {
+		const noIpStatuses = withBlockedStatus([
+			{ id: "open", value: "open", label: "Open", color: "#888", isCompleted: false, order: 0 },
+			{ id: "done", value: "done", label: "Done", color: "#0a0", isCompleted: true, order: 1 },
+		]);
+		const m = new StatusManager(noIpStatuses, "open");
+		expect(m.getReleaseStatus()).toBe("open");
+	});
+
 	it("excludes blocked from the click cycle", () => {
 		const m = new StatusManager(withBlockedStatus(DEFAULT_STATUSES), "open");
 		expect(m.getNextStatus("open")).not.toBe(BLOCKED_STATUS_VALUE);

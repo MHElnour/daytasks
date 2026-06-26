@@ -1,6 +1,7 @@
 import { hasPath, reconcileBlockedStatuses } from "../core/dependencies";
 import type { DayTask, ProjectLink, TimeEntry } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
+import { IN_PROGRESS_STATUS_VALUE } from "../core/status";
 import { isRecord } from "../util/isRecord";
 
 /** Minimal surface of Obsidian's `Plugin` data API, kept narrow for testing. */
@@ -207,8 +208,8 @@ export function decodePluginData(raw: unknown): DayTasksPluginData {
 	const completedValues = new Set(
 		settings.statuses.filter((s) => s.isCompleted).map((s) => s.value)
 	);
-	const releaseStatus = settings.statuses.some((s) => s.value === "in-progress")
-		? "in-progress"
+	const releaseStatus = settings.statuses.some((s) => s.value === IN_PROGRESS_STATUS_VALUE)
+		? IN_PROGRESS_STATUS_VALUE
 		: settings.defaultStatus;
 	reconcileBlockedStatuses(tasks, (status) => completedValues.has(status), releaseStatus);
 

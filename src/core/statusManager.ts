@@ -82,10 +82,15 @@ export class StatusManager {
 		);
 	}
 
-	/** Status a task returns to when released from blocked: in-progress if it exists,
-	 *  else the configured default. */
+	/** Status a task returns to when released from blocked: in-progress (if present
+	 *  and non-completed), else the first non-completed status by order, else the
+	 *  configured default. */
 	getReleaseStatus(): string {
-		return this.getStatusConfig(IN_PROGRESS_STATUS_VALUE)?.value ?? this.defaultStatus;
+		const inProgress = this.getStatusConfig(IN_PROGRESS_STATUS_VALUE);
+		if (inProgress && !inProgress.isCompleted) {
+			return inProgress.value;
+		}
+		return this.getStatusesByOrder().find((s) => !s.isCompleted)?.value ?? this.defaultStatus;
 	}
 
 	/**
