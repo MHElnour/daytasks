@@ -17,7 +17,6 @@ import {
 } from "./obsidian/pluginDataAdapter";
 import { TaskCreationModal } from "./obsidian/taskCreationModal";
 import { resolvesToMarkdownNote } from "./obsidian/vaultNote";
-import { insertWidgetAtBottom } from "./obsidian/widgetInsertion";
 import { todayDate } from "./util/time";
 import {
 	renderDailyTasksWidget,
@@ -202,8 +201,13 @@ export default class DayTasksPlugin extends Plugin {
 			) {
 				return;
 			}
+			// Inject into the scroll container (.markdown-preview-view), AFTER the
+			// sizer — not inside it. Obsidian virtual-renders the sizer's children on
+			// long notes and reconciles them to its own block list on scroll, which
+			// evicts a foreign node appended there; the scroller itself is stable.
 			const sizer = container.querySelector(".markdown-preview-sizer");
-			if (!(sizer instanceof HTMLElement)) {
+			const preview = sizer?.parentElement;
+			if (!(preview instanceof HTMLElement)) {
 				return;
 			}
 
@@ -212,7 +216,7 @@ export default class DayTasksPlugin extends Plugin {
 			host.dataset.notePath = path;
 			host.setAttribute("contenteditable", "false");
 			if (this.renderWidgetInto(host, path)) {
-				insertWidgetAtBottom(sizer, host);
+				preview.appendChild(host);
 			}
 		} catch (error) {
 			console.error("DayTasks: failed to render reading-mode widget", error);

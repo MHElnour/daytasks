@@ -172,6 +172,13 @@
 	margin-inline: 0;
 }
 
+/* The reading-mode host sits next to (not inside) the preview sizer, so it must
+   take on the sizer's readable-line-width centering itself when that mode is on. */
+.markdown-preview-view.is-readable-line-width > .daytasks-widget-host {
+	max-width: var(--file-line-width);
+	margin-inline: auto;
+}
+
 /* ---- task creation modal preview line ---- */
 
 .daytasks-create-preview {
