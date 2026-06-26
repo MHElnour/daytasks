@@ -105,50 +105,12 @@ function renderMetadataGrid(card: TaskCardViewModel): HTMLElement {
 	return grid;
 }
 
-function renderMetadata(
-	card: TaskCardViewModel,
-	options: WidgetRenderOptions,
-	handlers: WidgetRenderHandlers
-): HTMLElement | null {
-	const metadata = el("div", "task-card__metadata");
-
-	if (options.showProjects && card.projects.length > 0) {
-		for (const project of card.projects) {
-			const link = colorChip(
-				"task-card__meta task-card__project",
-				project.label,
-				`↗ ${project.label}`
-			);
-			link.dataset.path = project.path;
-			makeActivatable(link, () => handlers.onOpenProject?.(project.path));
-			metadata.appendChild(link);
-		}
-	}
-
-	if (options.showContexts && card.contexts.length > 0) {
-		for (const context of card.contexts) {
-			metadata.appendChild(el("span", "task-card__meta task-card__context", `@${context}`));
-		}
-	}
-
-	return metadata;
-}
-
-/** Tags rendered as colored boxes on their own line below the meta row. */
-function renderTags(
-	card: TaskCardViewModel,
-	options: WidgetRenderOptions,
-	handlers: WidgetRenderHandlers
-): HTMLElement | null {
-	if (!options.showTags || card.tags.length === 0) {
-		return null;
-	}
-	const row = el("div", "task-card__tags");
-	for (const tag of card.tags) {
-		const chip = colorChip("task-card__tag", tag, `#${tag}`);
-		makeActivatable(chip, () => handlers.onSelectTag?.(tag));
-		row.appendChild(chip);
-	}
+function chipRow(label: string, chips: HTMLElement[]): HTMLElement {
+	const row = el("div", "task-card__chip-row");
+	row.appendChild(el("span", "task-card__chip-row-label", label));
+	const list = el("div", "task-card__chip-row-chips");
+	chips.forEach((c) => list.appendChild(c));
+	row.appendChild(list);
 	return row;
 }
 
@@ -351,13 +313,27 @@ function renderExpandedBody(
 	if (card.description) {
 		content.appendChild(el("div", "task-card__description", card.description));
 	}
-	const metadata = renderMetadata(card, options, handlers);
-	if (metadata) {
-		content.appendChild(metadata);
+	if (options.showProjects && card.projects.length > 0) {
+		const chips = card.projects.map((project) => {
+			const link = colorChip("task-card__project", project.label, `↗ ${project.label}`);
+			link.dataset.path = project.path;
+			makeActivatable(link, () => handlers.onOpenProject?.(project.path));
+			return link;
+		});
+		content.appendChild(chipRow("Projects", chips));
 	}
-	const tags = renderTags(card, options, handlers);
-	if (tags) {
-		content.appendChild(tags);
+	if (options.showContexts && card.contexts.length > 0) {
+		const chips = card.contexts.map((context) =>
+			el("span", "task-card__context", `@${context}`));
+		content.appendChild(chipRow("Contexts", chips));
+	}
+	if (options.showTags && card.tags.length > 0) {
+		const chips = card.tags.map((tag) => {
+			const chip = colorChip("task-card__tag", tag, `#${tag}`);
+			makeActivatable(chip, () => handlers.onSelectTag?.(tag));
+			return chip;
+		});
+		content.appendChild(chipRow("Tags", chips));
 	}
 
 	if (card.blockedBy.length > 0) {

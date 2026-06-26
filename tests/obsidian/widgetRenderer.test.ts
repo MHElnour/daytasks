@@ -411,3 +411,20 @@ describe("renderDailyTasksWidget relations", () => {
 		expect(top?.querySelector(".task-card__blocking")).toBeNull();
 	});
 });
+
+describe("renderDailyTasksWidget chip rows", () => {
+	it("renders labeled Projects/Contexts/Tags rows", () => {
+		const { root } = render(filledModel);
+		const labels = [...root.querySelectorAll(".task-card__chip-row-label")].map((n) => n.textContent);
+		expect(labels).toEqual(["Projects", "Contexts", "Tags"]);
+		const tagsRow = [...root.querySelectorAll(".task-card__chip-row")]
+			.find((r) => r.querySelector(".task-card__chip-row-label")?.textContent === "Tags")!;
+		expect(tagsRow.querySelectorAll(".task-card__tag").length).toBe(2);
+	});
+
+	it("omits a chip row when its list is empty", () => {
+		const model = { ...filledModel, cards: [{ ...filledModel.cards[1], collapsed: false }] };
+		const { root } = render(model);
+		expect(root.querySelector(".task-card__chip-row")).toBeNull();
+	});
+});
