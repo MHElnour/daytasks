@@ -57,7 +57,6 @@ const filledModel: DailyTasksWidgetModel = {
 			contexts: ["phone"],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
 			description: "from the corner store",
-			descriptionExpanded: false,
 			children: [],
 			expanded: false,
 			blockedBy: [],
@@ -79,7 +78,6 @@ const filledModel: DailyTasksWidgetModel = {
 			tags: [],
 			contexts: [],
 			projects: [],
-			descriptionExpanded: false,
 			children: [],
 			expanded: false,
 			blockedBy: [],
@@ -277,7 +275,6 @@ function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}): D
 		tags: [],
 		contexts: [],
 		projects: [],
-		descriptionExpanded: false,
 		children: [],
 		expanded: false,
 		blockedBy: [],
@@ -427,24 +424,12 @@ describe("renderDailyTasksWidget relations", () => {
 
 const longDesc = "x".repeat(200);
 
-describe("renderDailyTasksWidget description toggle", () => {
-	it("truncates long descriptions with a Read more toggle", () => {
-		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], description: longDesc, descriptionExpanded: false }] };
-		const onToggleDescription = vi.fn();
-		const { root } = render(model, allOn, { onToggleDescription });
-		const desc = root.querySelector(".task-card__description")!;
-		expect(desc.textContent!.length).toBeLessThan(longDesc.length);
-		(root.querySelector(".task-card__read-more") as HTMLElement).click();
-		expect(onToggleDescription).toHaveBeenCalledWith("TSK-8cA562sd");
-	});
-
-	it("shows full description with a Read less toggle when expanded", () => {
-		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], description: longDesc, descriptionExpanded: true }] };
+describe("renderDailyTasksWidget description", () => {
+	it("always shows the full description with no Read more toggle", () => {
+		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], description: longDesc }] };
 		const { root } = render(model);
 		expect(root.querySelector(".task-card__description")!.textContent).toBe(longDesc);
-		const toggle = root.querySelector(".task-card__read-more");
-		expect(toggle).not.toBeNull();
-		expect(toggle!.textContent).toBe("Read less");
+		expect(root.querySelector(".task-card__read-more")).toBeNull();
 	});
 });
 

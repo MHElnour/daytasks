@@ -41,7 +41,6 @@ export default class DayTasksPlugin extends Plugin {
 	private controller!: DailyTasksWidgetController;
 	private expandedIds = new Set<string>();
 	private collapsedIds = new Set<string>();
-	private descExpandedIds = new Set<string>();
 	private reorderHandles: { handle: ReorderHandle; listEl: HTMLElement }[] = [];
 	private dataVersion = 0;
 	private readingRefreshTimer: number | null = null;
@@ -141,7 +140,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (!date) {
 			return false;
 		}
-		const model = this.controller.getWidgetForDate(date, this.expandedIds, this.collapsedIds, this.descExpandedIds);
+		const model = this.controller.getWidgetForDate(date, this.expandedIds, this.collapsedIds);
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onCyclePriority: (taskId) => void this.handleCyclePriority(taskId),
@@ -152,7 +151,6 @@ export default class DayTasksPlugin extends Plugin {
 			onSelectTag: (tag) => this.searchTag(tag),
 			onToggleSubtasks: (taskId) => this.toggleSubtasks(taskId),
 			onToggleCollapsed: (taskId) => this.toggleCollapsed(taskId),
-			onToggleDescription: (taskId) => this.toggleDescription(taskId),
 			onOpenMenu: (taskId, anchor) => this.openTaskMenu(taskId, anchor),
 		});
 		this.applyIcons(container);
@@ -249,15 +247,6 @@ export default class DayTasksPlugin extends Plugin {
 			this.collapsedIds.delete(taskId);
 		} else {
 			this.collapsedIds.add(taskId);
-		}
-		this.refreshViews();
-	}
-
-	private toggleDescription(taskId: string): void {
-		if (this.descExpandedIds.has(taskId)) {
-			this.descExpandedIds.delete(taskId);
-		} else {
-			this.descExpandedIds.add(taskId);
 		}
 		this.refreshViews();
 	}

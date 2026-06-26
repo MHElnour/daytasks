@@ -19,7 +19,6 @@ export interface TaskCardNesting {
 	childProgress?: { done: number; total: number };
 	expanded?: boolean;
 	collapsed?: boolean;
-	descriptionExpanded?: boolean;
 }
 
 export interface TaskRef {
@@ -55,7 +54,6 @@ export interface TaskCardViewModel {
 	contexts: string[];
 	projects: TaskCardProjectViewModel[];
 	description?: string;
-	descriptionExpanded: boolean;
 	children: TaskCardViewModel[];
 	childProgress?: { done: number; total: number };
 	expanded: boolean;
@@ -122,7 +120,6 @@ export function createTaskCardViewModel(
 			label: project.title ?? noteBasename(project.path),
 		})),
 		description: task.description,
-		descriptionExpanded: nesting.descriptionExpanded ?? false,
 		children: nesting.children ?? [],
 		childProgress: nesting.childProgress,
 		expanded: nesting.expanded ?? false,

@@ -23,7 +23,6 @@ export interface WidgetRenderHandlers {
 	onToggleSubtasks?(taskId: string): void;
 	onOpenTask?(taskId: string): void;
 	onToggleCollapsed?(taskId: string): void;
-	onToggleDescription?(taskId: string): void;
 	onOpenMenu?(taskId: string, anchor: HTMLElement): void;
 }
 
@@ -323,21 +322,9 @@ function renderExpandedBody(
 	content.appendChild(titleRow);
 	content.appendChild(renderMetadataGrid(card));
 
-	const DESC_LIMIT = 140;
 	if (card.description) {
 		const block = el("div", "task-card__description-block");
-		const collapsedDesc = !card.descriptionExpanded && card.description.length > DESC_LIMIT;
-		const text = collapsedDesc ? `${card.description.slice(0, DESC_LIMIT)}…` : card.description;
-		block.appendChild(el("div", "task-card__description", text));
-		if (card.description.length > DESC_LIMIT) {
-			const toggle = el("button", "task-card__read-more",
-				card.descriptionExpanded ? "Read less" : "Read more");
-			toggle.addEventListener("click", (event) => {
-				stop(event);
-				handlers.onToggleDescription?.(card.id);
-			});
-			block.appendChild(toggle);
-		}
+		block.appendChild(el("div", "task-card__description", card.description));
 		content.appendChild(block);
 	}
 

@@ -460,7 +460,7 @@
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 	flex: 0 0 auto;
-	min-width: 52px;
+	width: 74px;
 }
 
 .daytasks-plugin .task-card__rel-list {
@@ -610,7 +610,9 @@
 	color: var(--text-faint);
 	flex: 0 0 auto;
 	line-height: 1.35;
-	min-width: 52px;
+	/* Fixed width across every property row (incl. relations) so the chips/ids
+	   all start at the same x and read as a straight column. */
+	width: 74px;
 }
 
 /* One line per row; if the chips overflow, the row scrolls horizontally
@@ -632,30 +634,6 @@
 
 .daytasks-plugin .task-card__chip-row-chips > * {
 	flex: 0 0 auto;
-}
-
-/* ================================================================
-   READ-MORE TOGGLE
-   ================================================================ */
-
-.daytasks-plugin .task-card__read-more {
-	display: inline-block;
-	margin-top: 2px;
-	padding: 0;
-	background: none !important;
-	border: none !important;
-	box-shadow: none !important;
-	appearance: none;
-	-webkit-appearance: none;
-	font-size: var(--font-ui-smaller);
-	color: var(--interactive-accent);
-	cursor: pointer;
-	text-decoration: underline;
-	text-underline-offset: 2px;
-}
-
-.daytasks-plugin .task-card__read-more:hover {
-	color: var(--text-accent);
 }
 
 /* ================================================================

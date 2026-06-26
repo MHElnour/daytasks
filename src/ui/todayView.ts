@@ -33,8 +33,7 @@ export function createDailyTasksWidgetModel(
 	expandedIds: ReadonlySet<string> = new Set(),
 	getById: (id: string) => DayTask | undefined = () => undefined,
 	getBlocking: (id: string) => DayTask[] = () => [],
-	collapsedIds: ReadonlySet<string> = new Set(),
-	descExpandedIds: ReadonlySet<string> = new Set()
+	collapsedIds: ReadonlySet<string> = new Set()
 ): DailyTasksWidgetModel {
 	const isCompleted = (status: string): boolean => statusManager.isCompletedStatus(status);
 
@@ -56,7 +55,6 @@ export function createDailyTasksWidgetModel(
 				childProgress,
 				expanded: expandedIds.has(node.task.id),
 				collapsed,
-				descriptionExpanded: descExpandedIds.has(node.task.id),
 			},
 			{ resolve: getById, blocking: getBlocking(node.task.id) }
 		);
