@@ -77,7 +77,7 @@ describe("createDailyTasksWidgetModel", () => {
 		});
 	});
 
-	it("sorts open tasks before completed ones and counts done", () => {
+	it("counts done tasks and preserves insertion order (no completion sort)", () => {
 		const done: DayTask = { ...task, id: "TSK-done0001", status: "done" };
 		const open: DayTask = { ...task, id: "TSK-open0001", status: "open" };
 
@@ -89,7 +89,8 @@ describe("createDailyTasksWidgetModel", () => {
 			priorities
 		);
 
-		expect(model.cards.map((c) => c.id)).toEqual(["TSK-open0001", "TSK-done0001"]);
+		// Order reflects insertion (no sortOrder, same createdAt) — completion no longer sorts.
+		expect(model.cards.map((c) => c.id)).toEqual(["TSK-done0001", "TSK-open0001"]);
 		expect(model.doneCount).toBe(1);
 		expect(model.totalCount).toBe(2);
 	});

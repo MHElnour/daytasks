@@ -44,13 +44,14 @@ export interface TaskNode {
 
 /**
  * Groups one day's flat task list into a forest. Roots are tasks with no parent
- * (or whose parent isn't in `tasks`). Completed siblings sink to the bottom of
- * each group. A visited set makes the build cycle-safe: every task is placed
- * exactly once, so corrupt/cyclic stored `parentId` can never loop the renderer.
+ * (or whose parent isn't in `tasks`). Siblings are ordered by `sortOrder` (then
+ * `createdAt`); completion no longer affects position. A visited set makes the
+ * build cycle-safe: every task is placed exactly once, so corrupt/cyclic stored
+ * `parentId` can never loop the renderer.
  */
 export function buildTaskForest(
 	tasks: DayTask[],
-	isCompleted: (status: string) => boolean
+	_isCompleted: (status: string) => boolean
 ): TaskNode[] {
 	const byId = new Map<string, DayTask>();
 	for (const task of tasks) {
@@ -69,21 +70,34 @@ export function buildTaskForest(
 		}
 	}
 
-	const completedLast = (a: DayTask, b: DayTask): number =>
-		Number(isCompleted(a.status)) - Number(isCompleted(b.status));
+	/**
+	 * Sibling order: tasks with a stored `sortOrder` come first (lexicographic over
+	 * the zero-padded strings); tasks without one fall after, ordered by `createdAt`.
+	 * Completion no longer affects order — manual drag order wins.
+	 */
+	const bySortOrder = (a: DayTask, b: DayTask): number => {
+		const ao = a.sortOrder;
+		const bo = b.sortOrder;
+		if (ao !== undefined && bo !== undefined) {
+			return ao < bo ? -1 : ao > bo ? 1 : 0;
+		}
+		if (ao !== undefined) return -1;
+		if (bo !== undefined) return 1;
+		return a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0;
+	};
 
 	const visited = new Set<string>();
 	const build = (task: DayTask): TaskNode => {
 		visited.add(task.id);
 		const kids = [...(childrenOf.get(task.id) ?? [])]
-			.sort(completedLast)
+			.sort(bySortOrder)
 			.filter((child) => !visited.has(child.id));
 		return { task, children: kids.map(build) };
 	};
 
 	const forest = tasks
 		.filter((task) => !task.parentId || !byId.has(task.parentId))
-		.sort(completedLast)
+		.sort(bySortOrder)
 		.map(build);
 
 	// Any task not reached (trapped in a cycle) is surfaced as a root so it still
