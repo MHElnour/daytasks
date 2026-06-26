@@ -80,20 +80,29 @@ function makeActivatable(element: HTMLElement, activate: () => void): void {
 	});
 }
 
-/**
- * A metadata item shown as a Lucide icon + value. The icon span is left empty
- * with a `data-icon` attribute; the Obsidian caller fills it via `setIcon` after
- * render, so this stays pure DOM (and unit-testable). The icon is decorative —
- * the value text carries the meaning.
- */
-function metaWithIcon(className: string, iconName: string, text: string): HTMLElement {
-	const item = el("span", `task-card__meta ${className}`);
+
+function metaCell(label: string, iconName: string, value: string | undefined, extraClass = ""): HTMLElement {
+	const cell = el("div", `task-card__meta-cell ${extraClass}`.trim());
+	cell.appendChild(el("div", "task-card__meta-label", label));
+	const val = el("div", "task-card__meta-value");
 	const icon = el("span", "task-card__meta-icon");
 	icon.dataset.icon = iconName;
 	icon.setAttribute("aria-hidden", "true");
-	item.appendChild(icon);
-	item.appendChild(el("span", "task-card__meta-text", text));
-	return item;
+	val.appendChild(icon);
+	val.appendChild(el("span", "task-card__meta-text", value ?? "—"));
+	cell.appendChild(val);
+	return cell;
+}
+
+function renderMetadataGrid(card: TaskCardViewModel): HTMLElement {
+	const grid = el("div", "task-card__metadata-grid");
+	grid.appendChild(metaCell("Priority", card.priorityIcon ?? "flag", card.priorityLabel));
+	const dueCell = metaCell("Due", "calendar-clock", card.dueLabel);
+	if (card.overdue) dueCell.classList.add("is-overdue");
+	grid.appendChild(dueCell);
+	grid.appendChild(metaCell("Created", "calendar", card.createdLabel));
+	grid.appendChild(metaCell("Estimate", "clock", card.estimateLabel, "task-card__meta-cell--estimate"));
+	return grid;
 }
 
 function renderMetadata(
@@ -102,23 +111,6 @@ function renderMetadata(
 	handlers: WidgetRenderHandlers
 ): HTMLElement | null {
 	const metadata = el("div", "task-card__metadata");
-
-	if (card.dueLabel) {
-		const due = metaWithIcon("task-card__due", "calendar-clock", card.dueLabel);
-		if (card.overdue) {
-			due.classList.add("is-overdue");
-		}
-		metadata.appendChild(due);
-	}
-
-	metadata.appendChild(
-		metaWithIcon("task-card__scheduled", "calendar", card.scheduledLabel)
-	);
-
-	if (card.estimateLabel) {
-		metadata.appendChild(metaWithIcon("task-card__estimate", "clock", card.estimateLabel));
-	}
-
 
 	if (options.showProjects && card.projects.length > 0) {
 		for (const project of card.projects) {
@@ -354,6 +346,7 @@ function renderExpandedBody(
 	}
 	titleRow.appendChild(titleBlock);
 	content.appendChild(titleRow);
+	content.appendChild(renderMetadataGrid(card));
 
 	if (card.description) {
 		content.appendChild(el("div", "task-card__description", card.description));

@@ -128,21 +128,20 @@ describe("renderDailyTasksWidget", () => {
 		expect(first.querySelector(".task-card__description")?.textContent).toBe(
 			"from the corner store"
 		);
-		// Meta items are an icon (data-icon, filled by setIcon at runtime) + value.
-		expect(first.querySelector(".task-card__due")?.textContent).toBe("Jun 24");
+		// Meta grid — 4 cells: Priority, Due, Created, Estimate.
+		const metaCells = first.querySelectorAll(".task-card__metadata-grid .task-card__meta-cell");
+		// Due is the 2nd cell; value text and overdue class live on the cell.
+		const dueCell = metaCells[1];
+		expect(dueCell.querySelector(".task-card__meta-text")?.textContent).toBe("Jun 24");
 		expect(
-			first.querySelector(".task-card__due .task-card__meta-icon")?.getAttribute("data-icon")
+			dueCell.querySelector(".task-card__meta-icon")?.getAttribute("data-icon")
 		).toBe("calendar-clock");
-		expect(first.querySelector(".task-card__due")?.classList.contains("is-overdue")).toBe(
-			true
-		);
-		expect(first.querySelector(".task-card__scheduled")?.textContent).toBe("Jun 25");
-		expect(
-			first
-				.querySelector(".task-card__scheduled .task-card__meta-icon")
-				?.getAttribute("data-icon")
-		).toBe("calendar");
-		expect(first.querySelector(".task-card__estimate")?.textContent).toBe("1h30m");
+		expect(dueCell.classList.contains("is-overdue")).toBe(true);
+		// Scheduled is intentionally absent from the grid (dropped in redesign).
+		expect(first.querySelector(".task-card__scheduled")).toBeNull();
+		// Estimate is the 4th cell.
+		const estimateCell = metaCells[3];
+		expect(estimateCell.querySelector(".task-card__meta-text")?.textContent).toBe("1h30m");
 		// Priority is a quick-change control in the title row, not a meta chip.
 		expect(first.querySelector(".task-card__metadata .task-card__priority")).toBeNull();
 		const priorityControl = first.querySelector<HTMLElement>(".task-card__priority-control");
@@ -357,6 +356,17 @@ describe("renderDailyTasksWidget subtasks", () => {
 		const text = root.querySelector(".task-card__title-text")?.textContent ?? "";
 		expect(text).toHaveLength(100);
 		expect(text.endsWith("…")).toBe(true);
+	});
+});
+
+describe("renderDailyTasksWidget metadata grid", () => {
+	it("renders a 4-column metadata grid including Created", () => {
+		const { root } = render(filledModel);
+		const grid = root.querySelector(".task-card__metadata-grid")!;
+		const labels = [...grid.querySelectorAll(".task-card__meta-label")].map((n) => n.textContent);
+		expect(labels).toEqual(["Priority", "Due", "Created", "Estimate"]);
+		const created = grid.querySelectorAll(".task-card__meta-cell")[2];
+		expect(created.querySelector(".task-card__meta-value")?.textContent).toBe("Jun 25");
 	});
 });
 
