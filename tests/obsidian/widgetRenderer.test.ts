@@ -360,6 +360,24 @@ describe("renderDailyTasksWidget subtasks", () => {
 	});
 });
 
+describe("renderDailyTasksWidget collapsed cards", () => {
+	it("renders a collapsed card as a slim row with id and due, no metadata grid", () => {
+		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], collapsed: true }] };
+		const { root } = render(model);
+		const card = root.querySelector(".task-card")!;
+		expect(card.classList.contains("task-card--collapsed")).toBe(true);
+		expect(card.querySelector(".task-card__metadata-grid")).toBeNull();
+		expect(card.querySelector(".task-card__collapsed-id")?.textContent).toContain("TSK-8cA562sd");
+	});
+
+	it("chevron toggles collapse via handler", () => {
+		const onToggleCollapsed = vi.fn();
+		const { root } = render(filledModel, allOn, { onToggleCollapsed });
+		(root.querySelector(".task-card__collapse") as HTMLElement).click();
+		expect(onToggleCollapsed).toHaveBeenCalledWith("TSK-8cA562sd");
+	});
+});
+
 describe("renderDailyTasksWidget relations", () => {
 	it("renders a blocked-by box with clickable chips", () => {
 		const ref = { id: "TSK-blocker01", title: "Blocker", scheduledDate: "2026-06-25", completed: false };

@@ -22,6 +22,9 @@ export interface WidgetRenderHandlers {
 	onSelectTag?(tag: string): void;
 	onToggleSubtasks?(taskId: string): void;
 	onOpenTask?(taskId: string): void;
+	onToggleCollapsed?(taskId: string): void;
+	onToggleDescription?(taskId: string): void;
+	onOpenMenu?(taskId: string, anchor: HTMLElement): void;
 }
 
 /** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS. */
@@ -233,8 +236,45 @@ function renderProgress(progress: { done: number; total: number }): HTMLElement 
 	return wrap;
 }
 
+/** Card-level collapse toggle (chevron). Expanded shows full card; collapsed shows a slim row. */
+function renderCollapseControl(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const button = el("button", "task-card__collapse");
+	button.setAttribute("aria-expanded", String(!card.collapsed));
+	button.setAttribute("aria-label", card.collapsed ? "Expand card" : "Collapse card");
+	const icon = el("span", "task-card__collapse-icon");
+	icon.dataset.icon = card.collapsed ? "chevron-down" : "chevron-up";
+	icon.setAttribute("aria-hidden", "true");
+	button.appendChild(icon);
+	button.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onToggleCollapsed?.(card.id);
+	});
+	return button;
+}
+
+/** Per-card actions menu trigger (⋮). Delegates to the host to build the Menu. */
+function renderMenuControl(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const button = el("button", "task-card__menu");
+	button.setAttribute("aria-label", "Task actions");
+	const icon = el("span", "task-card__menu-icon");
+	icon.dataset.icon = "more-vertical";
+	icon.setAttribute("aria-hidden", "true");
+	button.appendChild(icon);
+	button.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onOpenMenu?.(card.id, button);
+	});
+	return button;
+}
+
 /**
- * Top-right control cluster (priority + status). Absolutely positioned via CSS so
+ * Top-right control cluster (priority + status + chevron + kebab). Absolutely positioned via CSS so
  * it never takes flow width from the title/metadata.
  */
 function renderRailTop(
@@ -244,6 +284,8 @@ function renderRailTop(
 	const top = el("div", "task-card__rail-top");
 	top.appendChild(renderPriorityControl(card, handlers));
 	top.appendChild(renderStatusControl(card, handlers));
+	top.appendChild(renderCollapseControl(card, handlers));
+	top.appendChild(renderMenuControl(card, handlers));
 	return top;
 }
 
@@ -290,36 +332,16 @@ function renderRelationBox(
 	return box;
 }
 
-function renderTaskCard(
+/**
+ * Builds the full expanded card body (the `content` div). Extracted so
+ * `renderTaskCard` can branch between collapsed and expanded, and so later
+ * tasks (5–8) can augment this function by name.
+ */
+function renderExpandedBody(
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
 	handlers: WidgetRenderHandlers
 ): HTMLElement {
-	const wrapper = el("li", "daytasks-note-widget__card");
-
-	const cardEl = el("div", "task-card");
-	cardEl.dataset.taskId = card.id;
-	cardEl.dataset.status = card.status;
-	if (card.checked) {
-		cardEl.classList.add("task-card--completed");
-	}
-	if (card.overdue) {
-		cardEl.classList.add("task-card--overdue");
-	}
-	if (card.childProgress) {
-		cardEl.classList.add("task-card--parent");
-	}
-	if (handlers.onEditTask) {
-		cardEl.classList.add("task-card--interactive");
-		cardEl.addEventListener("click", () => handlers.onEditTask?.(card.id));
-	}
-
-	const mainRow = el("div", "task-card__main-row");
-
-	const handle = el("span", "task-card__handle");
-	handle.setAttribute("aria-hidden", "true");
-	mainRow.appendChild(handle);
-
 	const content = el("div", "task-card__content");
 
 	// Top row is the title only (capped); the state + subtask controls live in a
@@ -345,9 +367,6 @@ function renderTaskCard(
 		content.appendChild(tags);
 	}
 
-	if (card.blocked) {
-		cardEl.classList.add("task-card--blocked");
-	}
 	if (card.blockedBy.length > 0) {
 		content.appendChild(
 			renderRelationBox("task-card__blocked-by", "Blocked by", card.blockedBy, handlers)
@@ -366,11 +385,64 @@ function renderTaskCard(
 		content.appendChild(footer);
 	}
 
-	mainRow.appendChild(content);
+	return content;
+}
+
+function renderTaskCard(
+	card: TaskCardViewModel,
+	options: WidgetRenderOptions,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const wrapper = el("li", "daytasks-note-widget__card");
+
+	const cardEl = el("div", "task-card");
+	cardEl.dataset.taskId = card.id;
+	cardEl.dataset.status = card.status;
+	if (card.checked) {
+		cardEl.classList.add("task-card--completed");
+	}
+	if (card.overdue) {
+		cardEl.classList.add("task-card--overdue");
+	}
+	if (card.childProgress) {
+		cardEl.classList.add("task-card--parent");
+	}
+	if (card.blocked) {
+		cardEl.classList.add("task-card--blocked");
+	}
+	if (handlers.onEditTask) {
+		cardEl.classList.add("task-card--interactive");
+		cardEl.addEventListener("click", () => handlers.onEditTask?.(card.id));
+	}
+
+	const mainRow = el("div", "task-card__main-row");
+
+	const handle = el("span", "task-card__handle");
+	handle.setAttribute("aria-hidden", "true");
+	mainRow.appendChild(handle);
+
+	if (card.collapsed) {
+		cardEl.classList.add("task-card--collapsed");
+		const content = el("div", "task-card__content");
+		const row = el("div", "task-card__collapsed-row");
+		row.appendChild(el("span", "task-card__collapsed-title",
+			truncate(card.title, 30)));
+		if (options.showTaskIds) {
+			row.appendChild(el("span", "task-card__collapsed-id", card.id));
+		}
+		if (card.dueLabel) {
+			row.appendChild(el("span", "task-card__collapsed-due", card.dueLabel));
+		}
+		content.appendChild(row);
+		mainRow.appendChild(content);
+	} else {
+		mainRow.appendChild(renderExpandedBody(card, options, handlers));
+	}
+
 	cardEl.appendChild(mainRow);
 
-	// Priority + status are pinned to the top-right corner (absolute), so they
-	// never steal flow width from the title.
+	// Priority + status + chevron + kebab are pinned to the top-right corner
+	// (absolute), so they never steal flow width from the title.
 	cardEl.appendChild(renderRailTop(card, handlers));
 
 	wrapper.appendChild(cardEl);
