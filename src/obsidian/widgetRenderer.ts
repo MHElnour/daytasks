@@ -243,25 +243,38 @@ function renderRailTop(
 	return top;
 }
 
-/**
- * Dedicated subtask footer row (progress + chevron), rendered in flow below the
- * card's properties so tags can never overlay it. `null` for a leaf card.
- */
-function renderSubtaskFooter(
+function subtaskPercent(progress: { done: number; total: number }): string {
+	if (progress.total === 0) return "0%";
+	return `${Math.round((progress.done / progress.total) * 100)}%`;
+}
+
+function renderSubtasksBox(
 	card: TaskCardViewModel,
+	options: WidgetRenderOptions,
 	handlers: WidgetRenderHandlers
-): HTMLElement | null {
-	if (!card.childProgress && card.children.length === 0) {
-		return null;
-	}
-	const footer = el("div", "task-card__subtask-footer");
-	if (card.childProgress) {
-		footer.appendChild(renderProgress(card.childProgress));
-	}
+): HTMLElement {
+	const box = el("div", "task-card__subtasks-box");
+	const head = el("div", "task-card__subtasks-head");
 	if (card.children.length > 0) {
-		footer.appendChild(renderDisclosure(card, handlers));
+		head.appendChild(renderDisclosure(card, handlers));
 	}
-	return footer;
+	head.appendChild(el("span", "task-card__subtasks-label", "Subtasks"));
+	if (card.childProgress) {
+		head.appendChild(renderProgress(card.childProgress));
+		head.appendChild(el("span", "task-card__subtasks-pct",
+			subtaskPercent(card.childProgress)));
+	}
+	box.appendChild(head);
+	if (card.children.length > 0) {
+		const sublist = el("ul", "task-card__subtasks");
+		sublist.id = `subtasks-${card.id}`;
+		if (!card.expanded) sublist.setAttribute("hidden", "");
+		for (const child of card.children) {
+			sublist.appendChild(renderTaskCard(child, options, handlers));
+		}
+		box.appendChild(sublist);
+	}
+	return box;
 }
 
 function renderRelationBox(
@@ -361,11 +374,10 @@ function renderExpandedBody(
 		);
 	}
 
-	// Subtask progress + chevron live in a dedicated row below the properties, so
-	// tags can never render on top of them.
-	const footer = renderSubtaskFooter(card, handlers);
-	if (footer) {
-		content.appendChild(footer);
+	// Subtask box (disclosure · "Subtasks" label · progress · % pill · child list)
+	// lives below the properties, inside the card body, only for parent cards.
+	if (card.childProgress || card.children.length > 0) {
+		content.appendChild(renderSubtasksBox(card, options, handlers));
 	}
 
 	return content;
@@ -429,18 +441,6 @@ function renderTaskCard(
 	cardEl.appendChild(renderRailTop(card, handlers));
 
 	wrapper.appendChild(cardEl);
-
-	if (card.children.length > 0) {
-		const sublist = el("ul", "task-card__subtasks");
-		sublist.id = `subtasks-${card.id}`;
-		if (!card.expanded) {
-			sublist.setAttribute("hidden", "");
-		}
-		for (const child of card.children) {
-			sublist.appendChild(renderTaskCard(child, options, handlers));
-		}
-		wrapper.appendChild(sublist);
-	}
 
 	return wrapper;
 }
