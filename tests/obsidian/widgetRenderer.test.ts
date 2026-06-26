@@ -428,11 +428,13 @@ describe("renderDailyTasksWidget description toggle", () => {
 		expect(onToggleDescription).toHaveBeenCalledWith("TSK-8cA562sd");
 	});
 
-	it("shows full description when expanded, no toggle", () => {
+	it("shows full description with a Read less toggle when expanded", () => {
 		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], description: longDesc, descriptionExpanded: true }] };
 		const { root } = render(model);
 		expect(root.querySelector(".task-card__description")!.textContent).toBe(longDesc);
-		expect(root.querySelector(".task-card__read-more")).toBeNull();
+		const toggle = root.querySelector(".task-card__read-more");
+		expect(toggle).not.toBeNull();
+		expect(toggle!.textContent).toBe("Read less");
 	});
 });
 

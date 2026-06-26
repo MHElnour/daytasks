@@ -316,7 +316,7 @@ function renderExpandedBody(
 		const collapsedDesc = !card.descriptionExpanded && card.description.length > DESC_LIMIT;
 		const text = collapsedDesc ? `${card.description.slice(0, DESC_LIMIT)}…` : card.description;
 		block.appendChild(el("div", "task-card__description", text));
-		if (card.description.length > DESC_LIMIT && !card.descriptionExpanded) {
+		if (card.description.length > DESC_LIMIT) {
 			const toggle = el("button", "task-card__read-more",
 				card.descriptionExpanded ? "Read less" : "Read more");
 			toggle.addEventListener("click", (event) => {
