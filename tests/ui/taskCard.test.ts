@@ -48,6 +48,8 @@ describe("createTaskCardViewModel", () => {
 			blockedBy: [],
 			blocking: [],
 			blocked: false,
+			collapsed: false,
+			createdLabel: "Jun 24",
 		});
 	});
 
@@ -151,5 +153,27 @@ describe("createTaskCardViewModel", () => {
 			blocking: [],
 		});
 		expect(model.blocked).toBe(false);
+	});
+
+	it("exposes createdLabel from createdAt date portion", () => {
+		const vm = createTaskCardViewModel(
+			{ ...task, createdAt: "2026-06-25T13:00:00.000Z" },
+			statusManager,
+			"2026-06-27",
+			priorities
+		);
+		expect(vm.createdLabel).toBe("Jun 25");
+		expect(vm.collapsed).toBe(false);
+	});
+
+	it("collapsed reflects the nesting flag", () => {
+		const vm = createTaskCardViewModel(
+			task,
+			statusManager,
+			"2026-06-27",
+			priorities,
+			{ collapsed: true }
+		);
+		expect(vm.collapsed).toBe(true);
 	});
 });

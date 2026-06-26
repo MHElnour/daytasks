@@ -62,6 +62,8 @@ const filledModel: DailyTasksWidgetModel = {
 			blockedBy: [],
 			blocking: [],
 			blocked: false,
+			collapsed: false,
+			createdLabel: "Jun 25",
 		},
 		{
 			id: "TSK-GJM4c42e",
@@ -81,6 +83,8 @@ const filledModel: DailyTasksWidgetModel = {
 			blockedBy: [],
 			blocking: [],
 			blocked: false,
+			collapsed: false,
+			createdLabel: "Jun 25",
 		},
 	],
 };
@@ -258,7 +262,7 @@ describe("renderDailyTasksWidget", () => {
 	});
 });
 
-function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}) {
+function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}): DailyTasksWidgetModel["cards"][number] {
 	return {
 		id: "TSK-leaf00001",
 		title: "Leaf",
@@ -277,6 +281,8 @@ function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}) {
 		blockedBy: [],
 		blocking: [],
 		blocked: false,
+		collapsed: false,
+		createdLabel: "Jun 25",
 		...over,
 	};
 }

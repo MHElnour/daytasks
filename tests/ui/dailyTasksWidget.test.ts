@@ -55,10 +55,13 @@ describe("createDailyTasksWidgetModel", () => {
 					projects: [{ path: "Projects/Home.md", label: "Home" }],
 					description: undefined,
 					children: [],
+					childProgress: undefined,
 					expanded: false,
 					blockedBy: [],
 					blocking: [],
 					blocked: false,
+					collapsed: false,
+					createdLabel: "Jun 24",
 				},
 			],
 		});

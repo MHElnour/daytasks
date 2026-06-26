@@ -18,6 +18,7 @@ export interface TaskCardNesting {
 	children?: TaskCardViewModel[];
 	childProgress?: { done: number; total: number };
 	expanded?: boolean;
+	collapsed?: boolean;
 }
 
 export interface TaskRef {
@@ -59,6 +60,8 @@ export interface TaskCardViewModel {
 	blockedBy: TaskRef[];
 	blocking: TaskRef[];
 	blocked: boolean;
+	collapsed: boolean;
+	createdLabel: string;
 }
 
 export function createTaskCardViewModel(
@@ -123,5 +126,7 @@ export function createTaskCardViewModel(
 		blockedBy,
 		blocking,
 		blocked,
+		collapsed: nesting.collapsed ?? false,
+		createdLabel: formatMonthDay(task.createdAt.slice(0, 10)),
 	};
 }

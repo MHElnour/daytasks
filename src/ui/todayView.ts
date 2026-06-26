@@ -32,29 +32,35 @@ export function createDailyTasksWidgetModel(
 	getChildren: (id: string) => DayTask[] = () => [],
 	expandedIds: ReadonlySet<string> = new Set(),
 	getById: (id: string) => DayTask | undefined = () => undefined,
-	getBlocking: (id: string) => DayTask[] = () => []
+	getBlocking: (id: string) => DayTask[] = () => [],
+	collapsedIds: ReadonlySet<string> = new Set()
 ): DailyTasksWidgetModel {
 	const isCompleted = (status: string): boolean => statusManager.isCompletedStatus(status);
 
-	const toCard = (node: TaskNode): TaskCardViewModel => {
+	const toCard = (node: TaskNode, depth: number): TaskCardViewModel => {
 		const directChildren = getChildren(node.task.id);
 		const childProgress =
 			directChildren.length > 0 ? computeChildProgress(directChildren, isCompleted) : undefined;
+		// Top-level default expanded; subtasks default collapsed. `collapsedIds`
+		// holds the ids the user has toggled away from their default.
+		const toggled = collapsedIds.has(node.task.id);
+		const collapsed = depth === 0 ? toggled : !toggled;
 		return createTaskCardViewModel(
 			node.task,
 			statusManager,
 			referenceDate,
 			priorities,
 			{
-				children: node.children.map(toCard),
+				children: node.children.map((child) => toCard(child, depth + 1)),
 				childProgress,
 				expanded: expandedIds.has(node.task.id),
+				collapsed,
 			},
 			{ resolve: getById, blocking: getBlocking(node.task.id) }
 		);
 	};
 
-	const cards = buildTaskForest(tasks, isCompleted).map(toCard);
+	const cards = buildTaskForest(tasks, isCompleted).map((node) => toCard(node, 0));
 
 	// Counts cover every task for the day, including nested ones.
 	const flat: TaskCardViewModel[] = [];

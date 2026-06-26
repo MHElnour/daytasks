@@ -31,7 +31,8 @@ export class DailyTasksWidgetController {
 	 */
 	getWidgetForDate(
 		date: string,
-		expandedIds: ReadonlySet<string> = new Set()
+		expandedIds: ReadonlySet<string> = new Set(),
+		collapsedIds: ReadonlySet<string> = new Set()
 	): DailyTasksWidgetModel {
 		return createDailyTasksWidgetModel(
 			date,
@@ -42,7 +43,8 @@ export class DailyTasksWidgetController {
 			(id) => this.dependencies.service.getChildren(id),
 			expandedIds,
 			(id) => this.dependencies.service.getById(id) ?? undefined,
-			(id) => this.dependencies.service.byBlocker(id)
+			(id) => this.dependencies.service.byBlocker(id),
+			collapsedIds
 		);
 	}
 }
