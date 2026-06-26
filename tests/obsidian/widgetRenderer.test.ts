@@ -57,6 +57,7 @@ const filledModel: DailyTasksWidgetModel = {
 			contexts: ["phone"],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
 			description: "from the corner store",
+			descriptionExpanded: false,
 			children: [],
 			expanded: false,
 			blockedBy: [],
@@ -78,6 +79,7 @@ const filledModel: DailyTasksWidgetModel = {
 			tags: [],
 			contexts: [],
 			projects: [],
+			descriptionExpanded: false,
 			children: [],
 			expanded: false,
 			blockedBy: [],
@@ -275,6 +277,7 @@ function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}): D
 		tags: [],
 		contexts: [],
 		projects: [],
+		descriptionExpanded: false,
 		children: [],
 		expanded: false,
 		blockedBy: [],
@@ -409,6 +412,27 @@ describe("renderDailyTasksWidget relations", () => {
 		const top = root.querySelector(".daytasks-cards > .daytasks-note-widget__card");
 		expect(top?.querySelector(".task-card__blocked-by")).toBeNull();
 		expect(top?.querySelector(".task-card__blocking")).toBeNull();
+	});
+});
+
+const longDesc = "x".repeat(200);
+
+describe("renderDailyTasksWidget description toggle", () => {
+	it("truncates long descriptions with a Read more toggle", () => {
+		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], description: longDesc, descriptionExpanded: false }] };
+		const onToggleDescription = vi.fn();
+		const { root } = render(model, allOn, { onToggleDescription });
+		const desc = root.querySelector(".task-card__description")!;
+		expect(desc.textContent!.length).toBeLessThan(longDesc.length);
+		(root.querySelector(".task-card__read-more") as HTMLElement).click();
+		expect(onToggleDescription).toHaveBeenCalledWith("TSK-8cA562sd");
+	});
+
+	it("shows full description when expanded, no toggle", () => {
+		const model = { ...filledModel, cards: [{ ...filledModel.cards[0], description: longDesc, descriptionExpanded: true }] };
+		const { root } = render(model);
+		expect(root.querySelector(".task-card__description")!.textContent).toBe(longDesc);
+		expect(root.querySelector(".task-card__read-more")).toBeNull();
 	});
 });
 

@@ -68,6 +68,7 @@ describe("DailyTasksWidgetController", () => {
 					contexts: [],
 					projects: [{ path: "Projects/Home.md", label: "Home" }],
 					description: undefined,
+					descriptionExpanded: false,
 					children: [],
 					childProgress: undefined,
 					expanded: false,

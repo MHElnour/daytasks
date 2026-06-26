@@ -43,6 +43,7 @@ describe("createTaskCardViewModel", () => {
 			contexts: [],
 			projects: [{ path: "Projects/Home.md", label: "Home" }],
 			description: undefined,
+			descriptionExpanded: false,
 			children: [],
 			expanded: false,
 			blockedBy: [],
