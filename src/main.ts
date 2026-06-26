@@ -299,7 +299,7 @@ export default class DayTasksPlugin extends Plugin {
 		});
 
 		// Attach SortableJS to every task list in this container.
-		container.querySelectorAll<HTMLElement>(".daytasks-note-widget__list").forEach((listEl) => {
+		container.querySelectorAll<HTMLElement>(".daytasks-cards, .task-card__subtasks").forEach((listEl) => {
 			// Determine parentId from the nearest card ancestor's task-id.
 			const parentCard = listEl.closest<HTMLElement>(".task-card");
 			const parentId = parentCard?.dataset.taskId ?? null;
