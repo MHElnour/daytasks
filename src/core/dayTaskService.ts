@@ -338,7 +338,9 @@ export class DayTaskService {
 			const next: DayTask =
 				remaining.length > 0
 					? { ...rest, blockedBy: remaining, updatedAt: timestamp }
-					: { ...rest, status: statusManager.getReleaseStatus(), updatedAt: timestamp };
+					: statusManager.isBlockedStatus(fresh.status)
+						? { ...rest, status: statusManager.getReleaseStatus(), updatedAt: timestamp }
+						: { ...rest, updatedAt: timestamp };
 			await this.saveAndIndex(next);
 		}
 	}

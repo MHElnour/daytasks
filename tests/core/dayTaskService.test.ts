@@ -392,6 +392,18 @@ describe("DayTaskService dependencies", () => {
 		expect(a?.status).toBe("in-progress");
 		expect(a?.blockedBy).toBeUndefined();
 	});
+
+	it("preserves a dependent's status on last-blocker completion when it is not blocked", async () => {
+		const service = makeServiceWithIds(["TSK-aaaaaaaa", "TSK-bbbbbbbb"]);
+		await service.createTask({ title: "A", scheduledDate: "2026-06-25" });
+		await service.createTask({ title: "B", scheduledDate: "2026-06-25" });
+		await service.addDependency("TSK-aaaaaaaa", "TSK-bbbbbbbb"); // A blocked by B
+		await service.setStatus("TSK-aaaaaaaa", "open"); // manually out of blocked, edge retained
+		await service.setStatus("TSK-bbbbbbbb", "done"); // complete the blocker
+		const a = await service.getTask("TSK-aaaaaaaa");
+		expect(a?.status).toBe("open"); // not overwritten to in-progress
+		expect(a?.blockedBy).toBeUndefined(); // edge still cleared
+	});
 });
 
 describe("DayTaskService priority", () => {
