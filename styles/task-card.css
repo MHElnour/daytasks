@@ -328,9 +328,29 @@
 	gap: 4px;
 }
 
-/* Title clears the top-right cluster (≈ a flag + status icon) with a small gap. */
+/* Title clears the top-right cluster (flag + status + collapse + menu = four
+ * ~26px controls plus gaps ≈ 120px) so a long title wraps instead of running
+ * under the rail icons. */
 .daytasks-plugin .task-card__title-row {
-	padding-inline-end: 64px;
+	padding-inline-end: 120px;
+}
+
+/* Rail controls read as bordered buttons (matches the reference layout). */
+.daytasks-plugin .task-card__priority-control,
+.daytasks-plugin .task-card__status,
+.daytasks-plugin .task-card__collapse,
+.daytasks-plugin .task-card__menu {
+	width: 26px;
+	height: 26px;
+	border: 1px solid var(--daytasks-soft-border);
+	background: var(--background-primary);
+}
+
+.daytasks-plugin .task-card__priority-control:hover,
+.daytasks-plugin .task-card__status:hover,
+.daytasks-plugin .task-card__collapse:hover,
+.daytasks-plugin .task-card__menu:hover {
+	background: var(--background-modifier-hover);
 }
 
 /* Subtask progress + chevron get their own row below the properties, in flow, so
@@ -490,8 +510,6 @@
 .daytasks-plugin .task-card__meta-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 	line-height: 1.2;
 }
 
@@ -547,10 +565,9 @@
 .daytasks-plugin .task-card__chip-row-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 	flex-shrink: 0;
 	line-height: 1.5;
+	min-width: 64px;
 }
 
 .daytasks-plugin .task-card__chip-row-chips {
@@ -632,12 +649,38 @@
 	padding-bottom: 5px;
 }
 
+/* Collapsed rows are short. Center the rail cluster vertically (instead of the
+ * fixed top offset used by tall expanded cards) and shrink the controls so they
+ * never overlap the row border or clip the task id. */
+.daytasks-plugin .task-card--collapsed .task-card__rail-top {
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+	gap: 3px;
+}
+
+.daytasks-plugin .task-card--collapsed .task-card__priority-control,
+.daytasks-plugin .task-card--collapsed .task-card__status,
+.daytasks-plugin .task-card--collapsed .task-card__collapse,
+.daytasks-plugin .task-card--collapsed .task-card__menu {
+	width: 20px;
+	height: 20px;
+}
+
+.daytasks-plugin .task-card--collapsed .task-card__status-icon svg,
+.daytasks-plugin .task-card--collapsed .task-card__priority-icon svg,
+.daytasks-plugin .task-card--collapsed .task-card__collapse-icon svg,
+.daytasks-plugin .task-card--collapsed .task-card__menu-icon svg {
+	width: 12px;
+	height: 12px;
+}
+
 .daytasks-plugin .task-card__collapsed-row {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	min-width: 0;
-	padding-inline-end: 100px; /* clear the fixed rail cluster */
+	padding-inline-end: 92px; /* clear the (smaller) centered rail cluster */
 }
 
 .daytasks-plugin .task-card__collapsed-title {
@@ -688,11 +731,9 @@
 }
 
 .daytasks-plugin .task-card__subtasks-label {
-	font-size: var(--font-ui-smaller);
+	font-size: var(--font-ui-small);
 	font-weight: 600;
-	color: var(--tn-text-muted);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	color: var(--tn-text-normal);
 	flex: 1;
 }
 
