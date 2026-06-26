@@ -293,6 +293,26 @@ export class DayTaskService {
 		return updated;
 	}
 
+	/**
+	 * Persists a manual sibling order by writing each task's `sortOrder`
+	 * (zero-padded so it compares lexicographically). `parentId` is informational
+	 * — the caller supplies the already-ordered sibling ids. Unknown ids are skipped.
+	 */
+	async reorderSiblings(_parentId: string | null, orderedIds: string[]): Promise<void> {
+		for (let index = 0; index < orderedIds.length; index += 1) {
+			const task = await this.dependencies.store.get(orderedIds[index]);
+			if (!task) {
+				continue;
+			}
+			const updated: DayTask = {
+				...task,
+				sortOrder: String(index * 10).padStart(6, "0"),
+				updatedAt: this.now(),
+			};
+			await this.saveAndIndex(updated);
+		}
+	}
+
 	/** Sets a task's priority, or clears it when `priority` is undefined. */
 	async setPriority(id: string, priority: string | undefined): Promise<DayTask> {
 		const task = await this.dependencies.store.get(id);

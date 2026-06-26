@@ -478,6 +478,30 @@ describe("DayTaskService updateTask blocked-status invariant", () => {
 	});
 });
 
+describe("DayTaskService reorderSiblings", () => {
+	it("reorderSiblings assigns zero-padded sortOrder in array order", async () => {
+		const service = makeServiceWithIds(["TSK-aaa", "TSK-bbb", "TSK-ccc"]);
+		const a = await service.createTask({ title: "A", scheduledDate: "2026-06-27" });
+		const b = await service.createTask({ title: "B", scheduledDate: "2026-06-27" });
+		const c = await service.createTask({ title: "C", scheduledDate: "2026-06-27" });
+
+		await service.reorderSiblings(null, [c.id, a.id, b.id]);
+
+		expect((await service.getTask(c.id))?.sortOrder).toBe("000000");
+		expect((await service.getTask(a.id))?.sortOrder).toBe("000010");
+		expect((await service.getTask(b.id))?.sortOrder).toBe("000020");
+	});
+
+	it("reorderSiblings skips unknown ids without throwing", async () => {
+		const service = makeServiceWithIds(["TSK-aaa"]);
+		const a = await service.createTask({ title: "A", scheduledDate: "2026-06-27" });
+		await expect(
+			service.reorderSiblings(null, ["nope", a.id])
+		).resolves.toBeUndefined();
+		expect((await service.getTask(a.id))?.sortOrder).toBe("000010");
+	});
+});
+
 describe("DayTaskService allTasks", () => {
 	it("returns an empty array when no tasks exist", () => {
 		const service = makeService();
