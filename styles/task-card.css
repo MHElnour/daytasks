@@ -234,7 +234,20 @@
 }
 
 .daytasks-plugin .task-card__context {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 4px;
+	border-radius: 4px;
+	white-space: nowrap;
 	color: var(--tn-text-muted);
+	background: transparent;
+	border: 1px solid transparent;
+	transition: background var(--tn-transition-fast), border-color var(--tn-transition-fast);
+}
+
+.daytasks-plugin .task-card__context:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--daytasks-soft-border);
 }
 
 /* Project: different color, plain by default, box on hover (clickable). */
@@ -242,10 +255,10 @@
 	color: var(--chip-color, var(--text-accent));
 	text-decoration: none;
 	cursor: pointer;
-	padding: 1px 6px;
-	margin: -1px -2px;
+	padding: 0 4px;
+	white-space: nowrap;
 	border: 1px solid transparent;
-	border-radius: 5px;
+	border-radius: 4px;
 	transition: background var(--tn-transition-fast), border-color var(--tn-transition-fast);
 }
 
@@ -281,24 +294,27 @@
 	margin-top: 5px;
 }
 
+/* Plain text by default; a subtle box appears only on hover (same treatment as
+   project chips) so a row of tags reads light instead of as bulky pills. */
 .daytasks-plugin .task-card__tag {
 	display: inline-flex;
 	align-items: center;
-	min-height: 19px;
-	padding: 1px 8px;
-	border-radius: 5px;
+	padding: 0 4px;
+	border-radius: 4px;
 	font-size: var(--tn-font-size-sm);
-	line-height: 1.25;
+	line-height: 1.4;
+	white-space: nowrap;
 	text-decoration: none;
 	cursor: pointer;
 	color: var(--chip-color, var(--tn-text-muted));
-	background: color-mix(in srgb, var(--chip-color, var(--tn-text-muted)) 11%, var(--daytasks-chip-bg));
-	border: 1px solid
-		color-mix(in srgb, var(--chip-color, var(--tn-text-muted)) 24%, var(--tn-border-color));
+	background: transparent;
+	border: 1px solid transparent;
+	transition: background var(--tn-transition-fast), border-color var(--tn-transition-fast);
 }
 
 .daytasks-plugin .task-card__tag:hover {
-	background: color-mix(in srgb, var(--chip-color, var(--tn-text-muted)) 18%, var(--daytasks-chip-bg));
+	background: color-mix(in srgb, var(--chip-color, var(--tn-text-muted)) 14%, var(--daytasks-chip-bg));
+	border-color: color-mix(in srgb, var(--chip-color, var(--tn-text-muted)) 28%, var(--tn-border-color));
 }
 
 @media (max-width: 560px) {
@@ -434,38 +450,58 @@
 	display: none;
 }
 
-/* ---- relation boxes and chips (blocked-by/blocking) ---- */
+/* ---- relation rows (blocked-by / blocking): compact single line, scrollable,
+   styled like the project/context/tag chip rows ---- */
 
 .daytasks-plugin .task-card__rel-box {
-	margin-top: 4px;
-	padding: 4px 6px;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-s);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 2px;
+	min-width: 0;
 }
 
 .daytasks-plugin .task-card__rel-label {
 	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
-	margin-bottom: 2px;
+	color: var(--text-faint);
+	flex: 0 0 auto;
+	min-width: 56px;
 }
 
 .daytasks-plugin .task-card__rel-list {
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	gap: 4px;
+	flex: 1;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+
+.daytasks-plugin .task-card__rel-list::-webkit-scrollbar {
+	height: 5px;
 }
 
 .daytasks-plugin .task-card__rel-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	padding: 1px 6px;
-	border-radius: 999px;
-	border: 1px solid var(--background-modifier-border);
+	flex: 0 0 auto;
+	padding: 0 5px;
+	border-radius: 4px;
+	border: 1px solid transparent;
 	background: transparent;
-	color: var(--text-normal);
+	color: var(--text-muted);
 	cursor: pointer;
-	font-size: var(--font-ui-smaller);
+	font-family: var(--font-monospace);
+	font-size: var(--tn-font-size-sm);
+	white-space: nowrap;
+	transition: background var(--tn-transition-fast), border-color var(--tn-transition-fast);
+}
+
+.daytasks-plugin .task-card__rel-chip:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--daytasks-soft-border);
 }
 
 .daytasks-plugin .task-card__rel-chip:focus-visible {
@@ -473,8 +509,10 @@
 	outline: none;
 }
 
-.daytasks-plugin .task-card--blocked .task-card__blocked-by {
-	border-color: color-mix(in srgb, var(--tn-color-error) 45%, var(--background-modifier-border));
+/* Blocked tasks: tint the "Blocked by" label so the state still reads at a
+   glance now that the bordered box is gone. */
+.daytasks-plugin .task-card--blocked .task-card__blocked-by .task-card__rel-label {
+	color: color-mix(in srgb, var(--tn-color-error) 70%, var(--text-faint));
 }
 
 /* ================================================================
@@ -556,24 +594,39 @@
 
 .daytasks-plugin .task-card__chip-row {
 	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: 3px 6px;
-	margin-top: 4px;
+	align-items: center;
+	gap: 8px;
+	margin-top: 2px;
+	min-width: 0;
 }
 
 .daytasks-plugin .task-card__chip-row-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
-	flex-shrink: 0;
-	line-height: 1.5;
-	min-width: 64px;
+	flex: 0 0 auto;
+	line-height: 1.4;
+	min-width: 56px;
 }
 
+/* One line per row; if the chips overflow, the row scrolls horizontally
+   instead of wrapping to extra lines. */
 .daytasks-plugin .task-card__chip-row-chips {
-	display: inline-flex;
-	flex-wrap: wrap;
+	display: flex;
+	flex-wrap: nowrap;
 	gap: 4px;
+	flex: 1;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: thin;
+	-webkit-overflow-scrolling: touch;
+}
+
+.daytasks-plugin .task-card__chip-row-chips::-webkit-scrollbar {
+	height: 5px;
+}
+
+.daytasks-plugin .task-card__chip-row-chips > * {
+	flex: 0 0 auto;
 }
 
 /* ================================================================
