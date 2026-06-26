@@ -13,11 +13,3 @@ Sections:
 DayTasks is private and English-only right now; no i18n release workflow is
 required.
 -->
-
-## Fixed
-
-- Reading mode: the daily-note widget no longer disappears when scrolling a long
-  note. It is now placed outside Obsidian's virtual-rendered preview area, so
-  scrolling can't evict it (and no longer bounces short notes to the top).
-
-**Full Changelog**: <https://github.com/MHElnour/daytasks/compare/0.4.2...0.4.3>
