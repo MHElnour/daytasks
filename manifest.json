@@ -3,7 +3,7 @@
   "name": "DayTasks",
   "version": "0.4.1",
   "minAppVersion": "1.8.0",
-  "description": "A lightweight day-first task plugin for Obsidian.",
+  "description": "A lightweight, day-first task manager for your daily notes.",
   "author": "MHElnour",
   "isDesktopOnly": true
 }
