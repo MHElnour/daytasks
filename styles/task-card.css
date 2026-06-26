@@ -81,6 +81,9 @@
 	display: flex;
 	flex-direction: column;
 	gap: 3px;
+	/* Makes width queryable so the metadata grid can drop to 2 columns on
+	   narrow panes (see the @container rule on .task-card__metadata-grid). */
+	container-type: inline-size;
 }
 
 .daytasks-plugin .task-card__title-row {
@@ -460,9 +463,21 @@
 
 .daytasks-plugin .task-card__metadata-grid {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 4px 12px;
-	margin-top: 5px;
+	margin-top: 8px;
+	padding: 8px 12px;
+	border: 1px solid var(--daytasks-soft-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+/* Narrow panes (Live Preview, side docks) can't fit four columns; fall back to
+   two so labels and values stay readable instead of truncating to nothing. */
+@container (max-width: 380px) {
+	.daytasks-plugin .task-card__metadata-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }
 
 .daytasks-plugin .task-card__meta-cell {

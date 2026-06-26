@@ -407,7 +407,17 @@ function renderTaskCard(
 	}
 	if (handlers.onEditTask) {
 		cardEl.classList.add("task-card--interactive");
-		cardEl.addEventListener("click", () => handlers.onEditTask?.(card.id));
+		cardEl.addEventListener("click", (event) => {
+			// A nested subtask card is a DOM descendant of its parent card, so a
+			// click on the subtask bubbles up to the parent's listener too. Only
+			// act when the click's nearest card is THIS card — otherwise a subtask
+			// click would also open the parent's editor.
+			const target = event.target as HTMLElement | null;
+			if (target?.closest(".task-card") !== cardEl) {
+				return;
+			}
+			handlers.onEditTask?.(card.id);
+		});
 	}
 
 	const mainRow = el("div", "task-card__main-row");

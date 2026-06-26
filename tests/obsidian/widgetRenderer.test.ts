@@ -464,3 +464,32 @@ describe("renderDailyTasksWidget chip rows", () => {
 		expect(root.querySelector(".task-card__chip-row")).toBeNull();
 	});
 });
+
+describe("renderDailyTasksWidget nested click isolation", () => {
+	it("clicking a subtask card opens only that subtask, not its parent", () => {
+		const child = leafCard({ id: "TSK-child0001", title: "Child" });
+		const parent = {
+			...leafCard({ id: "TSK-parent01", title: "Parent" }),
+			children: [child],
+			childProgress: { done: 0, total: 1 },
+			expanded: true,
+		};
+		const onEditTask = vi.fn();
+		const { root } = render(modelWith([parent]), allOn, { onEditTask });
+		(root.querySelector('[data-task-id="TSK-child0001"]') as HTMLElement).click();
+		expect(onEditTask).toHaveBeenCalledTimes(1);
+		expect(onEditTask).toHaveBeenCalledWith("TSK-child0001");
+	});
+
+	it("clicking the parent body still opens the parent", () => {
+		const parent = leafCard({ id: "TSK-parent01", title: "Parent" });
+		const onEditTask = vi.fn();
+		const { root } = render(modelWith([parent]), allOn, { onEditTask });
+		const title = root.querySelector(
+			'[data-task-id="TSK-parent01"] .task-card__title-text'
+		) as HTMLElement;
+		title.click();
+		expect(onEditTask).toHaveBeenCalledTimes(1);
+		expect(onEditTask).toHaveBeenCalledWith("TSK-parent01");
+	});
+});
