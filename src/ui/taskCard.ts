@@ -82,12 +82,12 @@ export function createTaskCardViewModel(
 		completed: statusManager.isCompletedStatus(t.status),
 	});
 
-	const blockedByTasks = (task.blockedBy ?? [])
+	const blockedBy = (task.blockedBy ?? [])
 		.map((id) => relations.resolve?.(id))
-		.filter((t): t is DayTask => t !== undefined);
-	const blockedBy = blockedByTasks.map(toRef);
+		.filter((t): t is DayTask => t !== undefined)
+		.map(toRef);
 	const blocking = (relations.blocking ?? []).map(toRef);
-	const blocked = blockedBy.some((ref) => !ref.completed);
+	const blocked = statusManager.isBlockedStatus(task.status);
 
 	return {
 		id: task.id,
