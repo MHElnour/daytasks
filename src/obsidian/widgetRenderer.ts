@@ -32,7 +32,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
 	className?: string,
 	text?: string
 ): HTMLElementTagNameMap[K] {
-	const node = document.createElement(tag);
+	const node = activeDocument.createElement(tag);
 	if (className) {
 		node.className = className;
 	}

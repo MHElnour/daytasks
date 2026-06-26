@@ -23,7 +23,7 @@ export const WIDGET_MARGIN_TOP_VAR = "--daytasks-widget-margin-top";
 
 function htmlChildren(container: HTMLElement): HTMLElement[] {
 	return Array.from(container.children).filter(
-		(child): child is HTMLElement => child instanceof HTMLElement
+		(child): child is HTMLElement => child.instanceOf(HTMLElement)
 	);
 }
 

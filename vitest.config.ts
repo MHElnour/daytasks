@@ -5,6 +5,7 @@ export default defineConfig({
 		// DOM globals (document, window, CSS, …) for every test. Pure-logic tests
 		// ignore them; renderer/DOM tests no longer need a per-file annotation.
 		environment: "happy-dom",
+		setupFiles: ["./tests/setup.ts"],
 		coverage: {
 			provider: "v8",
 			include: ["src/**/*.ts"],

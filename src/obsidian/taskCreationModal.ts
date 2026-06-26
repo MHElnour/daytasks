@@ -442,9 +442,11 @@ export class TaskCreationModal extends Modal {
 				const unlink = item.createEl("button", { cls: "daytasks-subtask-unlink" });
 				setIcon(unlink, "x");
 				unlink.setAttribute("aria-label", `Unlink subtask ${child.title}`);
-				unlink.addEventListener("click", async () => {
-					await this.options.onUnlinkSubtask?.(child.id);
-					renderList();
+				unlink.addEventListener("click", () => {
+					void (async () => {
+						await this.options.onUnlinkSubtask?.(child.id);
+						renderList();
+					})();
 				});
 			}
 		};
@@ -509,15 +511,17 @@ export class TaskCreationModal extends Modal {
 				const remove = item.createEl("button", { cls: "daytasks-dep-remove" });
 				setIcon(remove, "x");
 				remove.setAttribute("aria-label", `Remove ${dep.title}`);
-				remove.addEventListener("click", async () => {
+				remove.addEventListener("click", () => {
 					// blocked-by: thisId blocked by dep → remove(thisId, dep.id)
 					// blocking:   dep blocked by thisId → remove(dep.id, thisId)
-					if (isBlockedBy) {
-						await this.options.onRemoveDependency?.(thisId, dep.id);
-					} else {
-						await this.options.onRemoveDependency?.(dep.id, thisId);
-					}
-					renderList();
+					void (async () => {
+						if (isBlockedBy) {
+							await this.options.onRemoveDependency?.(thisId, dep.id);
+						} else {
+							await this.options.onRemoveDependency?.(dep.id, thisId);
+						}
+						renderList();
+					})();
 				});
 			}
 		};
@@ -530,13 +534,15 @@ export class TaskCreationModal extends Modal {
 				title: t.title,
 				scheduledDate: t.scheduledDate,
 			}));
-			new TaskSuggestModal(this.app, candidates, async (pickedId) => {
-				if (isBlockedBy) {
-					await this.options.onAddDependency?.(thisId, pickedId);
-				} else {
-					await this.options.onAddDependency?.(pickedId, thisId);
-				}
-				renderList();
+			new TaskSuggestModal(this.app, candidates, (pickedId) => {
+				void (async () => {
+					if (isBlockedBy) {
+						await this.options.onAddDependency?.(thisId, pickedId);
+					} else {
+						await this.options.onAddDependency?.(pickedId, thisId);
+					}
+					renderList();
+				})();
 			}).open();
 		});
 	}

@@ -77,7 +77,7 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 				this.remove();
 				this.cleanupOrphans(container);
 
-				const wrapper = document.createElement("div");
+				const wrapper = activeDocument.createElement("div");
 				wrapper.className = CM_WIDGET_CLASS;
 				wrapper.setAttribute("contenteditable", "false");
 				wrapper.spellcheck = false;
@@ -99,7 +99,7 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 			}
 
 			private scheduleOffsetRefresh(container: HTMLElement, widget: HTMLElement): void {
-				requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => {
 					if (widget.parentElement) {
 						applyBottomOffset(container, widget);
 					}

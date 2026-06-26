@@ -207,7 +207,7 @@ export default class DayTasksPlugin extends Plugin {
 				return;
 			}
 
-			const host = document.createElement("div");
+			const host = activeDocument.createElement("div");
 			host.className = WIDGET_HOST_CLASS;
 			host.dataset.notePath = path;
 			host.setAttribute("contenteditable", "false");
