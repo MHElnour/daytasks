@@ -340,6 +340,19 @@ function renderExpandedBody(
 		}
 		content.appendChild(block);
 	}
+
+	// A thin rule visually separates the free-text area (title/meta/description)
+	// from the structured properties (projects/contexts/tags/relations) below.
+	const hasProperties =
+		(options.showProjects && card.projects.length > 0) ||
+		(options.showContexts && card.contexts.length > 0) ||
+		(options.showTags && card.tags.length > 0) ||
+		card.blockedBy.length > 0 ||
+		card.blocking.length > 0;
+	if (hasProperties) {
+		content.appendChild(el("div", "task-card__divider"));
+	}
+
 	if (options.showProjects && card.projects.length > 0) {
 		const chips = card.projects.map((project) => {
 			const link = colorChip("task-card__project", project.label, `↗ ${project.label}`);
