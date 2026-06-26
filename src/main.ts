@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { MarkdownView, Notice, Plugin, setIcon } from "obsidian";
+import { MarkdownView, Menu, Notice, Plugin, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { dependencyCandidates } from "./core/dependencies";
 import { nextPriority } from "./core/priorityCycle";
@@ -9,6 +9,7 @@ import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./c
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
+import { attachReorder, type ReorderHandle } from "./obsidian/dragReorder";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
 import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
 import {
@@ -39,6 +40,9 @@ export default class DayTasksPlugin extends Plugin {
 	private service!: DayTaskService;
 	private controller!: DailyTasksWidgetController;
 	private expandedIds = new Set<string>();
+	private collapsedIds = new Set<string>();
+	private descExpandedIds = new Set<string>();
+	private reorderHandles: { handle: ReorderHandle; listEl: HTMLElement }[] = [];
 	private dataVersion = 0;
 	private readingRefreshTimer: number | null = null;
 
@@ -83,6 +87,10 @@ export default class DayTasksPlugin extends Plugin {
 		);
 		this.registerEvent(this.app.workspace.on("file-open", () => this.refreshViews()));
 		this.app.workspace.onLayoutReady(() => this.refreshReadingViews());
+	}
+
+	onunload(): void {
+		this.destroyReorder();
 	}
 
 	/** Rebuilds the status manager and services from current settings. */
@@ -133,7 +141,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (!date) {
 			return false;
 		}
-		const model = this.controller.getWidgetForDate(date, this.expandedIds);
+		const model = this.controller.getWidgetForDate(date, this.expandedIds, this.collapsedIds, this.descExpandedIds);
 		renderDailyTasksWidget(container, model, this.widgetOptions(), {
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onCyclePriority: (taskId) => void this.handleCyclePriority(taskId),
@@ -143,8 +151,12 @@ export default class DayTasksPlugin extends Plugin {
 			onOpenTask: (taskId) => this.openTaskNote(taskId),
 			onSelectTag: (tag) => this.searchTag(tag),
 			onToggleSubtasks: (taskId) => this.toggleSubtasks(taskId),
+			onToggleCollapsed: (taskId) => this.toggleCollapsed(taskId),
+			onToggleDescription: (taskId) => this.toggleDescription(taskId),
+			onOpenMenu: (taskId, anchor) => this.openTaskMenu(taskId, anchor),
 		});
 		this.applyIcons(container);
+		this.attachDrag(container);
 		return true;
 	}
 
@@ -230,6 +242,79 @@ export default class DayTasksPlugin extends Plugin {
 			this.expandedIds.add(taskId);
 		}
 		this.refreshViews();
+	}
+
+	private toggleCollapsed(taskId: string): void {
+		if (this.collapsedIds.has(taskId)) {
+			this.collapsedIds.delete(taskId);
+		} else {
+			this.collapsedIds.add(taskId);
+		}
+		this.refreshViews();
+	}
+
+	private toggleDescription(taskId: string): void {
+		if (this.descExpandedIds.has(taskId)) {
+			this.descExpandedIds.delete(taskId);
+		} else {
+			this.descExpandedIds.add(taskId);
+		}
+		this.refreshViews();
+	}
+
+	private openTaskMenu(taskId: string, anchor: HTMLElement): void {
+		const menu = new Menu();
+		menu.addItem((item) => {
+			item.setTitle("Edit").setIcon("pencil").onClick(() => {
+				void this.openEditModal(taskId);
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle("Delete").setIcon("trash").onClick(() => {
+				void this.deleteTask(taskId);
+			});
+		});
+		const rect = anchor.getBoundingClientRect();
+		menu.showAtPosition({ x: rect.left, y: rect.bottom });
+	}
+
+	private async handleReorder(parentId: string | null, orderedIds: string[]): Promise<void> {
+		try {
+			await this.service.reorderSiblings(parentId, orderedIds);
+			await this.persistTasks();
+		} catch (error) {
+			console.error("DayTasks: reorder failed", error);
+		}
+		this.refreshViews();
+	}
+
+	private attachDrag(container: HTMLElement): void {
+		// Prune stale handles (from detached containers, e.g. live-preview re-renders).
+		this.reorderHandles = this.reorderHandles.filter(({ handle, listEl }) => {
+			if (!listEl.isConnected) {
+				handle.destroy();
+				return false;
+			}
+			return true;
+		});
+
+		// Attach SortableJS to every task list in this container.
+		container.querySelectorAll<HTMLElement>(".daytasks-note-widget__list").forEach((listEl) => {
+			// Determine parentId from the nearest card ancestor's task-id.
+			const parentCard = listEl.closest<HTMLElement>(".task-card");
+			const parentId = parentCard?.dataset.taskId ?? null;
+			const handle = attachReorder(listEl, parentId, (pid, ids) => {
+				void this.handleReorder(pid, ids);
+			});
+			this.reorderHandles.push({ handle, listEl });
+		});
+	}
+
+	private destroyReorder(): void {
+		for (const { handle } of this.reorderHandles) {
+			handle.destroy();
+		}
+		this.reorderHandles = [];
 	}
 
 	private async handleCycleStatus(taskId: string): Promise<void> {
@@ -464,6 +549,7 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private refreshViews(): void {
+		this.destroyReorder();
 		this.dataVersion += 1;
 
 		// Reading mode: rebuild injected widgets.
