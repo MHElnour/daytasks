@@ -423,21 +423,28 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private async createTask(input: CreateDayTaskInput): Promise<void> {
+		let task: DayTask;
 		try {
-			const task = await this.service.createTask(input);
+			task = await this.service.createTask(input);
 			await this.persistTasks();
 			this.refreshViews();
 			new Notice(`DayTasks: created ${task.id}.`);
-			if (input.detailNote) {
+		} catch (error) {
+			console.error("DayTasks: failed to create task", error);
+			new Notice("DayTasks: could not create that task.");
+			return;
+		}
+		if (input.detailNote) {
+			try {
 				const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
 				await this.service.setDetailNotePath(task.id, path);
 				await this.persistTasks();
 				this.refreshViews();
 				await this.app.workspace.openLinkText(path, "", true);
+			} catch (error) {
+				console.error("DayTasks: failed to create detail note", error);
+				new Notice("DayTasks: task created, but the detail note could not be created.");
 			}
-		} catch (error) {
-			console.error("DayTasks: failed to create task", error);
-			new Notice("DayTasks: could not create that task.");
 		}
 	}
 
