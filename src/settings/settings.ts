@@ -145,11 +145,11 @@ function asTaskListState(value: unknown): TaskListState {
 	if (!isRecord(value)) {
 		return { ...DEFAULT_TASK_LIST_STATE };
 	}
-	const v = value as Record<string, unknown>;
+	const v = value;
 	const strArr = (x: unknown): string[] =>
 		Array.isArray(x) ? x.filter((e): e is string => typeof e === "string") : [];
 	const oneOf = <T extends string>(x: unknown, allowed: readonly T[], fallback: T): T =>
-		typeof x === "string" && (allowed as readonly string[]).includes(x) ? (x as T) : fallback;
+		typeof x === "string" && (allowed as readonly string[]).includes(x) ? x as T : fallback;
 	return {
 		statuses: strArr(v.statuses),
 		datePreset: oneOf(v.datePreset, ["all", "today", "overdue", "next7"] as const, "all"),

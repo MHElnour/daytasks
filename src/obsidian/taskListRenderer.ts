@@ -81,30 +81,30 @@ function renderFilterBar(
 	search.addEventListener("input", () => lh.onSetSearch(search.value));
 	bar.appendChild(search);
 
-	bar.appendChild(chipMultiselect("daytasks-tasklist__statuses", state.statuses, facets.statuses, lh.onSetStatuses));
+	bar.appendChild(chipMultiselect("daytasks-tasklist__statuses", state.statuses, facets.statuses, (values) => lh.onSetStatuses(values)));
 
 	bar.appendChild(select<TaskListState["datePreset"]>("daytasks-tasklist__date", state.datePreset, [
 		{ value: "all", label: "All dates" }, { value: "today", label: "Today" },
 		{ value: "overdue", label: "Overdue" }, { value: "next7", label: "Next 7 days" },
-	], lh.onSetDatePreset));
+	], (preset) => lh.onSetDatePreset(preset)));
 
 	if (facets.tags.length) {
 		bar.appendChild(chipMultiselect("daytasks-tasklist__tags", state.tags,
-			facets.tags.map((t) => ({ value: t, label: `#${t}` })), lh.onSetTags));
+			facets.tags.map((t) => ({ value: t, label: `#${t}` })), (values) => lh.onSetTags(values)));
 	}
 	if (facets.contexts.length) {
 		bar.appendChild(chipMultiselect("daytasks-tasklist__contexts", state.contexts,
-			facets.contexts.map((c) => ({ value: c, label: `@${c}` })), lh.onSetContexts));
+			facets.contexts.map((c) => ({ value: c, label: `@${c}` })), (values) => lh.onSetContexts(values)));
 	}
 	if (facets.projects.length) {
 		bar.appendChild(chipMultiselect("daytasks-tasklist__projects", state.projects,
-			facets.projects.map((p) => ({ value: p.path, label: p.label })), lh.onSetProjects));
+			facets.projects.map((p) => ({ value: p.path, label: p.label })), (values) => lh.onSetProjects(values)));
 	}
 
 	bar.appendChild(select<TaskListState["groupBy"]>("daytasks-tasklist__groupby", state.groupBy, [
 		{ value: "status", label: "Group: Status" }, { value: "scheduled", label: "Group: Date" },
 		{ value: "project", label: "Group: Project" },
-	], lh.onSetGroupBy));
+	], (groupBy) => lh.onSetGroupBy(groupBy)));
 
 	bar.appendChild(select<TaskListState["sortBy"]>("daytasks-tasklist__sortby", state.sortBy, [
 		{ value: "scheduled", label: "Sort: Scheduled" }, { value: "due", label: "Sort: Due" },
