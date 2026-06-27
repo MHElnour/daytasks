@@ -1,6 +1,6 @@
 {
   "name": "daytasks",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "A lightweight, day-first task manager for your daily notes.",
   "private": true,
   "type": "module",
