@@ -78,6 +78,7 @@ describe("filterTasks", () => {
 import { sortTasks, groupTasks } from "../../src/core/taskFilter";
 import { StatusManager } from "../../src/core/statusManager";
 import { DEFAULT_STATUSES, DEFAULT_PRIORITIES } from "../../src/core/status";
+import { formatMonthDay } from "../../src/util/relativeDate";
 
 const sm = new StatusManager(DEFAULT_STATUSES, "open");
 
@@ -94,6 +95,19 @@ describe("sortTasks", () => {
 	it("sorts by title", () => {
 		const tasks = [task({ id: "b", title: "Banana" }), task({ id: "a", title: "Apple" })];
 		expect(sortTasks(tasks, "title", "asc", DEFAULT_PRIORITIES).map((t) => t.id)).toEqual(["a", "b"]);
+	});
+
+	it("sorts by priority using array-index rank; undefined priority sorts last", () => {
+		// DEFAULT_PRIORITIES order: "none"(0), "low"(1), "normal"(2), "high"(3)
+		// "none" < "high" by index, so asc = [none, high, undefined]
+		const tasks = [
+			task({ id: "c", priority: undefined }),
+			task({ id: "b", priority: "high" }),
+			task({ id: "a", priority: "none" }),
+		];
+		expect(sortTasks(tasks, "priority", "asc", DEFAULT_PRIORITIES).map((t) => t.id)).toEqual(["a", "b", "c"]);
+		// desc reverses the ranked items but undefined still sorts last
+		expect(sortTasks(tasks, "priority", "desc", DEFAULT_PRIORITIES).map((t) => t.id)).toEqual(["b", "a", "c"]);
 	});
 });
 
@@ -113,5 +127,19 @@ describe("groupTasks", () => {
 		const groups = groupTasks(tasks, "project", sm);
 		expect(groups.map((g) => g.key)).toEqual(["P.md", ""]);
 		expect(groups[1].label).toBe("(No project)");
+	});
+
+	it("groups by scheduledDate ascending, label via formatMonthDay", () => {
+		// Input is intentionally out of date order to verify sort
+		const tasks = [
+			task({ id: "b", scheduledDate: "2026-07-05" }),
+			task({ id: "a", scheduledDate: "2026-06-27" }),
+		];
+		const groups = groupTasks(tasks, "scheduled", sm);
+		expect(groups.map((g) => g.key)).toEqual(["2026-06-27", "2026-07-05"]);
+		expect(groups[0].tasks.map((t) => t.id)).toEqual(["a"]);
+		expect(groups[1].tasks.map((t) => t.id)).toEqual(["b"]);
+		expect(groups[0].label).toBe(formatMonthDay("2026-06-27"));
+		expect(groups[1].label).toBe(formatMonthDay("2026-07-05"));
 	});
 });
