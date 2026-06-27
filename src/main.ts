@@ -17,10 +17,13 @@ import {
 	type DayTasksPluginData,
 } from "./obsidian/pluginDataAdapter";
 import { TaskCreationModal } from "./obsidian/taskCreationModal";
+import { TaskListView, VIEW_TYPE_TASK_LIST, type TaskListHost } from "./obsidian/taskListLeaf";
 import { resolvesToMarkdownNote } from "./obsidian/vaultNote";
 import { todayDate } from "./util/time";
+import { debounce } from "./util/debounce";
 import {
 	renderDailyTasksWidget,
+	type WidgetRenderHandlers,
 	type WidgetRenderOptions,
 } from "./obsidian/widgetRenderer";
 import { DEFAULT_SETTINGS, type DayTasksSettings } from "./settings/settings";
@@ -44,6 +47,7 @@ export default class DayTasksPlugin extends Plugin {
 	private reorderHandles: { handle: ReorderHandle; listEl: HTMLElement }[] = [];
 	private dataVersion = 0;
 	private readingRefreshTimer: number | null = null;
+	private readonly saveTaskListState = debounce(() => void this.saveSettings(), 400);
 
 	async onload(): Promise<void> {
 		this.dataStore = new DayTasksDataStore(this);
@@ -60,6 +64,14 @@ export default class DayTasksPlugin extends Plugin {
 		this.rebuildServices();
 
 		this.addSettingTab(new DayTasksSettingTab(this.app, this));
+
+		this.registerView(VIEW_TYPE_TASK_LIST, (leaf) => new TaskListView(leaf, this.taskListHost()));
+		this.addRibbonIcon("list-checks", "DayTasks: task list", () => void this.openTaskList());
+		this.addCommand({
+			id: "open-task-list",
+			name: "Open task list",
+			callback: () => void this.openTaskList(),
+		});
 
 		this.addCommand({
 			id: CREATE_TASK_COMMAND_ID,
@@ -524,6 +536,46 @@ export default class DayTasksPlugin extends Plugin {
 		}
 	}
 
+	private taskListHost(): TaskListHost {
+		return {
+			allTasks: () => this.service.allTasks(),
+			statusManager: this.statusManager,
+			priorities: this.settings.priorities,
+			today: () => todayDate(),
+			widgetOptions: () => this.widgetOptions(),
+			cardHandlers: () => this.taskListCardHandlers(),
+			getState: () => this.settings.taskListState,
+			setState: (next) => {
+				this.settings.taskListState = next;
+				this.saveTaskListState();
+			},
+			applyIcons: (el) => this.applyIcons(el),
+		};
+	}
+
+	private async openTaskList(): Promise<void> {
+		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_LIST);
+		if (existing.length > 0) {
+			await this.app.workspace.revealLeaf(existing[0]);
+			return;
+		}
+		const leaf = this.app.workspace.getLeaf(true);
+		await leaf.setViewState({ type: VIEW_TYPE_TASK_LIST, active: true });
+		await this.app.workspace.revealLeaf(leaf);
+	}
+
+	private taskListCardHandlers(): WidgetRenderHandlers {
+		return {
+			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
+			onCyclePriority: (taskId) => void this.handleCyclePriority(taskId),
+			onEditTask: (taskId) => void this.openEditModal(taskId),
+			onOpenProject: (path) => this.openProject(path),
+			onOpenTask: (taskId) => this.openTaskNote(taskId),
+			onSelectTag: (tag) => this.searchTag(tag),
+			onOpenMenu: (taskId, anchor) => this.openTaskMenu(taskId, anchor),
+		};
+	}
+
 	private async persistTasks(): Promise<void> {
 		await this.dataStore.save({
 			settings: this.settings,
@@ -548,6 +600,13 @@ export default class DayTasksPlugin extends Plugin {
 		// ViewPlugin re-renders against the new dataVersion. Other editors carry
 		// no widget, so dispatching into them is wasted work.
 		this.nudgeDailyNoteEditors();
+
+		// Task list view: re-render any open leaves.
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_LIST)) {
+			if (leaf.view instanceof TaskListView) {
+				leaf.view.render();
+			}
+		}
 	}
 
 	private nudgeDailyNoteEditors(): void {
