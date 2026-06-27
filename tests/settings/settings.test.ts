@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, mergeSettings } from "../../src/settings/settings";
+import { DEFAULT_TASK_LIST_STATE } from "../../src/core/taskListState";
 
 describe("DEFAULT_SETTINGS", () => {
 	it("matches the spec defaults", () => {
@@ -143,5 +144,16 @@ describe("mergeSettings", () => {
 			"in-progress",
 			"done",
 		]);
+	});
+
+	it("defaults taskListState and accepts a stored one", () => {
+		expect(mergeSettings(undefined).taskListState).toEqual(DEFAULT_TASK_LIST_STATE);
+		const stored = { taskListState: { ...DEFAULT_TASK_LIST_STATE, groupBy: "project", search: "x" } };
+		expect(mergeSettings(stored).taskListState.groupBy).toBe("project");
+		expect(mergeSettings(stored).taskListState.search).toBe("x");
+	});
+
+	it("falls back to default taskListState when stored value is malformed", () => {
+		expect(mergeSettings({ taskListState: 42 }).taskListState).toEqual(DEFAULT_TASK_LIST_STATE);
 	});
 });

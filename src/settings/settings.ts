@@ -7,6 +7,7 @@ import {
 	type StatusConfig,
 } from "../core/status";
 import { StatusManager } from "../core/statusManager";
+import { DEFAULT_TASK_LIST_STATE, type TaskListState } from "../core/taskListState";
 import { isRecord } from "../util/isRecord";
 
 export type WidgetPosition = "bottom";
@@ -36,6 +37,8 @@ export interface DayTasksSettings {
 	apiEnabled: boolean;
 	apiPort: number;
 	apiToken: string;
+	// Task list view
+	taskListState: TaskListState;
 }
 
 function cloneStatuses(statuses: StatusConfig[]): StatusConfig[] {
@@ -66,6 +69,7 @@ export const DEFAULT_SETTINGS: DayTasksSettings = {
 	apiEnabled: false,
 	apiPort: 9982,
 	apiToken: "",
+	taskListState: { ...DEFAULT_TASK_LIST_STATE },
 };
 
 function asString(value: unknown, fallback: string): string {
@@ -137,6 +141,28 @@ function asPriorities(value: unknown): PriorityConfig[] {
 	return clonePriorities(DEFAULT_PRIORITIES);
 }
 
+function asTaskListState(value: unknown): TaskListState {
+	if (!isRecord(value)) {
+		return { ...DEFAULT_TASK_LIST_STATE };
+	}
+	const v = value as Record<string, unknown>;
+	const strArr = (x: unknown): string[] =>
+		Array.isArray(x) ? x.filter((e): e is string => typeof e === "string") : [];
+	const oneOf = <T extends string>(x: unknown, allowed: readonly T[], fallback: T): T =>
+		typeof x === "string" && (allowed as readonly string[]).includes(x) ? (x as T) : fallback;
+	return {
+		statuses: strArr(v.statuses),
+		datePreset: oneOf(v.datePreset, ["all", "today", "overdue", "next7"] as const, "all"),
+		tags: strArr(v.tags),
+		contexts: strArr(v.contexts),
+		projects: strArr(v.projects),
+		search: typeof v.search === "string" ? v.search : "",
+		groupBy: oneOf(v.groupBy, ["status", "scheduled", "project"] as const, "status"),
+		sortBy: oneOf(v.sortBy, ["scheduled", "due", "priority", "created", "title"] as const, "scheduled"),
+		sortDir: oneOf(v.sortDir, ["asc", "desc"] as const, "asc"),
+	};
+}
+
 /**
  * Merges persisted settings over the defaults, dropping unknown keys, coercing
  * wrongly-typed values, and migrating to a valid status/priority config.
@@ -148,6 +174,7 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 			defaultTags: [...DEFAULT_SETTINGS.defaultTags],
 			statuses: cloneStatuses(DEFAULT_STATUSES),
 			priorities: clonePriorities(DEFAULT_PRIORITIES),
+			taskListState: { ...DEFAULT_TASK_LIST_STATE },
 		};
 	}
 
@@ -200,5 +227,6 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 		apiEnabled: asBoolean(s.apiEnabled, DEFAULT_SETTINGS.apiEnabled),
 		apiPort: asNumber(s.apiPort, DEFAULT_SETTINGS.apiPort),
 		apiToken: asString(s.apiToken, DEFAULT_SETTINGS.apiToken),
+		taskListState: asTaskListState(s.taskListState),
 	};
 }
