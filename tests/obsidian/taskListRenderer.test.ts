@@ -63,4 +63,20 @@ describe("renderTaskListView", () => {
 		input.dispatchEvent(new Event("input"));
 		expect(onSetSearch).toHaveBeenCalledWith("milk");
 	});
+
+	it("clicking an unselected status chip adds it to the selection", () => {
+		const onSetStatuses = vi.fn();
+		const root = render({ ...model, state: { ...DEFAULT_TASK_LIST_STATE, statuses: [] } }, { onSetStatuses });
+		const chip = root.querySelector(".daytasks-tasklist__statuses .daytasks-tasklist__facet-chip") as HTMLElement;
+		chip.click();
+		expect(onSetStatuses).toHaveBeenCalledWith(["open"]);
+	});
+
+	it("clicking a selected status chip removes it from the selection", () => {
+		const onSetStatuses = vi.fn();
+		const root = render({ ...model, state: { ...DEFAULT_TASK_LIST_STATE, statuses: ["open"] } }, { onSetStatuses });
+		const chip = root.querySelector(".daytasks-tasklist__statuses .daytasks-tasklist__facet-chip") as HTMLElement;
+		chip.click();
+		expect(onSetStatuses).toHaveBeenCalledWith([]);
+	});
 });
