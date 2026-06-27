@@ -29,9 +29,11 @@ created. This feature makes it real.
 
 ## The note file
 
-Path: `<detailNotesFolder>/<sanitized-title>-<taskId>.md` (folder from settings,
-default `DayTasks/Tasks`; the folder is created if missing; the title is sanitized
-to a safe filename; `taskId` guarantees uniqueness).
+Path: `<detailNotesFolder>/<sanitized-title>.md` (folder from settings, default
+`DayTasks/Tasks`; the folder is created if missing; the title is sanitized to a
+safe filename — the note's filename IS its title). On a name collision (another
+task with the same title) the create falls back to `<sanitized-title>-<taskId>.md`;
+detection always keys off the frontmatter `taskId`, never the filename. (0.7.1)
 
 Two zones, strictly separated:
 
@@ -45,8 +47,9 @@ and the user's body is always preserved.
 ### Managed frontmatter
 
 Emitted in a fixed key order, optional keys omitted when empty:
-`title, status, priority?, scheduled, due?, contexts?, projects?, estimate?,
-parentId?, taskId, taskCreated, dateCreated, dateModified, tags`. `projects` are
+`status, priority?, scheduled, due?, contexts?, projects?, estimate?, parentId?,
+taskId, taskCreated, dateCreated, dateModified, tags`. The task title is NOT a
+managed property — the note's filename is its title (0.7.1). `projects` are
 emitted as `["[[basename]]"]` wikilinks. `taskId` is the canonical note→task link
 (used for injection detection and sync). `MANAGED_FM_KEYS` is the fixed list the
 plugin sets/overwrites; any other keys the user adds are preserved.

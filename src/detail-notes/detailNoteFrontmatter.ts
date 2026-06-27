@@ -6,7 +6,6 @@ import { noteBasename } from "../util/notePath";
  * Consumers can use this to know which keys to preserve vs. overwrite.
  */
 export const MANAGED_FM_KEYS: readonly string[] = [
-	"title",
 	"status",
 	"priority",
 	"scheduled",
@@ -39,8 +38,8 @@ export function buildManagedFrontmatter(
 ): Record<string, unknown> {
 	const fm: Record<string, unknown> = {};
 
-	// Required keys — always present
-	fm["title"] = task.title;
+	// Required keys — always present. The note's own filename is its title, so
+	// `title` is intentionally NOT a managed frontmatter property.
 	fm["status"] = task.status;
 
 	// Optional: priority

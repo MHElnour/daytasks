@@ -594,6 +594,12 @@ export default class DayTasksPlugin extends Plugin {
 		} catch (error) {
 			console.error("DayTasks: failed to update task", error);
 			new Notice("DayTasks: could not update that task.");
+			return;
+		}
+		// "Create detail note" toggled on in the edit modal: create one now (no-op
+		// if the task already has one).
+		if (input.detailNote) {
+			await this.createDetailNote(id);
 		}
 	}
 

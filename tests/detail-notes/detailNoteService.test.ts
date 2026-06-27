@@ -110,14 +110,19 @@ describe("sanitizeFileBase", () => {
 // ---------------------------------------------------------------------------
 
 describe("detailNoteFileName", () => {
-	it("produces <sanitized-title>-<id>.md", () => {
+	it("produces <sanitized-title>.md (no id suffix)", () => {
 		const task: DayTask = { ...baseTask, title: "Write tests", id: "task-001" };
-		expect(detailNoteFileName(task)).toBe("Write tests-task-001.md");
+		expect(detailNoteFileName(task)).toBe("Write tests.md");
 	});
 
-	it("sanitizes the title portion", () => {
+	it("sanitizes the title", () => {
 		const task: DayTask = { ...baseTask, title: "My: Task?", id: "abc" };
-		expect(detailNoteFileName(task)).toBe("My Task-abc.md");
+		expect(detailNoteFileName(task)).toBe("My Task.md");
+	});
+
+	it("falls back to the id when the title sanitizes to empty", () => {
+		const task: DayTask = { ...baseTask, title: "///", id: "abc" };
+		expect(detailNoteFileName(task)).toBe("abc.md");
 	});
 });
 
@@ -141,15 +146,23 @@ describe("DetailNoteService.create", () => {
 		expect(port.foldersEnsured).toContain("Notes/Tasks");
 	});
 
-	it("creates the file at <folder>/<sanitized-title>-<id>.md", async () => {
+	it("creates the file at <folder>/<sanitized-title>.md", async () => {
 		const path = await service.create(baseTask, "Notes/Tasks");
-		expect(path).toBe("Notes/Tasks/Write tests-task-001.md");
+		expect(path).toBe("Notes/Tasks/Write tests.md");
 		expect(port.exists(path)).toBe(true);
 	});
 
 	it("returns the full path", async () => {
 		const path = await service.create(baseTask, "Notes/Tasks");
+		expect(path).toBe("Notes/Tasks/Write tests.md");
+	});
+
+	it("falls back to <title>-<id>.md when the clean name is already taken", async () => {
+		// Pre-occupy the clean path with an unrelated note.
+		await port.create("Notes/Tasks/Write tests.md", "existing");
+		const path = await service.create(baseTask, "Notes/Tasks");
 		expect(path).toBe("Notes/Tasks/Write tests-task-001.md");
+		expect(port.exists(path)).toBe(true);
 	});
 
 	it("stored body is empty string", async () => {

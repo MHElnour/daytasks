@@ -32,7 +32,6 @@ const fullTask: DayTask = {
 describe("MANAGED_FM_KEYS", () => {
 	it("contains all keys in the specified order", () => {
 		expect(MANAGED_FM_KEYS).toEqual([
-			"title",
 			"status",
 			"priority",
 			"scheduled",
@@ -59,7 +58,6 @@ describe("buildManagedFrontmatter", () => {
 		);
 
 		expect(Object.keys(result)).toEqual([
-			"title",
 			"status",
 			"priority",
 			"scheduled",
@@ -81,7 +79,7 @@ describe("buildManagedFrontmatter", () => {
 		const dateModified = "2026-06-27T12:00:00.000+03:00";
 		const result = buildManagedFrontmatter(fullTask, dateCreated, dateModified);
 
-		expect(result.title).toBe("Write tests");
+		expect(result).not.toHaveProperty("title");
 		expect(result.status).toBe("todo");
 		expect(result.priority).toBe("high");
 		expect(result.scheduled).toBe("2026-06-27");
@@ -105,7 +103,6 @@ describe("buildManagedFrontmatter", () => {
 		);
 
 		expect(Object.keys(result)).toEqual([
-			"title",
 			"status",
 			"scheduled",
 			"taskId",
@@ -115,6 +112,7 @@ describe("buildManagedFrontmatter", () => {
 			"tags",
 		]);
 
+		expect(result).not.toHaveProperty("title");
 		expect(result).not.toHaveProperty("priority");
 		expect(result).not.toHaveProperty("due");
 		expect(result).not.toHaveProperty("contexts");

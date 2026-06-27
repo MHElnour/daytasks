@@ -50,11 +50,12 @@ export function sanitizeFileBase(title: string): string {
 }
 
 /**
- * Builds the file name for a task's detail note:
- * `<sanitized-title>-<id>.md`
+ * Builds the preferred file name for a task's detail note: `<sanitized-title>.md`
+ * (the note's filename IS its title). Falls back to the task id when the title
+ * sanitizes to empty. `create` appends `-<id>` only on a name collision.
  */
 export function detailNoteFileName(task: DayTask): string {
-	return `${sanitizeFileBase(task.title)}-${task.id}.md`;
+	return `${sanitizeFileBase(task.title) || task.id}.md`;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,8 +78,14 @@ export class DetailNoteService {
 	 * 4. Return the full path.
 	 */
 	async create(task: DayTask, folder: string): Promise<string> {
-		const path = `${folder}/${detailNoteFileName(task)}`;
 		await this.port.ensureFolder(folder);
+		// Prefer a clean `<title>.md`; fall back to `<title>-<id>.md` only when
+		// that name is already taken (e.g. another task with the same title).
+		const preferred = `${folder}/${detailNoteFileName(task)}`;
+		const base = sanitizeFileBase(task.title) || task.id;
+		const path = this.port.exists(preferred)
+			? `${folder}/${base}-${task.id}.md`
+			: preferred;
 		await this.port.create(path, "");
 		const iso = localIso(this.now());
 		const managed = buildManagedFrontmatter(task, iso, iso);
