@@ -55,6 +55,13 @@ class FakeVaultPort implements VaultPort {
 		if (!entry) return;
 		mutate(entry.frontmatter);
 	}
+
+	async rename(from: string, to: string): Promise<void> {
+		const entry = this.files.get(from);
+		if (!entry) return;
+		this.files.delete(from);
+		this.files.set(to, entry);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -328,5 +335,87 @@ describe("DetailNoteService.sync", () => {
 		await service.sync(sameTask);
 
 		expect(port.writeFrontmatterCallCount).toBe(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// DetailNoteService.migrate (one-time legacy normalization)
+// ---------------------------------------------------------------------------
+
+describe("DetailNoteService.migrate", () => {
+	const clock = new Date("2026-06-27T10:00:00.000Z");
+	const taskWith = (over: Partial<DayTask>): DayTask => ({ ...baseTask, ...over });
+
+	async function seed(
+		port: FakeVaultPort,
+		path: string,
+		fm: Record<string, unknown>,
+		body = "user body"
+	): Promise<void> {
+		await port.create(path, body);
+		await port.writeFrontmatter(path, (f) => Object.assign(f, fm));
+	}
+
+	it("strips title and renames a legacy <title>-<id>.md note (body preserved)", async () => {
+		const port = new FakeVaultPort();
+		const service = new DetailNoteService(port, () => clock);
+		const legacy = "Notes/Tasks/Write tests-task-001.md";
+		await seed(port, legacy, { title: "Write tests", status: "todo", taskId: "task-001" });
+		const task = taskWith({ id: "task-001", title: "Write tests", detailNotePath: legacy });
+
+		const result = await service.migrate(task);
+
+		expect(result).toBe("Notes/Tasks/Write tests.md");
+		expect(port.exists(legacy)).toBe(false);
+		expect(port.exists("Notes/Tasks/Write tests.md")).toBe(true);
+		expect(port.readFrontmatter("Notes/Tasks/Write tests.md")).not.toHaveProperty("title");
+		expect(port.readFrontmatter("Notes/Tasks/Write tests.md")!.status).toBe("todo");
+		expect(port.readBody("Notes/Tasks/Write tests.md")).toBe("user body");
+	});
+
+	it("is a no-op (null, no write) for an already-clean note", async () => {
+		const port = new FakeVaultPort();
+		const service = new DetailNoteService(port, () => clock);
+		const clean = "Notes/Tasks/Write tests.md";
+		await seed(port, clean, { status: "todo", taskId: "task-001" });
+		port.writeFrontmatterCallCount = 0;
+		const task = taskWith({ id: "task-001", title: "Write tests", detailNotePath: clean });
+
+		expect(await service.migrate(task)).toBeNull();
+		expect(port.writeFrontmatterCallCount).toBe(0);
+	});
+
+	it("strips a stale title from a clean-named note without renaming", async () => {
+		const port = new FakeVaultPort();
+		const service = new DetailNoteService(port, () => clock);
+		const clean = "Notes/Tasks/Write tests.md";
+		await seed(port, clean, { title: "Write tests", status: "todo" });
+		const task = taskWith({ id: "task-001", title: "Write tests", detailNotePath: clean });
+
+		expect(await service.migrate(task)).toBeNull();
+		expect(port.readFrontmatter(clean)).not.toHaveProperty("title");
+	});
+
+	it("keeps the legacy name (first-wins) when the clean name is taken, but still strips title", async () => {
+		const port = new FakeVaultPort();
+		const service = new DetailNoteService(port, () => clock);
+		const legacy = "Notes/Tasks/Write tests-task-001.md";
+		await seed(port, legacy, { title: "Write tests", status: "todo" });
+		await port.create("Notes/Tasks/Write tests.md", "other note");
+		const task = taskWith({ id: "task-001", title: "Write tests", detailNotePath: legacy });
+
+		expect(await service.migrate(task)).toBeNull();
+		expect(port.exists(legacy)).toBe(true);
+		expect(port.readFrontmatter(legacy)).not.toHaveProperty("title");
+		expect(port.readBody("Notes/Tasks/Write tests.md")).toBe("other note");
+	});
+
+	it("is a no-op when the file is missing or the task has no note", async () => {
+		const port = new FakeVaultPort();
+		const service = new DetailNoteService(port, () => clock);
+		expect(
+			await service.migrate(taskWith({ id: "task-001", detailNotePath: "Notes/Tasks/gone.md" }))
+		).toBeNull();
+		expect(await service.migrate(taskWith({ detailNotePath: undefined }))).toBeNull();
 	});
 });

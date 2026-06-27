@@ -45,6 +45,9 @@ export default class DayTasksPlugin extends Plugin {
 	private service!: DayTaskService;
 	private controller!: DailyTasksWidgetController;
 	private detailNotes!: DetailNoteService;
+	/** Ids of tasks that currently have a detail note — the sync pass iterates
+	 * only these instead of scanning every task. Self-prunes on stale entries. */
+	private readonly detailNoteIds = new Set<string>();
 	private expandedIds = new Set<string>();
 	private collapsedIds = new Set<string>();
 	private reorderHandles: { handle: ReorderHandle; listEl: HTMLElement }[] = [];
@@ -96,8 +99,16 @@ export default class DayTasksPlugin extends Plugin {
 				if (!(file instanceof TFile)) return;
 				await this.app.fileManager.processFrontMatter(file, mutate);
 			},
+			rename: async (from: string, to: string): Promise<void> => {
+				const file = this.app.vault.getAbstractFileByPath(from);
+				if (!(file instanceof TFile)) return;
+				await this.app.fileManager.renameFile(file, to);
+			},
 		};
 		this.detailNotes = new DetailNoteService(port, () => new Date());
+		for (const task of this.service.allTasks()) {
+			if (task.detailNotePath) this.detailNoteIds.add(task.id);
+		}
 
 		this.addSettingTab(new DayTasksSettingTab(this.app, this));
 
@@ -133,7 +144,10 @@ export default class DayTasksPlugin extends Plugin {
 			this.app.workspace.on("active-leaf-change", () => this.scheduleReadingRefresh())
 		);
 		this.registerEvent(this.app.workspace.on("file-open", () => this.refreshViews()));
-		this.app.workspace.onLayoutReady(() => this.refreshReadingViews());
+		this.app.workspace.onLayoutReady(() => {
+			this.refreshReadingViews();
+			void this.migrateDetailNotes();
+		});
 	}
 
 	onunload(): void {
@@ -473,7 +487,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (input.detailNote) {
 			try {
 				const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
-				await this.service.setDetailNotePath(task.id, path);
+				await this.updateDetailNoteLink(task.id, path);
 				await this.persistTasks();
 				this.refreshViews();
 				await this.app.workspace.openLinkText(path, "", true);
@@ -489,7 +503,7 @@ export default class DayTasksPlugin extends Plugin {
 			const task = this.service.getById(taskId);
 			if (!task || task.detailNotePath) return;
 			const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
-			await this.service.setDetailNotePath(task.id, path);
+			await this.updateDetailNoteLink(task.id, path);
 			await this.persistTasks();
 			this.refreshViews();
 			await this.app.workspace.openLinkText(path, "", true);
@@ -505,7 +519,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (!path) return;
 		if (this.app.vault.getAbstractFileByPath(path) === null) {
 			new Notice("DayTasks: detail note is missing. Clearing the link.");
-			await this.service.setDetailNotePath(taskId, undefined);
+			await this.updateDetailNoteLink(taskId, undefined);
 			await this.persistTasks();
 			this.refreshViews();
 			return;
@@ -742,13 +756,67 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	private async runDetailNoteSync(): Promise<void> {
-		for (const task of this.service.allTasks()) {
-			if (!task.detailNotePath) continue;
+		// Iterate only tasks known to have a detail note (not every task), pruning
+		// ids whose task was deleted or whose link was cleared.
+		for (const id of [...this.detailNoteIds]) {
+			const task = this.service.getById(id);
+			if (!task?.detailNotePath) {
+				this.detailNoteIds.delete(id);
+				continue;
+			}
 			try {
 				await this.detailNotes.sync(task);
 			} catch (error) {
-				console.error("DayTasks: detail-note sync failed for", task.id, error);
+				console.error("DayTasks: detail-note sync failed for", id, error);
 			}
+		}
+	}
+
+	/**
+	 * Sets/clears a task's detail-note link via the service AND keeps the
+	 * `detailNoteIds` index in step — the single host entry point for link
+	 * changes, so the sync index never drifts.
+	 */
+	private async updateDetailNoteLink(
+		id: string,
+		path: string | undefined
+	): Promise<void> {
+		await this.service.setDetailNotePath(id, path);
+		if (path) {
+			this.detailNoteIds.add(id);
+		} else {
+			this.detailNoteIds.delete(id);
+		}
+	}
+
+	/**
+	 * One-time normalization of detail notes created before the 0.7.1 filename
+	 * change: each note has its unmanaged `title` property stripped and a legacy
+	 * `<title>-<taskId>.md` file renamed to `<title>.md` (see
+	 * `DetailNoteService.migrate`). A successful rename's new link is persisted
+	 * immediately, so a later failure can never leave the rename and the stored
+	 * path diverged. The "migrated" flag is set only when the whole pass is clean,
+	 * so a note that errors is retried on the next load (migrate is idempotent).
+	 */
+	private async migrateDetailNotes(): Promise<void> {
+		if (this.settings.detailNotesMigrated) return;
+		let allOk = true;
+		for (const task of this.service.allTasks()) {
+			if (!task.detailNotePath) continue;
+			try {
+				const newPath = await this.detailNotes.migrate(task);
+				if (newPath) {
+					await this.updateDetailNoteLink(task.id, newPath);
+					await this.persistTasks();
+				}
+			} catch (error) {
+				console.error("DayTasks: detail-note migration failed for", task.id, error);
+				allOk = false;
+			}
+		}
+		if (allOk) {
+			this.settings.detailNotesMigrated = true;
+			await this.persistTasks();
 		}
 	}
 

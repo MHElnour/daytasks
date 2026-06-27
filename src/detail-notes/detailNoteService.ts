@@ -35,6 +35,9 @@ export interface VaultPort {
 		path: string,
 		mutate: (fm: Record<string, unknown>) => void
 	): Promise<void>;
+
+	/** Renames/moves the file at `from` to `to`, preserving links. */
+	rename(from: string, to: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -146,5 +149,42 @@ export class DetailNoteService {
 			// Always update dateModified when writing.
 			fm["dateModified"] = managed["dateModified"];
 		});
+	}
+
+	/**
+	 * One-time normalization of a detail note created before the 0.7.1 filename
+	 * change: strip the now-unmanaged `title` property, and rename a legacy
+	 * `<title>-<taskId>.md` file to the clean `<title>.md` when that name is free.
+	 *
+	 * - No-op (returns null) when the note is missing or already clean (no `title`
+	 *   and not a legacy filename) — so an already-migrated vault writes nothing.
+	 * - Returns the new path when the file was renamed, else null. The caller is
+	 *   responsible for updating the task's stored `detailNotePath` to the result.
+	 * - Never touches the body. The clean-name collision check is "first wins":
+	 *   if `<title>.md` is already taken, the legacy name is kept.
+	 */
+	async migrate(task: DayTask): Promise<string | null> {
+		const path = task.detailNotePath;
+		if (!path || !this.port.exists(path)) return null;
+
+		const suffix = `-${task.id}.md`;
+		const isLegacyName = path.endsWith(suffix);
+		const current = this.port.readFrontmatter(path);
+		const hasTitle = current !== null && "title" in current;
+
+		// Already clean — write nothing.
+		if (!hasTitle && !isLegacyName) return null;
+
+		if (hasTitle) {
+			await this.port.writeFrontmatter(path, (fm) => {
+				delete fm["title"];
+			});
+		}
+
+		if (!isLegacyName) return null;
+		const cleanPath = `${path.slice(0, -suffix.length)}.md`;
+		if (cleanPath === path || this.port.exists(cleanPath)) return null;
+		await this.port.rename(path, cleanPath);
+		return cleanPath;
 	}
 }

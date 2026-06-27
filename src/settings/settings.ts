@@ -30,6 +30,8 @@ export interface DayTasksSettings {
 	defaultProjectPath: string;
 	createDetailNoteByDefault: boolean;
 	detailNotesFolder: string;
+	/** One-time flag: legacy detail notes normalized (filename + dropped title). */
+	detailNotesMigrated: boolean;
 	// Status / priority config
 	statuses: StatusConfig[];
 	priorities: PriorityConfig[];
@@ -64,6 +66,7 @@ export const DEFAULT_SETTINGS: DayTasksSettings = {
 	defaultProjectPath: "",
 	createDetailNoteByDefault: false,
 	detailNotesFolder: "DayTasks/Tasks",
+	detailNotesMigrated: false,
 	statuses: cloneStatuses(DEFAULT_STATUSES),
 	priorities: clonePriorities(DEFAULT_PRIORITIES),
 	apiEnabled: false,
@@ -221,6 +224,10 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 		detailNotesFolder: asString(
 			s.detailNotesFolder,
 			DEFAULT_SETTINGS.detailNotesFolder
+		),
+		detailNotesMigrated: asBoolean(
+			s.detailNotesMigrated,
+			DEFAULT_SETTINGS.detailNotesMigrated
 		),
 		statuses,
 		priorities: asPriorities(s.priorities),
