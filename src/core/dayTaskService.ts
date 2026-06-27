@@ -313,6 +313,19 @@ export class DayTaskService {
 		}
 	}
 
+	/** Sets a task's detail note path, or clears it when `path` is undefined. */
+	async setDetailNotePath(id: string, path: string | undefined): Promise<DayTask> {
+		const task = await this.dependencies.store.get(id);
+		if (!task) {
+			throw new Error(`Task not found: ${id}`);
+		}
+		const { detailNotePath: _removed, ...rest } = task;
+		const base: DayTask = { ...rest, updatedAt: this.now() };
+		const updated: DayTask = path ? { ...base, detailNotePath: path } : base;
+		await this.saveAndIndex(updated);
+		return updated;
+	}
+
 	/** Sets a task's priority, or clears it when `priority` is undefined. */
 	async setPriority(id: string, priority: string | undefined): Promise<DayTask> {
 		const task = await this.dependencies.store.get(id);

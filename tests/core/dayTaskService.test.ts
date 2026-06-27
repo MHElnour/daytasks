@@ -502,6 +502,54 @@ describe("DayTaskService reorderSiblings", () => {
 	});
 });
 
+describe("DayTaskService detailNotePath", () => {
+	it("sets detailNotePath on a task", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Task", scheduledDate: "2026-06-25" });
+
+		const updated = await service.setDetailNotePath("TSK-8cA562sd", "Notes/Task.md");
+
+		expect(updated.detailNotePath).toBe("Notes/Task.md");
+		expect((await service.getTask("TSK-8cA562sd"))?.detailNotePath).toBe("Notes/Task.md");
+	});
+
+	it("clears detailNotePath when given undefined", async () => {
+		const service = makeService();
+		await service.createTask({ title: "Task", scheduledDate: "2026-06-25" });
+		await service.setDetailNotePath("TSK-8cA562sd", "Notes/Task.md");
+
+		const cleared = await service.setDetailNotePath("TSK-8cA562sd", undefined);
+
+		expect(cleared.detailNotePath).toBeUndefined();
+		expect((await service.getTask("TSK-8cA562sd"))?.detailNotePath).toBeUndefined();
+	});
+
+	it("restamps updatedAt when setting detailNotePath", async () => {
+		let tick = 0;
+		const timestamps = ["2026-06-25T08:00:00.000Z", "2026-06-25T09:00:00.000Z"];
+		const service = new DayTaskService({
+			store: new MemoryTaskStore(),
+			index: new MemoryTaskIndex(),
+			statusManager,
+			settings: { defaultStatus: "open", defaultPriority: "normal", defaultTags: [], defaultProjectPath: "" },
+			now: () => timestamps[tick++] ?? "2026-06-25T10:00:00.000Z",
+			id: () => "TSK-8cA562sd",
+		});
+		await service.createTask({ title: "Task", scheduledDate: "2026-06-25" });
+
+		const updated = await service.setDetailNotePath("TSK-8cA562sd", "Notes/Task.md");
+
+		expect(updated.updatedAt).toBe("2026-06-25T09:00:00.000Z");
+	});
+
+	it("throws for a missing task", async () => {
+		const service = makeService();
+		await expect(service.setDetailNotePath("TSK-missing01", "Notes/Task.md")).rejects.toThrow(
+			"Task not found: TSK-missing01"
+		);
+	});
+});
+
 describe("DayTaskService allTasks", () => {
 	it("returns an empty array when no tasks exist", () => {
 		const service = makeService();
