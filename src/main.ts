@@ -195,6 +195,23 @@ export default class DayTasksPlugin extends Plugin {
 		};
 	}
 
+	/** The task a detail note points to via its frontmatter `taskId`, or null. */
+	private detailNoteTask(notePath: string): DayTask | null {
+		const file = this.app.vault.getAbstractFileByPath(notePath);
+		if (!(file instanceof TFile)) return null;
+		const taskId: unknown = this.app.metadataCache.getFileCache(file)?.frontmatter?.taskId;
+		if (typeof taskId !== "string") return null;
+		return this.service.getById(taskId);
+	}
+
+	/** True when a note path would render a widget (daily note or detail note). */
+	private notePathRendersWidget(notePath: string): boolean {
+		return (
+			Boolean(resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder)) ||
+			this.detailNoteTask(notePath) !== null
+		);
+	}
+
 	/** Renders the widget for a daily or detail note into `container`. Returns true if drawn. */
 	private renderWidgetInto(container: HTMLElement, notePath: string): boolean {
 		if (!this.settings.showDailyNoteWidget) return false;
@@ -209,12 +226,7 @@ export default class DayTasksPlugin extends Plugin {
 		}
 
 		// Detail note: a note whose frontmatter `taskId` matches an indexed task.
-		const file = this.app.vault.getAbstractFileByPath(notePath);
-		if (!(file instanceof TFile)) return false;
-		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
-		const taskId: unknown = frontmatter?.taskId;
-		if (typeof taskId !== "string") return false;
-		const task = this.service.getById(taskId);
+		const task = this.detailNoteTask(notePath);
 		if (!task) return false;
 
 		const model = createSubtaskWidgetModel(
@@ -226,7 +238,7 @@ export default class DayTasksPlugin extends Plugin {
 			this.expandedIds,
 			this.collapsedIds,
 			(id) => this.service.getById(id) ?? undefined,
-			(id) => this.index.byBlocker(id)
+			(id) => this.service.byBlocker(id)
 		);
 		renderDailyTasksWidget(container, model, this.widgetOptions(), this.widgetCardHandlers(null));
 		this.applyIcons(container);
@@ -707,10 +719,10 @@ export default class DayTasksPlugin extends Plugin {
 		// Reading mode: rebuild injected widgets.
 		this.refreshReadingViews();
 
-		// Live Preview: nudge only the editors showing a daily note so their
-		// ViewPlugin re-renders against the new dataVersion. Other editors carry
-		// no widget, so dispatching into them is wasted work.
-		this.nudgeDailyNoteEditors();
+		// Live Preview: nudge only the editors showing a widget-bearing note (daily
+		// or detail) so their ViewPlugin re-renders against the new dataVersion.
+		// Other editors carry no widget, so dispatching into them is wasted work.
+		this.nudgeWidgetEditors();
 
 		// Task list view: re-render any open leaves.
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_LIST)) {
@@ -734,14 +746,14 @@ export default class DayTasksPlugin extends Plugin {
 		}
 	}
 
-	private nudgeDailyNoteEditors(): void {
+	private nudgeWidgetEditors(): void {
 		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
 			const view = leaf.view;
 			if (!(view instanceof MarkdownView)) {
 				continue;
 			}
 			const path = view.file?.path;
-			if (!path || !resolveDailyNoteDate(path, this.settings.dailyNoteFolder)) {
+			if (!path || !this.notePathRendersWidget(path)) {
 				continue;
 			}
 			const cm = (view as unknown as { editor?: { cm?: EditorView } }).editor?.cm;
