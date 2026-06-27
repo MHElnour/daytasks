@@ -50,6 +50,7 @@ describe("createTaskCardViewModel", () => {
 			blocked: false,
 			collapsed: false,
 			createdLabel: "Jun 24",
+			hasDetailNote: false,
 		});
 	});
 
@@ -175,5 +176,20 @@ describe("createTaskCardViewModel", () => {
 			{ collapsed: true }
 		);
 		expect(vm.collapsed).toBe(true);
+	});
+
+	it("hasDetailNote is true when task.detailNotePath is set", () => {
+		const vm = createTaskCardViewModel(
+			{ ...task, detailNotePath: "Notes/TSK-8cA562sd.md" },
+			statusManager,
+			"2026-06-24",
+			priorities
+		);
+		expect(vm.hasDetailNote).toBe(true);
+	});
+
+	it("hasDetailNote is false when task.detailNotePath is undefined", () => {
+		const vm = createTaskCardViewModel(task, statusManager, "2026-06-24", priorities);
+		expect(vm.hasDetailNote).toBe(false);
 	});
 });

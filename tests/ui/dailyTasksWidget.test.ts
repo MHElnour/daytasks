@@ -62,6 +62,7 @@ describe("createDailyTasksWidgetModel", () => {
 					blocked: false,
 					collapsed: false,
 					createdLabel: "Jun 24",
+					hasDetailNote: false,
 				},
 			],
 		});

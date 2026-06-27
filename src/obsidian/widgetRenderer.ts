@@ -24,6 +24,7 @@ export interface WidgetRenderHandlers {
 	onOpenTask?(taskId: string): void;
 	onToggleCollapsed?(taskId: string): void;
 	onOpenMenu?(taskId: string, anchor: HTMLElement): void;
+	onOpenDetailNote?(taskId: string): void;
 }
 
 /** Root class names: `daytasks-plugin` scopes the ported TaskNotes CSS. */
@@ -226,6 +227,24 @@ function renderMenuControl(
 	return button;
 }
 
+/** Detail-note shortcut button (file-text icon). Only rendered when card.hasDetailNote is true. */
+function renderDetailNoteControl(
+	card: TaskCardViewModel,
+	handlers: WidgetRenderHandlers
+): HTMLElement {
+	const button = el("button", "task-card__detail-note");
+	button.setAttribute("aria-label", "Open detail note");
+	const icon = el("span", "task-card__detail-note-icon");
+	icon.dataset.icon = "file-text";
+	icon.setAttribute("aria-hidden", "true");
+	button.appendChild(icon);
+	button.addEventListener("click", (event) => {
+		stop(event);
+		handlers.onOpenDetailNote?.(card.id);
+	});
+	return button;
+}
+
 /**
  * Top-right control cluster (priority + status + chevron + kebab). Absolutely positioned via CSS so
  * it never takes flow width from the title/metadata.
@@ -238,6 +257,9 @@ function renderRailTop(
 	top.appendChild(renderPriorityControl(card, handlers));
 	top.appendChild(renderStatusControl(card, handlers));
 	top.appendChild(renderCollapseControl(card, handlers));
+	if (card.hasDetailNote) {
+		top.appendChild(renderDetailNoteControl(card, handlers));
+	}
 	top.appendChild(renderMenuControl(card, handlers));
 	return top;
 }

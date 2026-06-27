@@ -62,6 +62,7 @@ export interface TaskCardViewModel {
 	blocked: boolean;
 	collapsed: boolean;
 	createdLabel: string;
+	hasDetailNote: boolean;
 }
 
 export function createTaskCardViewModel(
@@ -128,5 +129,6 @@ export function createTaskCardViewModel(
 		blocked,
 		collapsed: nesting.collapsed ?? false,
 		createdLabel: formatMonthDay(task.createdAt.slice(0, 10)),
+		hasDetailNote: task.detailNotePath !== undefined,
 	};
 }

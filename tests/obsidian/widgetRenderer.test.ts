@@ -478,3 +478,46 @@ describe("renderDailyTasksWidget nested click isolation", () => {
 		expect(onEditTask).toHaveBeenCalledWith("TSK-parent01");
 	});
 });
+
+describe("renderDailyTasksWidget detail note control", () => {
+	it("renders .task-card__detail-note in the rail when hasDetailNote is true", () => {
+		const card = leafCard({ id: "TSK-dnote001", hasDetailNote: true });
+		const { root } = render(modelWith([card]));
+		const detailNote = root.querySelector(".task-card__rail-top .task-card__detail-note");
+		expect(detailNote).not.toBeNull();
+	});
+
+	it("does not render .task-card__detail-note when hasDetailNote is false", () => {
+		const card = leafCard({ id: "TSK-nodnt01", hasDetailNote: false });
+		const { root } = render(modelWith([card]));
+		const detailNote = root.querySelector(".task-card__rail-top .task-card__detail-note");
+		expect(detailNote).toBeNull();
+	});
+
+	it("clicking the detail-note button calls onOpenDetailNote with the card id", () => {
+		const onOpenDetailNote = vi.fn();
+		const card = leafCard({ id: "TSK-dnote001", hasDetailNote: true });
+		const { root } = render(modelWith([card]), allOn, { onOpenDetailNote });
+		const button = root.querySelector<HTMLElement>(".task-card__detail-note");
+		expect(button).not.toBeNull();
+		button?.dispatchEvent(new Event("click", { bubbles: true }));
+		expect(onOpenDetailNote).toHaveBeenCalledWith("TSK-dnote001");
+	});
+
+	it("detail-note control is the immediately-previous sibling of .task-card__menu", () => {
+		const card = leafCard({ id: "TSK-dnote001", hasDetailNote: true });
+		const { root } = render(modelWith([card]));
+		const menu = root.querySelector(".task-card__rail-top .task-card__menu");
+		expect(menu).not.toBeNull();
+		expect(menu?.previousElementSibling?.classList.contains("task-card__detail-note")).toBe(true);
+	});
+
+	it("detail-note button has aria-label and icon with data-icon=file-text", () => {
+		const card = leafCard({ id: "TSK-dnote001", hasDetailNote: true });
+		const { root } = render(modelWith([card]));
+		const button = root.querySelector<HTMLElement>(".task-card__detail-note");
+		expect(button?.getAttribute("aria-label")).toBe("Open detail note");
+		const icon = button?.querySelector("[data-icon]");
+		expect(icon?.getAttribute("data-icon")).toBe("file-text");
+	});
+});
