@@ -539,8 +539,8 @@ export default class DayTasksPlugin extends Plugin {
 	private taskListHost(): TaskListHost {
 		return {
 			allTasks: () => this.service.allTasks(),
-			statusManager: this.statusManager,
-			priorities: this.settings.priorities,
+			statusManager: () => this.statusManager,
+			priorities: () => this.settings.priorities,
 			today: () => todayDate(),
 			widgetOptions: () => this.widgetOptions(),
 			cardHandlers: () => this.taskListCardHandlers(),

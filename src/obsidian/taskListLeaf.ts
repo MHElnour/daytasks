@@ -13,8 +13,8 @@ export const VIEW_TYPE_TASK_LIST = "daytasks-task-list";
 
 export interface TaskListHost {
 	allTasks(): DayTask[];
-	statusManager: StatusManager;
-	priorities: PriorityConfig[];
+	statusManager(): StatusManager;
+	priorities(): PriorityConfig[];
 	today(): string;
 	widgetOptions(): WidgetRenderOptions;
 	cardHandlers(): WidgetRenderHandlers;
@@ -64,9 +64,9 @@ export class TaskListView extends ItemView {
 		const state = this.host.getState();
 		const model = createTaskListModel(
 			tasks,
-			this.host.statusManager,
+			this.host.statusManager(),
 			this.host.today(),
-			this.host.priorities,
+			this.host.priorities(),
 			state,
 			this.expandedCardIds,
 			this.collapsedGroupKeys
@@ -103,7 +103,7 @@ export class TaskListView extends ItemView {
 			task.projects.forEach((p) => projects.set(p.path, p.title ?? noteBasename(p.path)));
 		}
 		return {
-			statuses: this.host.statusManager.getStatusesByOrder().map((s) => ({ value: s.value, label: s.label })),
+			statuses: this.host.statusManager().getStatusesByOrder().map((s) => ({ value: s.value, label: s.label })),
 			tags: [...tags].sort(),
 			contexts: [...contexts].sort(),
 			projects: Array.from(projects, ([path, label]) => ({ path, label }))
