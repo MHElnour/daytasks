@@ -30,6 +30,7 @@ import {
 import { DEFAULT_SETTINGS, type DayTasksSettings } from "./settings/settings";
 import { DayTasksSettingTab } from "./settings/settingsTab";
 import { DailyTasksWidgetController } from "./ui/dailyTasksWidgetController";
+import { createSubtaskWidgetModel } from "./ui/subtaskWidget";
 
 const CREATE_TASK_COMMAND_ID = "create-task-for-current-daily-note";
 const WIDGET_HOST_CLASS = "daytasks-widget-host";
@@ -50,6 +51,7 @@ export default class DayTasksPlugin extends Plugin {
 	private dataVersion = 0;
 	private readingRefreshTimer: number | null = null;
 	private readonly saveTaskListState = debounce(() => void this.saveSettings(), 400);
+	private readonly syncDetailNotes = debounce(() => void this.runDetailNoteSync(), 800);
 
 	async onload(): Promise<void> {
 		this.dataStore = new DayTasksDataStore(this);
@@ -177,20 +179,11 @@ export default class DayTasksPlugin extends Plugin {
 		};
 	}
 
-	/** Renders the widget for a daily note into `container`. Returns true if drawn. */
-	private renderWidgetInto(container: HTMLElement, notePath: string): boolean {
-		if (!this.settings.showDailyNoteWidget) {
-			return false;
-		}
-		const date = resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder);
-		if (!date) {
-			return false;
-		}
-		const model = this.controller.getWidgetForDate(date, this.expandedIds, this.collapsedIds);
-		renderDailyTasksWidget(container, model, this.widgetOptions(), {
+	private widgetCardHandlers(addDate: string | null): WidgetRenderHandlers {
+		return {
 			onCycleStatus: (taskId) => void this.handleCycleStatus(taskId),
 			onCyclePriority: (taskId) => void this.handleCyclePriority(taskId),
-			onAddTask: () => this.openCreateModal(date),
+			...(addDate !== null ? { onAddTask: () => this.openCreateModal(addDate) } : {}),
 			onEditTask: (taskId) => void this.openEditModal(taskId),
 			onOpenProject: (path) => this.openProject(path),
 			onOpenTask: (taskId) => this.openTaskNote(taskId),
@@ -199,9 +192,44 @@ export default class DayTasksPlugin extends Plugin {
 			onToggleCollapsed: (taskId) => this.toggleCollapsed(taskId),
 			onOpenMenu: (taskId, anchor) => this.openTaskMenu(taskId, anchor),
 			onOpenDetailNote: (taskId) => void this.openDetailNote(taskId),
-		});
+		};
+	}
+
+	/** Renders the widget for a daily or detail note into `container`. Returns true if drawn. */
+	private renderWidgetInto(container: HTMLElement, notePath: string): boolean {
+		if (!this.settings.showDailyNoteWidget) return false;
+
+		const date = resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder);
+		if (date) {
+			const model = this.controller.getWidgetForDate(date, this.expandedIds, this.collapsedIds);
+			renderDailyTasksWidget(container, model, this.widgetOptions(), this.widgetCardHandlers(date));
+			this.applyIcons(container);
+			this.attachDrag(container);
+			return true;
+		}
+
+		// Detail note: a note whose frontmatter `taskId` matches an indexed task.
+		const file = this.app.vault.getAbstractFileByPath(notePath);
+		if (!(file instanceof TFile)) return false;
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const taskId: unknown = frontmatter?.taskId;
+		if (typeof taskId !== "string") return false;
+		const task = this.service.getById(taskId);
+		if (!task) return false;
+
+		const model = createSubtaskWidgetModel(
+			task,
+			this.statusManager,
+			todayDate(),
+			this.settings.priorities,
+			(id) => this.service.getChildren(id),
+			this.expandedIds,
+			this.collapsedIds,
+			(id) => this.service.getById(id) ?? undefined,
+			(id) => this.index.byBlocker(id)
+		);
+		renderDailyTasksWidget(container, model, this.widgetOptions(), this.widgetCardHandlers(null));
 		this.applyIcons(container);
-		this.attachDrag(container);
 		return true;
 	}
 
@@ -251,11 +279,7 @@ export default class DayTasksPlugin extends Plugin {
 				.forEach((node) => node.remove());
 
 			const path = view.file?.path;
-			if (
-				!path ||
-				!this.settings.showDailyNoteWidget ||
-				!resolveDailyNoteDate(path, this.settings.dailyNoteFolder)
-			) {
+			if (!path || !this.settings.showDailyNoteWidget) {
 				return;
 			}
 			// Inject into the scroll container (.markdown-preview-view), AFTER the
@@ -692,6 +716,20 @@ export default class DayTasksPlugin extends Plugin {
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TASK_LIST)) {
 			if (leaf.view instanceof TaskListView) {
 				leaf.view.render();
+			}
+		}
+
+		// Debounced detail-note frontmatter sync (no-op when no tasks have detail notes).
+		this.syncDetailNotes();
+	}
+
+	private async runDetailNoteSync(): Promise<void> {
+		for (const task of this.service.allTasks()) {
+			if (!task.detailNotePath) continue;
+			try {
+				await this.detailNotes.sync(task);
+			} catch (error) {
+				console.error("DayTasks: detail-note sync failed for", task.id, error);
 			}
 		}
 	}
