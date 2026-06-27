@@ -75,7 +75,7 @@
 }
 
 .daytasks-tasklist__group-label {
-	font-weight: var(--font-semibold);
+	font-weight: 600;
 }
 
 .daytasks-tasklist__group-count {
