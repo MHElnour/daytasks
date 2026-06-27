@@ -8,6 +8,7 @@ const CSS_FILES = [
 	"styles/task-card-note-widget.css", // note widget container
 	"styles/task-card.css", // BEM task card look
 	"styles/widget.css", // header / date / empty / panel
+	"styles/task-list-view.css", // task list view: filter bar, groups
 	"styles/modal.css", // task modal: status picker, projects, label icons
 ];
 

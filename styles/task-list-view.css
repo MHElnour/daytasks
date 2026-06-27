@@ -1,0 +1,99 @@
+/* =================================================================
+   TASK LIST VIEW — filter bar, facet chips, group sections, empty state.
+   All colours via Obsidian theme tokens; no hardcoded hex/rgb/hsl.
+   ================================================================= */
+
+.daytasks-tasklist {
+	padding: var(--size-4-3);
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+}
+
+.daytasks-tasklist__filterbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding-bottom: var(--size-4-2);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.daytasks-tasklist__search {
+	flex: 1 1 180px;
+	min-width: 140px;
+}
+
+.daytasks-tasklist__statuses,
+.daytasks-tasklist__tags,
+.daytasks-tasklist__contexts,
+.daytasks-tasklist__projects {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-2);
+}
+
+.daytasks-tasklist__facet-chip {
+	padding: 0 var(--size-2-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+}
+
+.daytasks-tasklist__facet-chip.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.daytasks-tasklist__group {
+	display: flex;
+	flex-direction: column;
+}
+
+.daytasks-tasklist__group-head {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	padding: var(--size-2-2) 0;
+	position: sticky;
+	top: 0;
+	background: var(--background-primary);
+	z-index: 1;
+}
+
+.daytasks-tasklist__group-toggle {
+	display: inline-flex;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-muted);
+	padding: 0;
+}
+
+.daytasks-tasklist__group-label {
+	font-weight: var(--font-semibold);
+}
+
+.daytasks-tasklist__group-count {
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+.daytasks-tasklist__cards {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-2);
+}
+
+.daytasks-tasklist__empty {
+	color: var(--text-muted);
+	padding: var(--size-4-4);
+	text-align: center;
+}
