@@ -9,6 +9,15 @@ export interface TaskListFacets {
 	projects: { path: string; label: string }[];
 }
 
+/** The unbounded facets shown as searchable dropdowns (status stays inline). */
+export type FacetKey = "tags" | "contexts" | "projects";
+
+/** Ephemeral filter-bar UI state owned by the view (which dropdown is open + its search text). */
+export interface TaskListUiState {
+	openFacet: FacetKey | null;
+	facetSearch: string;
+}
+
 export interface TaskListHandlers {
 	onSetStatuses(values: string[]): void;
 	onSetDatePreset(preset: TaskListState["datePreset"]): void;
@@ -20,6 +29,10 @@ export interface TaskListHandlers {
 	onSetSort(sortBy: TaskListState["sortBy"], dir: TaskListState["sortDir"]): void;
 	onClear(): void;
 	onToggleGroup(key: string): void;
+	/** Opens the given facet's dropdown (or closes all when null). */
+	onToggleFacetMenu(facet: FacetKey | null): void;
+	/** Updates the open facet dropdown's search text. */
+	onFacetSearch(text: string): void;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -67,9 +80,80 @@ function chipMultiselect(
 	return wrap;
 }
 
+/**
+ * A facet shown as a dropdown button + searchable checklist popover, so it
+ * scales to hundreds of values instead of spilling chips across the bar. The
+ * popover is rendered open when `ui.openFacet === facetKey`; the view re-renders
+ * on each toggle and restores the open popover + focus.
+ */
+function facetDropdown(
+	facetKey: FacetKey,
+	label: string,
+	selected: string[],
+	choices: { value: string; label: string }[],
+	ui: TaskListUiState,
+	onSet: (values: string[]) => void,
+	lh: TaskListHandlers
+): HTMLElement {
+	const wrap = el("div", "daytasks-tasklist__facet");
+
+	const btn = el(
+		"button",
+		"daytasks-tasklist__facet-btn",
+		selected.length ? `${label} (${selected.length})` : label
+	);
+	if (selected.length) btn.classList.add("is-active");
+	const caret = el("span", "daytasks-tasklist__facet-caret", "▾");
+	btn.appendChild(caret);
+	btn.addEventListener("click", (event) => {
+		event.stopPropagation();
+		lh.onToggleFacetMenu(ui.openFacet === facetKey ? null : facetKey);
+	});
+	wrap.appendChild(btn);
+
+	if (ui.openFacet === facetKey) {
+		wrap.classList.add("is-open");
+		const pop = el("div", "daytasks-tasklist__facet-pop");
+		pop.addEventListener("click", (event) => event.stopPropagation());
+
+		const search = el("input", "daytasks-tasklist__facet-search");
+		search.type = "search";
+		search.placeholder = `Filter ${label.toLowerCase()}…`;
+		search.value = ui.facetSearch;
+		search.addEventListener("input", () => lh.onFacetSearch(search.value));
+		pop.appendChild(search);
+
+		const listEl = el("div", "daytasks-tasklist__facet-list");
+		const query = ui.facetSearch.trim().toLowerCase();
+		const filtered = query
+			? choices.filter((c) => c.label.toLowerCase().includes(query))
+			: choices;
+		for (const choice of filtered) {
+			const opt = el("button", "daytasks-tasklist__facet-opt", choice.label);
+			const on = selected.includes(choice.value);
+			if (on) opt.classList.add("is-on");
+			opt.setAttribute("role", "menuitemcheckbox");
+			opt.setAttribute("aria-checked", String(on));
+			opt.addEventListener("click", (event) => {
+				event.stopPropagation();
+				onSet(on ? selected.filter((v) => v !== choice.value) : [...selected, choice.value]);
+			});
+			listEl.appendChild(opt);
+		}
+		if (filtered.length === 0) {
+			listEl.appendChild(el("div", "daytasks-tasklist__facet-empty", "No matches"));
+		}
+		pop.appendChild(listEl);
+		wrap.appendChild(pop);
+	}
+
+	return wrap;
+}
+
 function renderFilterBar(
 	state: TaskListState,
 	facets: TaskListFacets,
+	ui: TaskListUiState,
 	lh: TaskListHandlers
 ): HTMLElement {
 	const bar = el("div", "daytasks-tasklist__filterbar");
@@ -89,16 +173,16 @@ function renderFilterBar(
 	], (preset) => lh.onSetDatePreset(preset)));
 
 	if (facets.tags.length) {
-		bar.appendChild(chipMultiselect("daytasks-tasklist__tags", state.tags,
-			facets.tags.map((t) => ({ value: t, label: `#${t}` })), (values) => lh.onSetTags(values)));
+		bar.appendChild(facetDropdown("tags", "Tags", state.tags,
+			facets.tags.map((t) => ({ value: t, label: `#${t}` })), ui, (values) => lh.onSetTags(values), lh));
 	}
 	if (facets.contexts.length) {
-		bar.appendChild(chipMultiselect("daytasks-tasklist__contexts", state.contexts,
-			facets.contexts.map((c) => ({ value: c, label: `@${c}` })), (values) => lh.onSetContexts(values)));
+		bar.appendChild(facetDropdown("contexts", "Contexts", state.contexts,
+			facets.contexts.map((c) => ({ value: c, label: `@${c}` })), ui, (values) => lh.onSetContexts(values), lh));
 	}
 	if (facets.projects.length) {
-		bar.appendChild(chipMultiselect("daytasks-tasklist__projects", state.projects,
-			facets.projects.map((p) => ({ value: p.path, label: p.label })), (values) => lh.onSetProjects(values)));
+		bar.appendChild(facetDropdown("projects", "Projects", state.projects,
+			facets.projects.map((p) => ({ value: p.path, label: p.label })), ui, (values) => lh.onSetProjects(values), lh));
 	}
 
 	bar.appendChild(select<TaskListState["groupBy"]>("daytasks-tasklist__groupby", state.groupBy, [
@@ -130,11 +214,19 @@ export function renderTaskListView(
 	facets: TaskListFacets,
 	options: WidgetRenderOptions,
 	handlers: WidgetRenderHandlers,
-	listHandlers: TaskListHandlers
+	listHandlers: TaskListHandlers,
+	uiState: TaskListUiState
 ): HTMLElement {
 	const root = el("div");
 	root.classList.add("daytasks-plugin", "daytasks-tasklist");
-	root.appendChild(renderFilterBar(model.state, facets, listHandlers));
+	root.appendChild(renderFilterBar(model.state, facets, uiState, listHandlers));
+
+	// Click-anywhere-else closes an open facet dropdown.
+	if (uiState.openFacet) {
+		const backdrop = el("div", "daytasks-tasklist__facet-backdrop");
+		backdrop.addEventListener("click", () => listHandlers.onToggleFacetMenu(null));
+		root.appendChild(backdrop);
+	}
 
 	if (model.empty) {
 		root.appendChild(el("div", "daytasks-tasklist__empty", "No tasks match these filters."));

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderTaskListView, type TaskListFacets, type TaskListHandlers } from "../../src/obsidian/taskListRenderer";
+import { renderTaskListView, type TaskListFacets, type TaskListHandlers, type TaskListUiState } from "../../src/obsidian/taskListRenderer";
 import type { TaskListModel } from "../../src/ui/taskListModel";
 import { DEFAULT_TASK_LIST_STATE } from "../../src/core/taskListState";
 import type { WidgetRenderOptions } from "../../src/obsidian/widgetRenderer";
@@ -18,12 +18,19 @@ function card(id: string) {
 const noopHandlers: TaskListHandlers = {
 	onSetStatuses: vi.fn(), onSetDatePreset: vi.fn(), onSetTags: vi.fn(), onSetContexts: vi.fn(),
 	onSetProjects: vi.fn(), onSetSearch: vi.fn(), onSetGroupBy: vi.fn(), onSetSort: vi.fn(),
-	onClear: vi.fn(), onToggleGroup: vi.fn(),
+	onClear: vi.fn(), onToggleGroup: vi.fn(), onToggleFacetMenu: vi.fn(), onFacetSearch: vi.fn(),
 };
 
-function render(model: TaskListModel, lh: Partial<TaskListHandlers> = {}) {
+const CLOSED: TaskListUiState = { openFacet: null, facetSearch: "" };
+
+function render(
+	model: TaskListModel,
+	lh: Partial<TaskListHandlers> = {},
+	ui: TaskListUiState = CLOSED,
+	facetsOverride: TaskListFacets = facets
+) {
 	const parent = document.createElement("div");
-	renderTaskListView(parent, model, facets, options, { onCycleStatus: vi.fn() }, { ...noopHandlers, ...lh });
+	renderTaskListView(parent, model, facetsOverride, options, { onCycleStatus: vi.fn() }, { ...noopHandlers, ...lh }, ui);
 	return parent;
 }
 
@@ -78,5 +85,39 @@ describe("renderTaskListView", () => {
 		const chip = root.querySelector(".daytasks-tasklist__statuses .daytasks-tasklist__facet-chip") as HTMLElement;
 		chip.click();
 		expect(onSetStatuses).toHaveBeenCalledWith([]);
+	});
+
+	it("renders a Tags facet dropdown button (not inline chips); clicking it opens the menu", () => {
+		const onToggleFacetMenu = vi.fn();
+		const root = render(model, { onToggleFacetMenu });
+		const btn = [...root.querySelectorAll(".daytasks-tasklist__facet-btn")].find((b) =>
+			b.textContent?.startsWith("Tags")
+		) as HTMLElement;
+		expect(btn).toBeTruthy();
+		// closed: no popover yet
+		expect(root.querySelector(".daytasks-tasklist__facet-pop")).toBeNull();
+		btn.click();
+		expect(onToggleFacetMenu).toHaveBeenCalledWith("tags");
+	});
+
+	it("an open facet popover lists choices; clicking one toggles via onSetTags, and the backdrop closes it", () => {
+		const onSetTags = vi.fn();
+		const onToggleFacetMenu = vi.fn();
+		const root = render(model, { onSetTags, onToggleFacetMenu }, { openFacet: "tags", facetSearch: "" });
+		const pop = root.querySelector(".daytasks-tasklist__facet-pop")!;
+		expect(pop).not.toBeNull();
+		const opt = pop.querySelector(".daytasks-tasklist__facet-opt") as HTMLElement;
+		expect(opt.textContent).toBe("#x");
+		opt.click();
+		expect(onSetTags).toHaveBeenCalledWith(["x"]);
+		(root.querySelector(".daytasks-tasklist__facet-backdrop") as HTMLElement).click();
+		expect(onToggleFacetMenu).toHaveBeenCalledWith(null);
+	});
+
+	it("facet search filters the choices", () => {
+		const many: TaskListFacets = { statuses: [], tags: ["alpha", "beta"], contexts: [], projects: [] };
+		const root = render(model, {}, { openFacet: "tags", facetSearch: "al" }, many);
+		const opts = [...root.querySelectorAll(".daytasks-tasklist__facet-opt")].map((o) => o.textContent);
+		expect(opts).toEqual(["#alpha"]);
 	});
 });

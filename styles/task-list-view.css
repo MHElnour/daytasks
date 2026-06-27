@@ -97,3 +97,152 @@
 	padding: var(--size-4-4);
 	text-align: center;
 }
+
+/* =================================================================
+   LIST-ROW TWEAKS (scoped to this view; the daily widget is untouched)
+   ================================================================= */
+
+/* Drag-to-reorder is intentionally not offered in this view, so the card's
+   drag handle does nothing here — hide it. */
+.daytasks-tasklist .task-card__handle {
+	display: none;
+}
+
+/* Align each collapsed row into clean right-hand columns: title (flex) ·
+   due · id · [rail]. Fixed widths + right alignment + reordering id to sit
+   closest to the rail make the ids and dates line up across every row,
+   regardless of which rows have a due date. */
+.daytasks-tasklist .task-card--collapsed .task-card__collapsed-row {
+	gap: var(--size-4-2);
+}
+
+.daytasks-tasklist .task-card__collapsed-due {
+	order: 1;
+	flex: 0 0 auto;
+	width: 3.5em;
+	text-align: right;
+	margin-left: 0;
+}
+
+.daytasks-tasklist .task-card__collapsed-id {
+	order: 2;
+	flex: 0 0 auto;
+	width: 8em;
+	text-align: right;
+}
+
+/* =================================================================
+   FACET DROPDOWNS — Tags / Contexts / Projects (searchable popover)
+   ================================================================= */
+
+.daytasks-tasklist__facet {
+	position: relative;
+	display: inline-flex;
+}
+
+/* Keep the open button + its popover above the click-outside backdrop. */
+.daytasks-tasklist__facet.is-open {
+	z-index: 30;
+}
+
+.daytasks-tasklist__facet-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-1);
+	padding: 0 var(--size-2-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+}
+
+.daytasks-tasklist__facet-btn.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.daytasks-tasklist__facet-caret {
+	font-size: 0.7em;
+	opacity: 0.8;
+}
+
+/* Transparent full-window layer so a click anywhere else closes the dropdown. */
+.daytasks-tasklist__facet-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+}
+
+.daytasks-tasklist__facet-pop {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 31;
+	display: flex;
+	flex-direction: column;
+	min-width: 200px;
+	max-width: 280px;
+	max-height: 320px;
+	overflow: hidden;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+}
+
+.daytasks-tasklist__facet-search {
+	flex: 0 0 auto;
+	margin: var(--size-2-2);
+}
+
+.daytasks-tasklist__facet-list {
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	padding: 0 var(--size-2-2) var(--size-2-2);
+}
+
+.daytasks-tasklist__facet-opt {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	width: 100%;
+	padding: var(--size-2-1) var(--size-2-2);
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+	text-align: left;
+}
+
+/* Faux checkbox indicator on the left of each option. */
+.daytasks-tasklist__facet-opt::before {
+	content: "";
+	flex: 0 0 auto;
+	width: 13px;
+	height: 13px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+}
+
+.daytasks-tasklist__facet-opt.is-on::before {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+}
+
+.daytasks-tasklist__facet-opt:hover {
+	background: var(--background-modifier-hover);
+}
+
+.daytasks-tasklist__facet-empty {
+	padding: var(--size-2-2);
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	text-align: center;
+}

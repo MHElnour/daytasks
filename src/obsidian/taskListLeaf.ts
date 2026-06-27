@@ -5,7 +5,12 @@ import type { DayTask } from "../core/task";
 import type { TaskListState } from "../core/taskListState";
 import { DEFAULT_TASK_LIST_STATE } from "../core/taskListState";
 import { createTaskListModel } from "../ui/taskListModel";
-import { renderTaskListView, type TaskListFacets, type TaskListHandlers } from "./taskListRenderer";
+import {
+	renderTaskListView,
+	type FacetKey,
+	type TaskListFacets,
+	type TaskListHandlers,
+} from "./taskListRenderer";
 import type { WidgetRenderHandlers, WidgetRenderOptions } from "./widgetRenderer";
 import { noteBasename } from "../util/notePath";
 
@@ -26,6 +31,8 @@ export interface TaskListHost {
 export class TaskListView extends ItemView {
 	private readonly expandedCardIds = new Set<string>();
 	private readonly collapsedGroupKeys = new Set<string>();
+	private openFacet: FacetKey | null = null;
+	private facetSearch = "";
 
 	constructor(leaf: WorkspaceLeaf, private readonly host: TaskListHost) {
 		super(leaf);
@@ -51,12 +58,21 @@ export class TaskListView extends ItemView {
 	render(): void {
 		const container = this.contentEl;
 
-		// The search input is rebuilt on every render; preserve its focus + caret so
-		// typing in it isn't interrupted (onSetSearch re-renders on each keystroke).
+		// The filter bar is rebuilt on every render. Preserve the focus + caret of
+		// whichever filter input is active (the main search OR an open facet
+		// dropdown's search) and the facet list's scroll position, so typing and
+		// scrolling aren't interrupted (each keystroke re-renders).
 		const active = container.ownerDocument.activeElement;
-		const searchFocused =
-			active instanceof HTMLInputElement && active.classList.contains("daytasks-tasklist__search");
-		const caret = searchFocused ? active.selectionStart : null;
+		const focusedClass =
+			active instanceof HTMLInputElement
+				? ["daytasks-tasklist__search", "daytasks-tasklist__facet-search"].find((c) =>
+						active.classList.contains(c)
+					)
+				: undefined;
+		const caret =
+			focusedClass && active instanceof HTMLInputElement ? active.selectionStart : null;
+		const facetScroll =
+			container.querySelector<HTMLElement>(".daytasks-tasklist__facet-list")?.scrollTop ?? null;
 
 		container.empty();
 
@@ -78,17 +94,25 @@ export class TaskListView extends ItemView {
 			this.facets(tasks),
 			this.host.widgetOptions(),
 			this.wrapCardHandlers(),
-			this.listHandlers(state)
+			this.listHandlers(state),
+			{ openFacet: this.openFacet, facetSearch: this.facetSearch }
 		);
 		this.host.applyIcons(container);
 
-		if (searchFocused) {
-			const input = container.querySelector<HTMLInputElement>(".daytasks-tasklist__search");
+		if (focusedClass) {
+			const input = container.querySelector<HTMLInputElement>(`.${focusedClass}`);
 			if (input) {
 				input.focus();
 				const pos = caret ?? input.value.length;
 				input.setSelectionRange(pos, pos);
 			}
+		} else if (this.openFacet) {
+			// A facet dropdown just opened — focus its search box.
+			container.querySelector<HTMLInputElement>(".daytasks-tasklist__facet-search")?.focus();
+		}
+		if (facetScroll !== null) {
+			const list = container.querySelector<HTMLElement>(".daytasks-tasklist__facet-list");
+			if (list) list.scrollTop = facetScroll;
 		}
 	}
 
@@ -143,6 +167,15 @@ export class TaskListView extends ItemView {
 			onToggleGroup: (key) => {
 				if (this.collapsedGroupKeys.has(key)) this.collapsedGroupKeys.delete(key);
 				else this.collapsedGroupKeys.add(key);
+				this.render();
+			},
+			onToggleFacetMenu: (facet) => {
+				this.openFacet = facet;
+				this.facetSearch = "";
+				this.render();
+			},
+			onFacetSearch: (text) => {
+				this.facetSearch = text;
 				this.render();
 			},
 		};
