@@ -10,6 +10,7 @@ Current design docs:
 - [Task Modal Layout Redesign](modal-layout-redesign.md) - UI slice A.5: two-box modal, icon toolbar, relationship placeholders.
 - [Card Redesign + Drag-to-Reorder](card-redesign-drag-drop.md) - 0.5.0 card layout rebuild + drag reorder (sortOrder), collapse/expand, boxed metadata.
 - [Task List View](task-list-view.md) - 0.6.0 cross-day filterable/grouped/sortable task view (ItemView), facet dropdowns, reuses the card UI.
+- [Detail Notes](detail-notes.md) - 0.7.0 per-task markdown note with plugin-managed synced frontmatter + an injected interactive Subtasks widget; rail control + kebab across all views.
 
 Design docs can mention future surfaces, but current implementation priority is
 the Obsidian plugin experience.
