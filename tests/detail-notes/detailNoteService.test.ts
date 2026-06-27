@@ -40,6 +40,12 @@ class FakeVaultPort implements VaultPort {
 		return entry ? entry.frontmatter : null;
 	}
 
+	/** Test-only accessor for the stored body (null if the file is absent). */
+	readBody(path: string): string | null {
+		const entry = this.files.get(path);
+		return entry ? entry.body : null;
+	}
+
 	async writeFrontmatter(
 		path: string,
 		mutate: (fm: Record<string, unknown>) => void
@@ -148,14 +154,7 @@ describe("DetailNoteService.create", () => {
 
 	it("stored body is empty string", async () => {
 		const path = await service.create(baseTask, "Notes/Tasks");
-		// Access via readFrontmatter to confirm file exists; body check via internal
-		// — we expose it by storing through create(path, "") which the fake records.
-		// The fake stores body from create; we'll verify by checking readFrontmatter
-		// returns something (file was created) and the content arg was "".
-		// We test body indirectly: port.create is called with "" body.
-		// Since FakeVaultPort stores body, we expose a helper for the test only.
-		// Actually let's expose it:
-		expect(port.readFrontmatter(path)).not.toBeNull();
+		expect(port.readBody(path)).toBe("");
 	});
 
 	it("frontmatter after create equals buildManagedFrontmatter(task, iso, iso)", async () => {
@@ -283,5 +282,38 @@ describe("DetailNoteService.sync", () => {
 		await service.sync(noPriorityTask);
 
 		expect(port.readFrontmatter(path)).not.toHaveProperty("priority");
+	});
+
+	it("diff-guard reacts to array-content changes (tags + contexts)", async () => {
+		const path = await service.create(fullTask, "Notes/Tasks");
+		port.writeFrontmatterCallCount = 0; // reset after create
+
+		// Advance clock and change only array-valued managed fields.
+		clock = new Date("2026-06-27T11:00:00.000Z");
+		const updatedTask: DayTask = {
+			...fullTask,
+			tags: ["daytask", "later"],
+			contexts: ["home"],
+			detailNotePath: path,
+		};
+		await service.sync(updatedTask);
+
+		expect(port.writeFrontmatterCallCount).toBe(1);
+		expect(port.readFrontmatter(path)!.tags).toEqual(["daytask", "later"]);
+		expect(port.readFrontmatter(path)!.contexts).toEqual(["home"]);
+	});
+
+	it("diff-guard does NOT misfire when only a non-managed key changed", async () => {
+		const path = await service.create(baseTask, "Notes/Tasks");
+
+		// Inject a user-managed key after creation.
+		port.readFrontmatter(path)!["myField"] = 1;
+		port.writeFrontmatterCallCount = 0; // reset after create
+
+		// Task and clock otherwise unchanged — only the non-managed key exists.
+		const sameTask: DayTask = { ...baseTask, detailNotePath: path };
+		await service.sync(sameTask);
+
+		expect(port.writeFrontmatterCallCount).toBe(0);
 	});
 });
