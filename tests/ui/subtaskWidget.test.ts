@@ -100,4 +100,41 @@ describe("createSubtaskWidgetModel", () => {
 		expect(model.cards.length).toBe(0);
 		expect(model.title).toBe("Subtasks");
 	});
+
+	it("terminates and produces no duplicate cards on a cyclic getChildren graph", () => {
+		const parent = makeTask({ id: "TSK-parent01" });
+		const childA = makeTask({ id: "TSK-childA01", parentId: "TSK-parent01" });
+		const grandchild = makeTask({ id: "TSK-grand0001", parentId: "TSK-childA01" });
+
+		// Cyclic graph: parent → childA → grandchild → childA → ...
+		const getChildren = (id: string): DayTask[] => {
+			if (id === parent.id) return [childA];
+			if (id === childA.id) return [grandchild];
+			if (id === grandchild.id) return [childA];
+			return [];
+		};
+
+		// (a) Must terminate (no infinite loop / timeout).
+		const model = createSubtaskWidgetModel(
+			parent,
+			statusManager,
+			"2026-06-27",
+			priorities,
+			getChildren,
+			new Set([childA.id, grandchild.id]),
+			new Set(),
+			(id: string) => [parent, childA, grandchild].find((t) => t.id === id),
+			() => []
+		);
+
+		// (b) No duplicate card ids across the whole forest (roots + nested children).
+		const ids: string[] = [];
+		const collect = (card: { id: string; children: { id: string; children: unknown[] }[] }): void => {
+			ids.push(card.id);
+			card.children.forEach((c) => collect(c as typeof card));
+		};
+		model.cards.forEach((c) => collect(c));
+
+		expect(new Set(ids).size).toBe(ids.length);
+	});
 });

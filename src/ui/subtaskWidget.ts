@@ -3,12 +3,20 @@ import type { PriorityConfig } from "../core/status";
 import type { DayTask } from "../core/task";
 import { createDailyTasksWidgetModel, type DailyTasksWidgetModel } from "./todayView";
 
-/** Collect all descendants of `rootId` into a flat array via BFS over `getChildren`. */
+/**
+ * Collect all descendants of `rootId` into a flat array via BFS over `getChildren`.
+ * A visited set makes the walk cycle-safe (matching `isDescendant`/`buildTaskForest`
+ * in core/subtasks): each task is collected at most once, so a corrupt cyclic
+ * `parentId` graph terminates instead of looping.
+ */
 function collectDescendants(rootId: string, getChildren: (id: string) => DayTask[]): DayTask[] {
 	const result: DayTask[] = [];
+	const visited = new Set<string>([rootId]);
 	const queue = getChildren(rootId);
 	while (queue.length > 0) {
 		const task = queue.shift()!;
+		if (visited.has(task.id)) continue;
+		visited.add(task.id);
 		result.push(task);
 		queue.push(...getChildren(task.id));
 	}
