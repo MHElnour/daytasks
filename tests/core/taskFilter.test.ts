@@ -74,3 +74,44 @@ describe("filterTasks", () => {
 		expect(filterTasks(tasks, state({ search: "bob" }), ref, isCompleted).map((t) => t.id)).toEqual(["b"]);
 	});
 });
+
+import { sortTasks, groupTasks } from "../../src/core/taskFilter";
+import { StatusManager } from "../../src/core/statusManager";
+import { DEFAULT_STATUSES, DEFAULT_PRIORITIES } from "../../src/core/status";
+
+const sm = new StatusManager(DEFAULT_STATUSES, "open");
+
+describe("sortTasks", () => {
+	it("sorts by scheduled date asc/desc, missing last", () => {
+		const tasks = [
+			task({ id: "b", scheduledDate: "2026-06-28" }),
+			task({ id: "a", scheduledDate: "2026-06-27" }),
+		];
+		expect(sortTasks(tasks, "scheduled", "asc", DEFAULT_PRIORITIES).map((t) => t.id)).toEqual(["a", "b"]);
+		expect(sortTasks(tasks, "scheduled", "desc", DEFAULT_PRIORITIES).map((t) => t.id)).toEqual(["b", "a"]);
+	});
+
+	it("sorts by title", () => {
+		const tasks = [task({ id: "b", title: "Banana" }), task({ id: "a", title: "Apple" })];
+		expect(sortTasks(tasks, "title", "asc", DEFAULT_PRIORITIES).map((t) => t.id)).toEqual(["a", "b"]);
+	});
+});
+
+describe("groupTasks", () => {
+	it("groups by status in configured order, present statuses only", () => {
+		const tasks = [task({ id: "a", status: "open" }), task({ id: "b", status: "done" })];
+		const groups = groupTasks(tasks, "status", sm);
+		expect(groups.map((g) => g.key)).toEqual(["open", "done"]);
+		expect(groups[0].tasks.map((t) => t.id)).toEqual(["a"]);
+	});
+
+	it("groups by project with a no-project bucket last", () => {
+		const tasks = [
+			task({ id: "a", projects: [{ path: "P.md", title: "Proj" }] }),
+			task({ id: "b" }),
+		];
+		const groups = groupTasks(tasks, "project", sm);
+		expect(groups.map((g) => g.key)).toEqual(["P.md", ""]);
+		expect(groups[1].label).toBe("(No project)");
+	});
+});
