@@ -282,6 +282,7 @@ function leafCard(over: Partial<DailyTasksWidgetModel["cards"][number]> = {}): D
 		blocked: false,
 		collapsed: false,
 		createdLabel: "Jun 25",
+		hasDetailNote: false,
 		...over,
 	};
 }

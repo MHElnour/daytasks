@@ -11,7 +11,7 @@ function card(id: string) {
 	return {
 		id, title: id, checked: false, status: "open", statusLabel: "Open", statusColor: "#888", statusIcon: "circle",
 		scheduledLabel: "Jun 27", createdLabel: "Jun 27", overdue: false, tags: [], contexts: [], projects: [],
-		children: [], expanded: false, collapsed: true, blockedBy: [], blocking: [], blocked: false,
+		children: [], expanded: false, collapsed: true, blockedBy: [], blocking: [], blocked: false, hasDetailNote: false,
 	};
 }
 
