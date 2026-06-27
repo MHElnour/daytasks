@@ -35,6 +35,11 @@ safe filename — the note's filename IS its title). On a name collision (anothe
 task with the same title) the create falls back to `<sanitized-title>-<taskId>.md`;
 detection always keys off the frontmatter `taskId`, never the filename. (0.7.1)
 
+The folder supports date templates — `{{year}}`, `{{month}}`, `{{day}}`, `{{date}}`
+are expanded from the task's scheduled date at create time (`resolveFolderTemplate`),
+so `Tasks/{{year}}/{{month}}` files a note under `Tasks/2026/06/`; the resolved
+full path is what gets stored, so sync/open/migration are unaffected. (0.8.0)
+
 Two zones, strictly separated:
 
 - **Managed** (plugin owns): the YAML **frontmatter** only.

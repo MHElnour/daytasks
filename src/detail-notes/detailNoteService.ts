@@ -81,13 +81,15 @@ export class DetailNoteService {
 	 * 4. Return the full path.
 	 */
 	async create(task: DayTask, folder: string): Promise<string> {
-		await this.port.ensureFolder(folder);
+		// An empty folder means the vault root (e.g. a template that resolved away).
+		const dir = folder ? `${folder}/` : "";
+		if (folder) await this.port.ensureFolder(folder);
 		// Prefer a clean `<title>.md`; fall back to `<title>-<id>.md` only when
 		// that name is already taken (e.g. another task with the same title).
-		const preferred = `${folder}/${detailNoteFileName(task)}`;
+		const preferred = `${dir}${detailNoteFileName(task)}`;
 		const base = sanitizeFileBase(task.title) || task.id;
 		const path = this.port.exists(preferred)
-			? `${folder}/${base}-${task.id}.md`
+			? `${dir}${base}-${task.id}.md`
 			: preferred;
 		await this.port.create(path, "");
 		const iso = localIso(this.now());

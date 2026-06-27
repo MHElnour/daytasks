@@ -13,3 +13,14 @@ Sections:
 DayTasks is private and English-only right now; no i18n release workflow is
 required.
 -->
+
+## Added
+
+- **Date templates in the detail-notes folder.** The *Detail notes folder*
+  setting now understands `{{year}}`, `{{month}}`, `{{day}}`, and `{{date}}`,
+  filled from the task's scheduled date when a note is created — so
+  `Tasks/{{year}}/{{month}}` files a task scheduled in June 2026 under
+  `Tasks/2026/06/`. Nested folders are created automatically. A plain folder with
+  no `{{…}}` works exactly as before.
+
+**Full Changelog**: <https://github.com/MHElnour/daytasks/compare/0.7.2...0.8.0>

@@ -9,6 +9,7 @@ import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./c
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { DetailNoteService, type VaultPort } from "./detail-notes/detailNoteService";
+import { resolveFolderTemplate } from "./detail-notes/folderTemplate";
 import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
 import { attachReorder, type ReorderHandle } from "./obsidian/dragReorder";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
@@ -486,7 +487,7 @@ export default class DayTasksPlugin extends Plugin {
 		}
 		if (input.detailNote) {
 			try {
-				const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
+				const path = await this.detailNotes.create(task, this.detailNotesFolderFor(task));
 				await this.updateDetailNoteLink(task.id, path);
 				await this.persistTasks();
 				this.refreshViews();
@@ -498,11 +499,19 @@ export default class DayTasksPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * The folder for a task's new detail note — the `detailNotesFolder` setting
+	 * with `{{year}}/{{month}}/{{day}}` expanded from the task's scheduled date.
+	 */
+	private detailNotesFolderFor(task: DayTask): string {
+		return resolveFolderTemplate(this.settings.detailNotesFolder, task.scheduledDate);
+	}
+
 	private async createDetailNote(taskId: string): Promise<void> {
 		try {
 			const task = this.service.getById(taskId);
 			if (!task || task.detailNotePath) return;
-			const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
+			const path = await this.detailNotes.create(task, this.detailNotesFolderFor(task));
 			await this.updateDetailNoteLink(task.id, path);
 			await this.persistTasks();
 			this.refreshViews();

@@ -170,7 +170,9 @@ export class DayTasksSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Detail notes folder")
-			.setDesc("Folder where new detail notes are created.")
+			.setDesc(
+				"Folder for new detail notes. Supports {{year}}, {{month}}, {{day}} from the task's scheduled date — e.g. Tasks/{{year}}/{{month}}."
+			)
 			.addText((text) =>
 				text.setValue(settings.detailNotesFolder).onChange((value) => {
 					settings.detailNotesFolder = value.trim();

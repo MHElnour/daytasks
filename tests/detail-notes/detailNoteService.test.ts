@@ -172,6 +172,13 @@ describe("DetailNoteService.create", () => {
 		expect(port.exists(path)).toBe(true);
 	});
 
+	it("creates in the vault root (no leading slash, no folder ensured) for an empty folder", async () => {
+		const path = await service.create(baseTask, "");
+		expect(path).toBe("Write tests.md");
+		expect(port.exists(path)).toBe(true);
+		expect(port.foldersEnsured).toEqual([]);
+	});
+
 	it("stored body is empty string", async () => {
 		const path = await service.create(baseTask, "Notes/Tasks");
 		expect(port.readBody(path)).toBe("");
