@@ -50,6 +50,14 @@ export class TaskListView extends ItemView {
 	/** Re-renders from current tasks + persisted state. Called by the plugin on change. */
 	render(): void {
 		const container = this.contentEl;
+
+		// The search input is rebuilt on every render; preserve its focus + caret so
+		// typing in it isn't interrupted (onSetSearch re-renders on each keystroke).
+		const active = container.ownerDocument.activeElement;
+		const searchFocused =
+			active instanceof HTMLInputElement && active.classList.contains("daytasks-tasklist__search");
+		const caret = searchFocused ? active.selectionStart : null;
+
 		container.empty();
 
 		const tasks = this.host.allTasks();
@@ -73,6 +81,15 @@ export class TaskListView extends ItemView {
 			this.listHandlers(state)
 		);
 		this.host.applyIcons(container);
+
+		if (searchFocused) {
+			const input = container.querySelector<HTMLInputElement>(".daytasks-tasklist__search");
+			if (input) {
+				input.focus();
+				const pos = caret ?? input.value.length;
+				input.setSelectionRange(pos, pos);
+			}
+		}
 	}
 
 	/** Distinct status/tag/context/project values across all tasks, for the filter bar. */
