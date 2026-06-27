@@ -170,7 +170,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Detail notes folder")
-			.setDesc("Reserved for optional detail notes in a later milestone.")
+			.setDesc("Folder where new detail notes are created.")
 			.addText((text) =>
 				text.setValue(settings.detailNotesFolder).onChange((value) => {
 					settings.detailNotesFolder = value.trim();
@@ -180,7 +180,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Create detail note by default")
-			.setDesc("Reserved for the detail-note milestone.")
+			.setDesc("Turn on the create-detail-note toggle by default in the task modal.")
 			.addToggle((toggle) =>
 				toggle.setValue(settings.createDetailNoteByDefault).onChange(async (value) => {
 					settings.createDetailNoteByDefault = value;

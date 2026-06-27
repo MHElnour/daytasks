@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { MarkdownView, Menu, Notice, Plugin, setIcon } from "obsidian";
+import { MarkdownView, Menu, Notice, Plugin, TFile, TFolder, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { dependencyCandidates } from "./core/dependencies";
 import { nextPriority } from "./core/priorityCycle";
@@ -8,6 +8,7 @@ import { withBlockedStatus } from "./core/status";
 import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./core/task";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
+import { DetailNoteService, type VaultPort } from "./detail-notes/detailNoteService";
 import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
 import { attachReorder, type ReorderHandle } from "./obsidian/dragReorder";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
@@ -42,6 +43,7 @@ export default class DayTasksPlugin extends Plugin {
 	private statusManager!: StatusManager;
 	private service!: DayTaskService;
 	private controller!: DailyTasksWidgetController;
+	private detailNotes!: DetailNoteService;
 	private expandedIds = new Set<string>();
 	private collapsedIds = new Set<string>();
 	private reorderHandles: { handle: ReorderHandle; listEl: HTMLElement }[] = [];
@@ -62,6 +64,38 @@ export default class DayTasksPlugin extends Plugin {
 		}
 		this.index.rebuild(await this.store.list());
 		this.rebuildServices();
+
+		// VaultPort + DetailNoteService — instantiated once; settings-independent.
+		const port: VaultPort = {
+			exists: (path: string): boolean =>
+				this.app.vault.getAbstractFileByPath(path) !== null,
+			ensureFolder: async (path: string): Promise<void> => {
+				if (this.app.vault.getAbstractFileByPath(path) instanceof TFolder) return;
+				try {
+					await this.app.vault.createFolder(path);
+				} catch (e) {
+					// Swallow "already exists" race
+					if (!(e instanceof Error && e.message.includes("already exists"))) throw e;
+				}
+			},
+			create: async (path: string, content: string): Promise<void> => {
+				await this.app.vault.create(path, content);
+			},
+			readFrontmatter: (path: string): Record<string, unknown> | null => {
+				const file = this.app.vault.getAbstractFileByPath(path);
+				if (!(file instanceof TFile)) return null;
+				return this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
+			},
+			writeFrontmatter: async (
+				path: string,
+				mutate: (fm: Record<string, unknown>) => void
+			): Promise<void> => {
+				const file = this.app.vault.getAbstractFileByPath(path);
+				if (!(file instanceof TFile)) return;
+				await this.app.fileManager.processFrontMatter(file, mutate);
+			},
+		};
+		this.detailNotes = new DetailNoteService(port, () => new Date());
 
 		this.addSettingTab(new DayTasksSettingTab(this.app, this));
 
@@ -164,6 +198,7 @@ export default class DayTasksPlugin extends Plugin {
 			onToggleSubtasks: (taskId) => this.toggleSubtasks(taskId),
 			onToggleCollapsed: (taskId) => this.toggleCollapsed(taskId),
 			onOpenMenu: (taskId, anchor) => this.openTaskMenu(taskId, anchor),
+			onOpenDetailNote: (taskId) => void this.openDetailNote(taskId),
 		});
 		this.applyIcons(container);
 		this.attachDrag(container);
@@ -275,6 +310,14 @@ export default class DayTasksPlugin extends Plugin {
 				void this.deleteTask(taskId);
 			});
 		});
+		const dnPath = this.service.getById(taskId)?.detailNotePath;
+		menu.addItem((item) => {
+			if (dnPath) {
+				item.setTitle("Open detail note").setIcon("file-text").onClick(() => void this.openDetailNote(taskId));
+			} else {
+				item.setTitle("Create detail note").setIcon("file-text").onClick(() => void this.createDetailNote(taskId));
+			}
+		});
 		const rect = anchor.getBoundingClientRect();
 		menu.showAtPosition({ x: rect.left, y: rect.bottom });
 	}
@@ -385,10 +428,46 @@ export default class DayTasksPlugin extends Plugin {
 			await this.persistTasks();
 			this.refreshViews();
 			new Notice(`DayTasks: created ${task.id}.`);
+			if (input.detailNote) {
+				const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
+				await this.service.setDetailNotePath(task.id, path);
+				await this.persistTasks();
+				this.refreshViews();
+				await this.app.workspace.openLinkText(path, "", true);
+			}
 		} catch (error) {
 			console.error("DayTasks: failed to create task", error);
 			new Notice("DayTasks: could not create that task.");
 		}
+	}
+
+	private async createDetailNote(taskId: string): Promise<void> {
+		try {
+			const task = this.service.getById(taskId);
+			if (!task || task.detailNotePath) return;
+			const path = await this.detailNotes.create(task, this.settings.detailNotesFolder);
+			await this.service.setDetailNotePath(task.id, path);
+			await this.persistTasks();
+			this.refreshViews();
+			await this.app.workspace.openLinkText(path, "", true);
+		} catch (error) {
+			console.error("DayTasks: failed to create detail note", error);
+			new Notice("DayTasks: could not create the detail note.");
+		}
+	}
+
+	private async openDetailNote(taskId: string): Promise<void> {
+		const task = this.service.getById(taskId);
+		const path = task?.detailNotePath;
+		if (!path) return;
+		if (this.app.vault.getAbstractFileByPath(path) === null) {
+			new Notice("DayTasks: detail note is missing. Clearing the link.");
+			await this.service.setDetailNotePath(taskId, undefined);
+			await this.persistTasks();
+			this.refreshViews();
+			return;
+		}
+		await this.app.workspace.openLinkText(path, "", false);
 	}
 
 	private async openEditModal(taskId: string): Promise<void> {
@@ -573,6 +652,7 @@ export default class DayTasksPlugin extends Plugin {
 			onOpenTask: (taskId) => this.openTaskNote(taskId),
 			onSelectTag: (tag) => this.searchTag(tag),
 			onOpenMenu: (taskId, anchor) => this.openTaskMenu(taskId, anchor),
+			onOpenDetailNote: (taskId) => void this.openDetailNote(taskId),
 		};
 	}
 
