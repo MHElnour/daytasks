@@ -383,7 +383,7 @@ function renderExpandedBody(
 	return content;
 }
 
-function renderTaskCard(
+export function renderTaskCard(
 	card: TaskCardViewModel,
 	options: WidgetRenderOptions,
 	handlers: WidgetRenderHandlers
