@@ -246,7 +246,7 @@ deletion unless a near-term milestone needs it. Update docs in the same commit.
 Accessibility + the remaining test gaps. Several were enabling steps in earlier phases;
 this phase closes the rest.
 
-### P5.1 — Migration orchestration tests (TEST-1)
+### P5.1 — Migration orchestration tests (TEST-1)  ✅ DONE (extracted runDetailNoteMigration; 4 cases incl. partial-failure + idempotent retry; main.ts wired; check 381, build green, eslint 0)
 
 - **objective:** Cover `migrateDetailNotes` partial-failure + flag/persist ordering.
 - **files:** extract orchestrator from `src/main.ts` (810-830) into a testable unit; `tests/main/migrateDetailNotes.test.ts`.

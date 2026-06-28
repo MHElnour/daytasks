@@ -10,6 +10,7 @@ import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { DetailNoteService, type VaultPort } from "./detail-notes/detailNoteService";
 import { resolveFolderTemplate } from "./detail-notes/folderTemplate";
+import { runDetailNoteMigration } from "./detail-notes/migrateDetailNotes";
 import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
 import { attachReorder, type ReorderHandle } from "./obsidian/dragReorder";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
@@ -852,20 +853,16 @@ export default class DayTasksPlugin extends Plugin {
 	 */
 	private async migrateDetailNotes(): Promise<void> {
 		if (this.settings.detailNotesMigrated) return;
-		let allOk = true;
-		for (const task of this.service.allTasks()) {
-			if (!task.detailNotePath) continue;
-			try {
-				const newPath = await this.detailNotes.migrate(task);
-				if (newPath) {
-					await this.updateDetailNoteLink(task.id, newPath);
-					await this.persistTasks();
-				}
-			} catch (error) {
-				console.error("DayTasks: detail-note migration failed for", task.id, error);
-				allOk = false;
-			}
-		}
+		const allOk = await runDetailNoteMigration({
+			tasks: this.service.allTasks(),
+			migrate: (task) => this.detailNotes.migrate(task),
+			onMigrated: async (id, newPath) => {
+				await this.updateDetailNoteLink(id, newPath);
+				await this.persistTasks();
+			},
+			onError: (id, error) =>
+				console.error("DayTasks: detail-note migration failed for", id, error),
+		});
 		if (allOk) {
 			this.settings.detailNotesMigrated = true;
 			await this.persistTasks();
