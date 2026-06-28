@@ -116,6 +116,17 @@ When GitHub releases are available, install by copying the release assets
 See [Features](docs/features.md), [Settings](docs/settings.md), and
 [Troubleshooting](docs/troubleshooting.md) for the full workflow.
 
+## Support
+
+- **Bug or feature request?** [Open an issue](https://github.com/MHElnour/daytasks/issues/new/choose)
+  — the bug form asks for your DayTasks/Obsidian versions, steps to reproduce,
+  and any console errors so it can be fixed quickly.
+- **Question, idea, or want to share your setup?** Use
+  [Discussions](https://github.com/MHElnour/daytasks/discussions).
+
+When reporting a bug, the console log helps most: open the developer console with
+`Ctrl`/`Cmd`+`Shift`+`I`, reproduce the issue, and paste any DayTasks errors.
+
 ## Data Model
 
 DayTasks stores tasks in Obsidian plugin data, not in daily-note bodies. Optional
