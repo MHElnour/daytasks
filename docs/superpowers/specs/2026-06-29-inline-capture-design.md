@@ -30,7 +30,9 @@ the plugin's strengths. This feature is additive.
 - Auto-detection of tasks by tag or checkbox (no live scanning; capture is an
   explicit command).
 - A trigger-character configuration UI.
-- Project/context auto-assignment (a later, optional setting — see Phase 2).
+- *Automatic* context assignment to captured tasks (a later, optional setting).
+  Explicit `#tag`/`@context`/`+project` the user types ARE parsed — this
+  non-goal is only about auto-adding them.
 
 ## Decisions (resolved in brainstorm)
 
@@ -38,7 +40,7 @@ the plugin's strengths. This feature is additive.
    checkbox auto-detection. Cleaner and avoids "is this line a task?" ambiguity.
 2. **NLP dependency:** **chrono-node + minimal in-house extractors** (option a).
    chrono does the hard, tested date parsing; we add ~100 lines of tested
-   regex extractors for `#tag @ctx !priority` + estimate. We do NOT pull in
+   regex extractors for `#tag @ctx +project !priority` + estimate. We do NOT pull in
    `tasknotes-nlp-core`/`rrule` (recurrence/time/status machinery DayTasks lacks
    = dead bundle weight).
 3. **Note↔task link:** a **dedicated `sourceNote` field** on the task (not the
@@ -58,6 +60,7 @@ export interface ParsedTaskInput {
   priority?: string;      // a configured priority value
   tags: string[];
   contexts: string[];
+  projects: string[];     // raw +project values (word or wikilink target)
   estimateMinutes?: number;
 }
 
@@ -71,21 +74,45 @@ Pipeline (each stage extracts its tokens, then strips them; the residue is the
 title), adapted from TaskNotes' approach but trimmed to DayTasks' fields:
 
 1. Strip a leading list/checkbox prefix (`- [ ]`, `1.`, `> - [ ]`).
-2. `#tag` → tags; `@context` → contexts (regex, Unicode-aware).
+2. `#tag` → tags; `@context` → contexts; `+project` (`+word` or `+[[wikilink]]`)
+   → projects (regex, Unicode-aware). The `+` token captures the wikilink target
+   or the bare word as a raw string; the capture command maps each to a
+   `ProjectLink`.
 3. `!priority` (and bare priority words) → match against `opts.priorities`.
 4. Estimate: `1h30m`, `45m`, `2h`, `90` → `estimateMinutes`.
-5. Dates via `chrono-node`: a date phrased with `due`/`by`/`deadline` →
-   `dueDate`; otherwise → `scheduledDate` (day-first default). Times are ignored
-   (no time fields).
+5. Dates via `chrono-node` → `scheduledDate` / `dueDate` per the **Date
+   semantics** rules below. Times are ignored (no time fields).
 6. Remaining trimmed text → `title` (empty title is a parse failure the caller
    handles with a Notice).
+
+### Date semantics
+
+`scheduledDate` is always set (it is a required task field); `dueDate` is only
+set when a due phrase is present.
+
+- **Scheduled (default for any bare date):** a date phrase with no keyword, or
+  with `scheduled`/`on`/`start` → `scheduledDate`. Example: `friday`, `2026-07-02`,
+  `scheduled monday`.
+- **Due:** a date phrase preceded by a due keyword — `due`, `by`, `deadline` →
+  `dueDate`. Example: `due friday`, `by next monday`, `deadline 7/5`.
+- **Both:** `scheduled monday due friday` → scheduled = Monday, due = Friday.
+- **No date typed → auto to the current day:** `scheduledDate` falls back to the
+  source note's date if it is a daily note (capturing in `2026-07-02.md` →
+  scheduled `2026-07-02`), otherwise `todayDate()`. (This fallback lives in the
+  capture command, not the pure parser, which only reports parsed dates.)
+
+`by` is a common English word and can mis-route ("written by John"); it is kept
+for ergonomics but covered by tests, and the keyword list can be trimmed if it
+proves noisy in daily use.
 
 Pure, no Obsidian imports → unit-tested in isolation. `chrono-node` is the only
 new dependency.
 
 ### Data model
 
-- `DayTask` gains optional `sourceNote?: string` (task.ts).
+- `DayTask` gains optional `sourceNote?: string` (task.ts). **Projects already
+  exist on the model** — parsed `+project`s reuse `CreateDayTaskInput.projects`
+  via the existing `mergeUniqueProjects`; no model change for projects.
 - `CreateDayTaskInput` gains optional `sourceNote?: string`; `taskFactory`
   copies it through (truthy-guard, like other optional strings).
 - `pluginDataAdapter` decodes `sourceNote` via the existing optional-string path
@@ -103,7 +130,9 @@ callback, **no default hotkey** (Obsidian rule):
 3. Multi-line selection: lines after the first become the task `description`.
 4. `scheduledDate` = parsed scheduled > parsed due > (source is a daily note →
    that date via `resolveDailyNoteDate`) > `todayDate()`.
-5. Create via the service with `sourceNote` = active file path; persist; refresh.
+5. Create via the service: map parsed fields → `CreateDayTaskInput` (parsed
+   `projects` → `ProjectLink[]`; `sourceNote` = active file path); persist;
+   refresh.
 6. Replace the captured line: `${listPrefix}${title}  \`${task.id}\`` (preserve
    the list/checkbox prefix if present).
 
@@ -127,10 +156,13 @@ that renders those task cards under a "Related tasks" header.
 
 ## Testing
 
-- `tests/core/parseTaskInput.test.ts` (the bulk): tags, contexts, `!priority`
-  matching, estimate forms (`1h30m`/`45m`/`2h`/`90`), due-vs-scheduled keyword
-  routing, list/checkbox prefix stripping, multi-line → description, empty-title
-  failure, and chrono-relative dates with an injected `today`.
+- `tests/core/parseTaskInput.test.ts` (the bulk): tags, contexts, `+project`
+  (`+word` and `+[[wikilink]]`), `!priority` matching, estimate forms
+  (`1h30m`/`45m`/`2h`/`90`), due-vs-scheduled keyword routing (`due`/`by`/
+  `deadline` vs bare/`scheduled`), list/checkbox prefix stripping, multi-line →
+  description, empty-title failure, and chrono-relative dates with an injected
+  `today`. (The no-date → current/daily-day fallback lives in the capture
+  command, so it's covered as glue, not in the pure parser.)
 - `tests/core/taskIndex.test.ts`: `bySourceNote` lookup.
 - `tests/obsidian/pluginDataAdapter.test.ts`: `sourceNote` decode round-trip.
 - The `main.ts` command is Obsidian glue → smoke-verified (logic is in the pure
