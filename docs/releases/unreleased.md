@@ -14,8 +14,23 @@ DayTasks is private and English-only right now; no i18n release workflow is
 required.
 -->
 
+## Changed
+
+- **Better theme support.** The warm surface tint is now a single overridable CSS
+  variable, and the success/error/estimate colors fall back to Obsidian theme
+  variables instead of fixed hex — so DayTasks tracks dark and high-contrast
+  themes more faithfully.
+- **Settings:** the reserved API section heading is now simply *API*.
+
 ## Fixed
 
+- **Collapsed task cards keep the due date visible.** When a task has a detail
+  note (a fifth control on the row), the card now reserves room for every control
+  so the due date is no longer clipped. The task id and due date use a smaller,
+  consistent size, and the id now picks up the theme's accent color.
+- **Visible keyboard focus.** The Task List filter controls and the project/tag
+  chips show a focus outline when you tab to them, and the group collapse/expand
+  button has an accessible name for screen readers.
 - **Creating a detail note no longer fails when both candidate filenames are
   taken.** If `<title>.md` and the `<title>-<id>.md` fallback both already exist,
   DayTasks now picks the next free name instead of erroring and leaving the task
