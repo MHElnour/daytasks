@@ -45,7 +45,7 @@ Establish a known-good starting point before any change.
 
 Highest priority. All touch user data; write tests first (TDD) where logic allows.
 
-### P1.1 — Test fidelity: make `FakeVaultPort.create` throw on existing path (TEST-2)
+### P1.1 — Test fidelity: make `FakeVaultPort.create` throw on existing path (TEST-2)  ✅ DONE (faithful fake + RED collision test confirmed)
 
 - **objective:** Align the test fake with Obsidian's throw-on-exists so collision bugs become visible. Do this FIRST — it red-lights P1.2.
 - **files:** `tests/detail-notes/detailNoteService.test.ts`.
@@ -54,7 +54,7 @@ Highest priority. All touch user data; write tests first (TDD) where logic allow
 - **expected tests:** add a case pre-occupying both `<title>.md` and `<title>-<id>.md`; expect it to fail (proving DATA-2).
 - **acceptance:** the new collision test is red against current `create`; existing tests still green.
 
-### P1.2 — Guard the create-collision fallback (DATA-2)
+### P1.2 — Guard the create-collision fallback (DATA-2)  ✅ DONE (numeric-suffix loop; 29/29 green, check 371)
 
 - **objective:** Ensure `create` never calls `port.create` on an existing path; disambiguate the fallback.
 - **files:** `src/detail-notes/detailNoteService.ts` (lines ~89-94).

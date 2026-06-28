@@ -84,13 +84,20 @@ export class DetailNoteService {
 		// An empty folder means the vault root (e.g. a template that resolved away).
 		const dir = folder ? `${folder}/` : "";
 		if (folder) await this.port.ensureFolder(folder);
-		// Prefer a clean `<title>.md`; fall back to `<title>-<id>.md` only when
-		// that name is already taken (e.g. another task with the same title).
+		// Prefer a clean `<title>.md`; fall back to `<title>-<id>.md` when that name
+		// is taken (e.g. another task with the same title), then to `-<id>-2.md`,
+		// `-<id>-3.md`, … so a pre-existing fallback name can never make
+		// `vault.create` throw and strand the task without its note (DATA-2).
 		const preferred = `${dir}${detailNoteFileName(task)}`;
 		const base = sanitizeFileBase(task.title) || task.id;
-		const path = this.port.exists(preferred)
-			? `${dir}${base}-${task.id}.md`
-			: preferred;
+		let path = preferred;
+		if (this.port.exists(path)) {
+			const fallbackBase = `${dir}${base}-${task.id}`;
+			path = `${fallbackBase}.md`;
+			for (let n = 2; this.port.exists(path); n++) {
+				path = `${fallbackBase}-${n}.md`;
+			}
+		}
 		await this.port.create(path, "");
 		const iso = localIso(this.now());
 		const managed = buildManagedFrontmatter(task, iso, iso);

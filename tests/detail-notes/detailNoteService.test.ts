@@ -32,6 +32,11 @@ class FakeVaultPort implements VaultPort {
 	}
 
 	async create(path: string, content: string): Promise<void> {
+		// Mirror Obsidian's Vault.create, which THROWS when the path is taken
+		// (the silent-overwrite fake hid the DATA-2 collision bug).
+		if (this.files.has(path)) {
+			throw new Error("File already exists.");
+		}
 		this.files.set(path, { frontmatter: {}, body: content });
 	}
 
@@ -170,6 +175,18 @@ describe("DetailNoteService.create", () => {
 		const path = await service.create(baseTask, "Notes/Tasks");
 		expect(path).toBe("Notes/Tasks/Write tests-task-001.md");
 		expect(port.exists(path)).toBe(true);
+	});
+
+	it("disambiguates (no throw) when BOTH the clean and <id> fallback names are taken (DATA-2)", async () => {
+		// Both candidate names already exist (e.g. leftovers from a prior run).
+		await port.create("Notes/Tasks/Write tests.md", "existing");
+		await port.create("Notes/Tasks/Write tests-task-001.md", "also existing");
+		const path = await service.create(baseTask, "Notes/Tasks");
+		// Must pick a fresh, distinct path and never call create on an occupied one.
+		expect(path).not.toBe("Notes/Tasks/Write tests.md");
+		expect(path).not.toBe("Notes/Tasks/Write tests-task-001.md");
+		expect(port.exists(path)).toBe(true);
+		expect(port.readBody(path)).toBe("");
 	});
 
 	it("creates in the vault root (no leading slash, no folder ensured) for an empty folder", async () => {
