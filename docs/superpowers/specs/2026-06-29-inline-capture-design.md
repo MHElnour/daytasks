@@ -87,23 +87,28 @@ title), adapted from TaskNotes' approach but trimmed to DayTasks' fields:
 
 ### Date semantics
 
-`scheduledDate` is always set (it is a required task field); `dueDate` is only
-set when a due phrase is present.
+Dates use **colon markers** so they never collide with normal sentence words —
+`due:`/`by:`/`deadline:` only fire *with the colon*, so "written by John" or
+"meeting on Friday" are not misread as dates. `scheduledDate` is always set
+(required field); `dueDate` is only set when a due marker is present.
 
-- **Scheduled (default for any bare date):** a date phrase with no keyword, or
-  with `scheduled`/`on`/`start` → `scheduledDate`. Example: `friday`, `2026-07-02`,
-  `scheduled monday`.
-- **Due:** a date phrase preceded by a due keyword — `due`, `by`, `deadline` →
-  `dueDate`. Example: `due friday`, `by next monday`, `deadline 7/5`.
-- **Both:** `scheduled monday due friday` → scheduled = Monday, due = Friday.
+- **Due:** `due:` / `by:` / `deadline:` followed by a date phrase → `dueDate`.
+  Examples: `due:friday`, `by:next monday`, `deadline:2026-07-05`.
+- **Scheduled:** `scheduled:` followed by a date phrase, **or** a bare date
+  phrase with no marker → `scheduledDate`. Examples: `scheduled:monday`,
+  `2026-07-02`, or just `friday`.
+- **Both:** `scheduled:monday due:friday` → scheduled = Monday, due = Friday.
 - **No date typed → auto to the current day:** `scheduledDate` falls back to the
   source note's date if it is a daily note (capturing in `2026-07-02.md` →
   scheduled `2026-07-02`), otherwise `todayDate()`. (This fallback lives in the
   capture command, not the pure parser, which only reports parsed dates.)
 
-`by` is a common English word and can mis-route ("written by John"); it is kept
-for ergonomics but covered by tests, and the keyword list can be trimmed if it
-proves noisy in daily use.
+Order: marker dates are extracted first (date phrase parsed by chrono and
+stripped), then any remaining bare date is chrono-scanned into `scheduledDate`.
+Caveat: bare-date scanning can still grab a date word that was meant as title
+text ("Review the Monday report" → scheduled Monday); use an explicit
+`scheduled:` marker, or avoid date words in titles, when that matters. Due is
+fully unambiguous (marker-only).
 
 Pure, no Obsidian imports → unit-tested in isolation. `chrono-node` is the only
 new dependency.
@@ -158,8 +163,10 @@ that renders those task cards under a "Related tasks" header.
 
 - `tests/core/parseTaskInput.test.ts` (the bulk): tags, contexts, `+project`
   (`+word` and `+[[wikilink]]`), `!priority` matching, estimate forms
-  (`1h30m`/`45m`/`2h`/`90`), due-vs-scheduled keyword routing (`due`/`by`/
-  `deadline` vs bare/`scheduled`), list/checkbox prefix stripping, multi-line →
+  (`1h30m`/`45m`/`2h`/`90`), date routing via colon markers (`due:`/`by:`/
+  `deadline:` → due; `scheduled:` or bare date → scheduled) including that plain
+  prose words like "by"/"on" are NOT treated as dates without the colon,
+  list/checkbox prefix stripping, multi-line →
   description, empty-title failure, and chrono-relative dates with an injected
   `today`. (The no-date → current/daily-day fallback lives in the capture
   command, so it's covered as glue, not in the pure parser.)
