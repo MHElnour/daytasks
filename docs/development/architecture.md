@@ -37,6 +37,17 @@ modal/card action
   -> widget refresh
 ```
 
+Detail-note mutations add one more boundary:
+
+```text
+task action
+  -> DetailNoteService
+  -> VaultPort
+  -> Obsidian vault / FileManager APIs
+  -> task.detailNotePath update
+  -> plugin saveData
+```
+
 ## Module Boundaries
 
 ### `src/core/`
@@ -47,6 +58,8 @@ Owns task data and domain rules:
 - `taskFactory.ts` - creation normalization and defaults.
 - `dayTaskService.ts` - create, update, delete, status changes, indexing.
 - `taskIndex.ts` - in-memory lookup by ID/date/status/parent/tag/context/project.
+- `subtasks.ts` - parent/child forest and progress helpers.
+- `dependencies.ts` - dependency graph checks and blocked-status reconciliation.
 - `statusManager.ts` - configurable status behavior.
 
 Core modules should not call Obsidian APIs or touch DOM.
@@ -64,6 +77,9 @@ Owns Obsidian-specific integration:
 
 Keep casts to private Obsidian surfaces contained in adapter modules.
 
+Obsidian-facing modules should use the editor/view owner document for DOM work
+so widgets behave correctly in split panes and popped-out windows.
+
 ### `src/ui/`
 
 Owns view-model assembly for renderers:
@@ -71,8 +87,22 @@ Owns view-model assembly for renderers:
 - `taskCard.ts` turns a `DayTask` into card display data.
 - `todayView.ts` builds the daily widget model and status summary.
 - `dailyTasksWidgetController.ts` maps dates/paths to widget models.
+- `taskListModel.ts` builds the all-tasks view model.
+- `subtaskWidget.ts` builds the detail-note subtasks widget.
 
 UI modules should not persist data.
+
+### `src/detail-notes/`
+
+Owns optional Markdown detail notes:
+
+- `detailNoteService.ts` creates, syncs, and migrates notes through a narrow
+  `VaultPort`.
+- `detailNoteFrontmatter.ts` builds the managed frontmatter contract.
+- `folderTemplate.ts` resolves date-based folder templates safely.
+- `migrateDetailNotes.ts` coordinates the one-time legacy-note migration.
+
+Detail-note code should preserve note bodies and non-managed frontmatter keys.
 
 ### `src/settings/`
 
@@ -103,6 +133,10 @@ The former `src/api/*` stubs, the unwired daily-note write slice
 duplicate `createTaskCommand` were removed in the 2026-06-28 cleanup.
 `src/detail-notes/detailNoteService.ts` shipped in 0.7.0 and is no longer a stub.
 
+Do not add scaffold modules unless the current milestone is ready to wire and
+test them. If a placeholder remains after a milestone, either document why or
+delete it.
+
 ## Data Model Summary
 
 Each task has:
@@ -117,3 +151,17 @@ Each task has:
 - timestamps for `createdAt`, `updatedAt`, and optional `completedAt`.
 
 Arrays should be normalized to empty arrays, not `undefined`.
+
+## Consolidation Rules
+
+Prefer a shared helper only when it removes real duplication or prevents a
+known class of bug. Current examples:
+
+- `parseLabelList` owns comma-list parsing for settings and modals.
+- `noteBasename` and path helpers live in `src/util/notePath.ts`.
+- `localDate` and `localIso` own local date formatting.
+- `src/util/coerce.ts` owns named coercion helpers; use the deduping and
+  non-deduping array helpers intentionally.
+- `safeCssColor` validates theme/user colors before they reach CSS properties.
+
+Avoid abstractions that only hide one call site or change behavior silently.

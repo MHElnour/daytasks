@@ -1,54 +1,58 @@
 # Roadmap
 
-DayTasks is focused on becoming a complete Obsidian daily-note task plugin. API
-and browser-extension work are intentionally deferred.
+DayTasks is focused on becoming a complete Obsidian daily-note task plugin. API,
+browser-extension, sync, and i18n work are intentionally deferred.
 
-## Current Position (0.2.0)
+## Current Position (0.8.1)
 
 Shipped:
 
-- Core: generated `TSK-xxxxxxxx` ids; plugin-store persistence with a validating
-  decoder; in-memory index by id, date, status, parent, tag, context, and
-  project; configurable status and priority model.
-- Daily notes: detection with strict calendar-date validation; Live Preview and
-  reading-mode widget injection.
-- Tasks: create, edit, delete; completion and status cycling; scheduled/due
-  dates, tags, contexts, projects, estimate, description; status summary footer.
-- Cards: Lucide icons for status, priority, scheduled, due, and estimate
-  (priority now shown on cards).
-- Editor: compact two-box modal with an icon toolbar (status and priority
-  menus, inline date and estimate inputs); multiple project links; a due date
-  cannot precede the scheduled date; reserved placeholders for subtasks and
-  dependencies.
-- Engineering: two-pass code audit closed (35 findings); 175 unit tests; a local
-  two-step release flow; markdownlint.
+- generated `TSK-xxxxxxxx` ids and store-first task persistence;
+- validating decode/merge paths for tasks and settings;
+- daily-note widget in Live Preview and reading mode;
+- all-tasks Task List view with filters, grouping, sorting, and persisted state;
+- task create, edit, delete, complete, status cycle, and priority cycle flows;
+- tags, contexts, projects, estimates, scheduled dates, due dates, and
+  descriptions;
+- subtasks with nested cards and progress;
+- dependency relationships with blocked-status behavior and cycle prevention;
+- manual drag reorder within groups;
+- optional detail notes with managed frontmatter and user-owned bodies;
+- detail-note folder date templates;
+- popout/split-pane widget support;
+- keyboard focus and accessible labels for current task controls;
+- local release scripts and automated checks.
 
-## Active: relationships
+Engineering status:
 
-The editor already has the placeholders laid out for these.
+- `npm run check` is the pre-commit gate.
+- The 2026-06-25 code audit and 2026-06-28 optimization/security assessment are
+  resolved in `issue-analysis/`.
+- The dead API stubs, dead daily-note write slice, duplicate create-task command,
+  and unused relative-date helper were removed in the 2026-06-28 cleanup.
 
-- Subtasks (parent/child): link and add subtasks, nested display, progress
-  count. The model already carries `parentId` and orphans children on delete.
-- Blocked by / blocking: a dependency model with cycle prevention, plus the UI.
+## Next Milestone: Configuration Completion
 
-## Next Milestone: Obsidian Completion
+- Build a real status editor for label, value, color, completed flag, order, and
+  next status.
+- Build a real priority editor for label, value, color, icon, and weight.
+- Remove or fully implement the reserved API settings section. Until the API
+  milestone is active, avoid exposing controls that imply a working server.
 
-- Detail notes: create a markdown detail note on request, write the task id,
-  store `detailNotePath`, and open it from the task UI. The "Create detail note"
-  toggle is a stub until this lands.
-- Status settings editor: edit, add, and remove statuses (label, value, color,
-  completed flag, order). `StatusManager.validate()` already guards saves; the
-  editing UI is missing.
-- Remove dishonest UI: hide or implement controls that point at stubs (the
-  detail-note toggle and the inactive API settings).
+## Obsidian Polish
+
+- Improve detail-note and Task List manual smoke coverage.
+- Keep popout-window behavior, keyboard focus, and theme compatibility part of
+  every UI review.
+- Decide whether `src/obsidian/vaultAdapter.ts` should become a real adapter or
+  be deleted as the final remaining stub.
 
 ## Later
 
-- Manual ordering with `sortOrder`.
 - Time tracking inside Obsidian.
 - Pomodoro inside Obsidian.
 - Local API.
 - Browser extension.
 
 Do not start API or browser-extension work until the Obsidian workflow is fully
-functional and tested.
+functional, documented, and tested.

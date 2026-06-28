@@ -1,6 +1,6 @@
 # Testing And Debugging
 
-Use this workflow after code changes.
+Use this workflow after code or documentation changes.
 
 ## Baseline Checks
 
@@ -17,6 +17,18 @@ npm run check
 ```
 
 `npm run build` regenerates `styles.css`, typechecks, and builds `main.js`.
+Documentation changes should also pass:
+
+```bash
+npm run lint:md
+```
+
+Code changes should also pass:
+
+```bash
+npm run lint
+```
+
 Coverage (v8):
 
 ```bash
@@ -88,6 +100,8 @@ from Obsidian's Community Plugins UI.
 ## Focused Test Areas
 
 - `tests/core/` - task model, service, factory, store, index, status manager.
+- `tests/detail-notes/` - detail-note frontmatter, service, migration, and folder
+  template behavior.
 - `tests/obsidian/` - data adapter, widget renderer, safe Obsidian adapters.
 - `tests/ui/` - card and daily-widget view models.
 - `tests/settings/` - settings merge and validation.
@@ -99,3 +113,16 @@ Prefer adding focused tests around pure logic before touching Obsidian glue.
 load in vitest, so they are intentionally not unit-tested. Their decision logic is
 extracted into the pure, tested helpers above; what remains is API orchestration,
 verified with `npm run build:test` and the Obsidian CLI smoke checks above.
+
+## Manual High-Risk Checks
+
+Run the relevant checks when a change touches these areas:
+
+- detail-note create/sync/migrate: create notes, rename notes, delete one, and
+  confirm body/frontmatter preservation;
+- storage decode/migrations: test with a backup copy of `data.json`;
+- widget rendering: test Live Preview, reading mode, split panes, and popouts;
+- accessibility: tab through the daily widget, Task List filters, menus, and
+  chips without a mouse;
+- theming: switch light/dark/high-contrast or Minimal-style themes after CSS
+  changes.

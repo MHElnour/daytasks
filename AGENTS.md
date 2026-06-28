@@ -59,10 +59,14 @@ unit tests. See `docs/development/testing.md` for the full workflow.
 ## Documentation Rules
 
 - Update `docs/index.md` when adding a new documentation area.
-- Keep product and user-facing docs under `docs/`.
+- Keep product and user-facing docs as top-level pages under `docs/`.
 - Keep development workflow docs under `docs/development/`.
-- Keep historical designs under `docs/design/`.
-- Keep implementation plans under `docs/plans/`.
+- Do not recreate `docs/design/`, `docs/plans/`, or `docs/private/`.
+- When a design or plan is still current, migrate its durable facts into
+  `docs/core-concepts.md`, `docs/features.md`, `docs/roadmap.md`, or
+  `docs/development/`.
+- Delete stale design drafts, implementation plans, and private working notes
+  after their useful content is migrated.
 - Keep audits, bug investigations, and resolution tracking under
   `issue-analysis/`.
 - New issue-analysis files must include YAML front matter with at least:

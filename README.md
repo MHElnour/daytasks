@@ -30,8 +30,13 @@ Obsidian experience is solid.
 ## Documentation
 
 - Start with [docs/index.md](docs/index.md).
+- Product concepts live in [docs/core-concepts.md](docs/core-concepts.md).
+- Feature documentation lives in [docs/features.md](docs/features.md).
+- Settings documentation lives in [docs/settings.md](docs/settings.md).
 - Architecture lives in [docs/development/architecture.md](docs/development/architecture.md).
 - Testing workflow lives in [docs/development/testing.md](docs/development/testing.md).
+- Security and data-safety review guidance lives in
+  [docs/development/security-and-data-safety.md](docs/development/security-and-data-safety.md).
 - Work tracking and audit follow-ups live in [issue-analysis/README.md](issue-analysis/README.md).
 
 ## Development

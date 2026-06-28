@@ -27,8 +27,9 @@ resolution: >
   (renderer el() factories — children auto-adopt on append) and TEST-7 (shared
   test fixture) deferred as low/by-design; TEST-3 moot (parser deleted). Maintainer
   confirmed manual Obsidian smoke: vault-path containment, popout/split render,
-  disable/reload state, theme switch, and drag-reorder. See the Resolution fix log
-  below; roadmap docs/plans/optimization-security-roadmap.md. Pending merge to main.
+  disable/reload state, theme switch, and drag-reorder. The temporary roadmap and
+  consolidation plan files were removed after their durable guidance moved into
+  docs/roadmap.md and docs/development/security-and-data-safety.md.
 ---
 
 # Optimization, Security & Maintainability Assessment 2026-06-28
@@ -214,7 +215,7 @@ date and coercion helpers. None block release; all are small, verifiable tasks.
 - **severity:** medium · **confidence:** high · **type:** maintainability
 - **affected:** [src/util/time.ts:9-12](../src/util/time.ts#L9-L12) and [src/util/localIso.ts:9-11](../src/util/localIso.ts#L9-L11) — both do the identical `getFullYear()/getMonth()+1/getDate()` + `padStart(2)` dance.
 - **why it matters:** Two places to fix any date-edge bug (month padding, locale). `todayDate()` re-implements the prefix `localIso` already produces and also holds the one extra `new Date()` impurity.
-- **recommended fix:** Add `localDate(date: Date): string` in `localIso.ts`; have `localIso` reuse it for its date portion and `todayDate()` become `localDate(new Date())`. See [refactor-consolidation-map.md](../docs/plans/refactor-consolidation-map.md).
+- **recommended fix:** Add `localDate(date: Date): string` in `localIso.ts`; have `localIso` reuse it for its date portion and `todayDate()` become `localDate(new Date())`. The durable consolidation rule now lives in [architecture.md](../docs/development/architecture.md).
 - **verification plan:** Extend `localIso.test.ts` + `time.test.ts`: `localDate(d) === localIso(d).slice(0,10)` across TZ-sensitive dates. `npm test`.
 
 #### DRY-8 — Two divergent coercion toolkits (`settings.ts` vs `pluginDataAdapter.ts`) with a dedupe-vs-not trap
@@ -222,7 +223,7 @@ date and coercion helpers. None block release; all are small, verifiable tasks.
 - **severity:** medium · **confidence:** high · **type:** maintainability
 - **affected:** [src/settings/settings.ts:78-95](../src/settings/settings.ts#L78-L95) (`asString`/`asBoolean`/`asNumber`/`asStringArray`) vs [src/obsidian/pluginDataAdapter.ts:37-59](../src/obsidian/pluginDataAdapter.ts#L37-L59) (`asString`/`asFiniteNumber`/`asStringArray`). Same names, **different semantics**: settings' `asString(value, fallback)` vs adapter's `asString(value): string|undefined`; adapter's `asStringArray` **dedupes**, settings' does not.
 - **why it matters:** Two coercion vocabularies for one job invite copy-paste drift; the dedupe divergence is a latent bug magnet (a dev reusing the "wrong" one silently changes behavior).
-- **recommended fix:** Extract `src/util/coerce.ts` with explicitly named variants (`asStringOr`, `asOptionalString`, `asFiniteNumberOr`, `asUniqueStringArray`, `asStringArrayOr`); migrate both files so the dedupe contract is explicit per call site. See [refactor-consolidation-map.md](../docs/plans/refactor-consolidation-map.md).
+- **recommended fix:** Extract `src/util/coerce.ts` with explicitly named variants (`asStringOr`, `asOptionalString`, `asFiniteNumberOr`, `asUniqueStringArray`, `asStringArrayOr`); migrate both files so the dedupe contract is explicit per call site. The durable consolidation rule now lives in [architecture.md](../docs/development/architecture.md).
 - **verification plan:** New `tests/util/coerce.test.ts`; `settings.test.ts` + `pluginDataAdapter.test.ts` stay green unchanged. `npm test`.
 
 #### TEST-2 — Create-collision fallback untested, and `FakeVaultPort.create` doesn't model Obsidian's throw-on-exists
