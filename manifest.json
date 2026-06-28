@@ -5,5 +5,6 @@
   "minAppVersion": "1.8.0",
   "description": "A lightweight, day-first task manager for your daily notes.",
   "author": "MHElnour",
+  "authorUrl": "https://github.com/MHElnour",
   "isDesktopOnly": true
 }
