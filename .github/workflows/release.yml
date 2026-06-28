@@ -1,0 +1,55 @@
+name: Release
+
+# Publishes a GitHub Release with build-provenance attestations when a bare
+# semver tag (e.g. 0.8.3) is pushed. The local `npm run release -- <bump>` step
+# bumps/commits/tags and rolls the notes; `npm run release:publish` pushes the
+# tag, which triggers this workflow to build, attest, and create the release.
+
+on:
+  push:
+    tags:
+      - "[0-9]*.[0-9]*.[0-9]*"
+
+permissions:
+  contents: write # create the release
+  id-token: write # required for attestation signing
+  attestations: write # write build-provenance attestations
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      # tsc + tests gate, then the production build (main.js, styles.css).
+      - run: npm run check
+      - run: npm run build
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          NOTES="docs/releases/${TAG}.md"
+          if [ -f "$NOTES" ]; then
+            gh release create "$TAG" main.js manifest.json styles.css \
+              --title "$TAG" --notes-file "$NOTES"
+          else
+            gh release create "$TAG" main.js manifest.json styles.css \
+              --title "$TAG" --generate-notes
+          fi

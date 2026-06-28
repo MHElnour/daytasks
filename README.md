@@ -174,12 +174,12 @@ npm run install-plugin -- /path/to/Vault
 
 ## Release
 
-DayTasks uses a local two-step release flow. Build artifacts are GitHub Release
-assets, not committed files.
+Bump and tag locally, then push — GitHub Actions builds, attests build
+provenance, and publishes the release with the assets attached.
 
 ```bash
-npm run release -- patch
-npm run release:publish
+npm run release -- patch   # bump, check, build, roll notes, commit, tag
+npm run release:publish    # push the tag -> CI builds, attests, publishes
 ```
 
 See [Release process](docs/development/release-process.md) for details.
