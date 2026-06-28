@@ -24,10 +24,12 @@ required.
 
 ## Fixed
 
-- **Collapsed task cards keep the due date visible.** When a task has a detail
-  note (a fifth control on the row), the card now reserves room for every control
-  so the due date is no longer clipped. The task id and due date use a smaller,
-  consistent size, and the id now picks up the theme's accent color.
+- **Task cards no longer overlap their controls when a detail note is present.**
+  A detail note adds a fifth control to the card; cards now reserve room for all
+  of them, so a collapsed card's due date is no longer clipped and an expanded
+  card's long title wraps instead of running under the icons. The collapsed task
+  id and due date also use a smaller, consistent size, and the id picks up the
+  theme's accent color.
 - **Visible keyboard focus.** The Task List filter controls and the project/tag
   chips show a focus outline when you tab to them, and the group collapse/expand
   button has an accessible name for screen readers.

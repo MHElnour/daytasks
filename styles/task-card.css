@@ -347,11 +347,12 @@
 	gap: 4px;
 }
 
-/* Title clears the top-right cluster (flag + status + collapse + menu = four
- * ~26px controls plus gaps ≈ 120px) so a long title wraps instead of running
- * under the rail icons. */
+/* Title clears the top-right cluster so a long title wraps instead of running
+ * under the rail icons. Sized for the full five controls (priority + status +
+ * collapse + detail-note + menu = 5x26px + gaps, inset 10px) so the detail-note
+ * icon never overlaps the title; consistent whether or not it is present. */
 .daytasks-plugin .task-card__title-row {
-	padding-inline-end: 120px;
+	padding-inline-end: 150px;
 }
 
 /* Rail controls read as bordered buttons (matches the reference layout). */
