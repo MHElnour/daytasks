@@ -203,7 +203,7 @@ deletion unless a near-term milestone needs it. Update docs in the same commit.
 - **expected tests:** `npm run check` green; `grep -rn "api/" src tests` → 0.
 - **acceptance:** typecheck + tests + build green; SEC-1 noted as N/A-while-deleted.
 
-### P4.2 — Resolve the daily-note slice (DEAD-2 + SEC-4)
+### P4.2 — Resolve the daily-note slice (DEAD-2 + SEC-4)  ✅ DONE (decision: delete; removed 5 modules + 2 tests; SEC-4 eliminated with the formatter; dailyNoteDate kept; check 386, build green, eslint 0)
 
 - **objective:** Delete `dailyNoteDocument/Formatter/Parser/Service.ts` + `openTodayCommand.ts` and their tests — OR keep and re-affirm BAD-9 + add SEC-4 escaping guard + TEST-3 first.
 - **files:** `src/daily-notes/dailyNote{Document,Formatter,Parser,Service}.ts`, `src/commands/openTodayCommand.ts`, matching `tests/daily-notes/*`, `docs/development/architecture.md`.
