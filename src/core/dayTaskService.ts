@@ -1,4 +1,5 @@
 import { nowIso } from "../util/time";
+import { omit } from "../util/omit";
 import type { DayTasksSettings } from "../settings/settings";
 import type { StatusManager } from "./statusManager";
 import {
@@ -159,7 +160,7 @@ export class DayTaskService {
 		}
 		const { statusManager } = this.dependencies;
 		const remaining = (task.blockedBy ?? []).filter((id) => id !== blockerId);
-		const { blockedBy: _drop, ...rest } = task;
+		const rest = omit(task, "blockedBy");
 		const timestamp = this.now();
 		let updated: DayTask;
 		if (remaining.length > 0) {
@@ -185,7 +186,7 @@ export class DayTaskService {
 			if (!fresh) {
 				continue;
 			}
-			const { parentId: _removed, ...rest } = fresh;
+			const rest = omit(fresh, "parentId");
 			await this.saveAndIndex({ ...rest, updatedAt: timestamp });
 		}
 
@@ -196,7 +197,7 @@ export class DayTaskService {
 				continue;
 			}
 			const remaining = fresh.blockedBy.filter((b) => b !== id);
-			const { blockedBy: _drop, ...rest } = fresh;
+			const rest = omit(fresh, "blockedBy");
 			const next: DayTask =
 				remaining.length > 0
 					? { ...rest, blockedBy: remaining, updatedAt: timestamp }
@@ -287,7 +288,7 @@ export class DayTaskService {
 		if (!child) {
 			throw new Error(`Task not found: ${childId}`);
 		}
-		const { parentId: _removed, ...rest } = child;
+		const rest = omit(child, "parentId");
 		const updated: DayTask = { ...rest, updatedAt: this.now() };
 		await this.saveAndIndex(updated);
 		return updated;
@@ -319,7 +320,7 @@ export class DayTaskService {
 		if (!task) {
 			throw new Error(`Task not found: ${id}`);
 		}
-		const { detailNotePath: _removed, ...rest } = task;
+		const rest = omit(task, "detailNotePath");
 		const base: DayTask = { ...rest, updatedAt: this.now() };
 		const updated: DayTask = path ? { ...base, detailNotePath: path } : base;
 		await this.saveAndIndex(updated);
@@ -332,7 +333,7 @@ export class DayTaskService {
 		if (!task) {
 			throw new Error(`Task not found: ${id}`);
 		}
-		const { priority: _removed, ...rest } = task;
+		const rest = omit(task, "priority");
 		const base: DayTask = { ...rest, updatedAt: this.now() };
 		const updated: DayTask = priority ? { ...base, priority } : base;
 		await this.saveAndIndex(updated);
@@ -367,7 +368,7 @@ export class DayTaskService {
 				continue;
 			}
 			const remaining = fresh.blockedBy.filter((b) => b !== blockerId);
-			const { blockedBy: _drop, ...rest } = fresh;
+			const rest = omit(fresh, "blockedBy");
 			const next: DayTask =
 				remaining.length > 0
 					? { ...rest, blockedBy: remaining, updatedAt: timestamp }
