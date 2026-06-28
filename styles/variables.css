@@ -35,6 +35,9 @@
 	--daytasks-row-bg-hover: color-mix(in srgb, var(--background-secondary) 94%, var(--daytasks-tint) 6%);
 	--daytasks-soft-border: color-mix(in srgb, var(--background-modifier-border) 82%, var(--daytasks-border-tint) 18%);
 	--daytasks-chip-bg: color-mix(in srgb, var(--background-primary) 88%, var(--background-secondary) 12%);
+	/* Collapsed-row task id: themed accent so it's distinct but theme-safe.
+	   Override this one token to recolor (e.g. var(--text-faint) to mute it). */
+	--daytasks-task-id-color: var(--text-accent);
 
 	/* Spacing aliases */
 	--tn-spacing-xs: var(--cs-spacing-xs);
@@ -44,6 +47,7 @@
 
 	/* Type scale */
 	--tn-font-size-base: var(--font-text-size, 16px);
+	--tn-font-size-xs: calc(var(--tn-font-size-base) * 0.625);
 	--tn-font-size-sm: calc(var(--tn-font-size-base) * 0.6875);
 	--tn-font-size-md: calc(var(--tn-font-size-base) * 0.75);
 	--tn-font-size-lg: calc(var(--tn-font-size-base) * 0.875);

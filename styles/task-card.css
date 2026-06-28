@@ -738,7 +738,11 @@
 	align-items: center;
 	gap: 8px;
 	min-width: 0;
-	padding-inline-end: 92px; /* clear the (smaller) centered rail cluster */
+	/* Reserve room for the full five-control rail (priority + status + collapse +
+	 * detail-note + menu = 5x20px + gaps, inset 10px) so the due date is never
+	 * clipped when a detail note adds the 5th icon. Sized for 5 always, so the
+	 * row layout stays consistent whether or not a detail note exists. */
+	padding-inline-end: 116px;
 }
 
 .daytasks-plugin .task-card__collapsed-title {
@@ -754,14 +758,14 @@
 
 .daytasks-plugin .task-card__collapsed-id {
 	font-family: var(--font-monospace);
-	font-size: var(--tn-font-size-sm);
-	color: var(--text-faint);
+	font-size: var(--tn-font-size-xs);
+	color: var(--daytasks-task-id-color, var(--text-faint));
 	white-space: nowrap;
 	flex-shrink: 0;
 }
 
 .daytasks-plugin .task-card__collapsed-due {
-	font-size: var(--tn-font-size-sm);
+	font-size: var(--tn-font-size-xs);
 	color: var(--tn-text-muted);
 	white-space: nowrap;
 	flex-shrink: 0;
