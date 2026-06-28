@@ -137,6 +137,7 @@ export default class DayTasksPlugin extends Plugin {
 				renderWidget: (container, notePath) =>
 					this.renderWidgetInto(container, notePath),
 				version: () => this.dataVersion,
+				detachDragFor: (widget) => this.detachDragFor(widget),
 			})
 		);
 
@@ -437,6 +438,21 @@ export default class DayTasksPlugin extends Plugin {
 			handle.destroy();
 		}
 		this.reorderHandles = [];
+	}
+
+	/**
+	 * Destroys drag handles whose list lives inside `widget` (or is already
+	 * detached) — called when a Live Preview widget is removed so its SortableJS
+	 * instances don't linger on disconnected nodes until the next attach (LIFE-3).
+	 */
+	private detachDragFor(widget: HTMLElement): void {
+		this.reorderHandles = this.reorderHandles.filter(({ handle, listEl }) => {
+			if (widget.contains(listEl) || !listEl.isConnected) {
+				handle.destroy();
+				return false;
+			}
+			return true;
+		});
 	}
 
 	private async handleCycleStatus(taskId: string): Promise<void> {

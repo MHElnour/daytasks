@@ -10,6 +10,12 @@ export interface LivePreviewWidgetHost {
 	renderWidget(container: HTMLElement, notePath: string): boolean;
 	/** Monotonic counter bumped whenever tasks or settings change. */
 	version(): number;
+	/**
+	 * Destroys any drag-reorder handles whose list lives inside `widget`, called
+	 * just before the widget is removed so a closed editor leaf doesn't leave a
+	 * SortableJS instance (and its listeners) on a detached node (LIFE-3).
+	 */
+	detachDragFor(widget: HTMLElement): void;
 }
 
 const CM_WIDGET_CLASS = "daytasks-cm-widget";
@@ -122,7 +128,12 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 			}
 
 			private remove(): void {
-				this.widget?.remove();
+				if (this.widget) {
+					// Drop drag handles while the widget is still attached, so the
+					// host can match them by containment, then remove the node.
+					host.detachDragFor(this.widget);
+					this.widget.remove();
+				}
 				this.widget = null;
 				this.lastKey = "";
 			}

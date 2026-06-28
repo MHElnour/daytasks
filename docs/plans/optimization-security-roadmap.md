@@ -126,7 +126,7 @@ is popout correctness + lifecycle cleanup.
 - **expected tests:** existing renderer unit tests stay green (DOM shape unchanged); add an assertion that the resolved owner document drives creation if cheaply mockable.
 - **acceptance:** open a daily note in a popped-out window + a vertical split — widget renders in the correct window and the bottom-gap trim is right; `obsidian … dev:errors` clean.
 
-### P2.3 — Tear down SortableJS when a Live-Preview widget is removed (LIFE-3)
+### P2.3 — Tear down SortableJS when a Live-Preview widget is removed (LIFE-3)  ✅ DONE (host.detachDragFor hook called from ViewPlugin remove(); main.ts destroys handles by containment; check 377, build green. ⏸ heap-snapshot leak smoke manual)
 
 - **objective:** Drop reorder handles promptly when the widget's editor leaf closes without a data change.
 - **files:** `src/obsidian/livePreview.ts` (`destroy()`/`remove()` calls a host hook), `src/main.ts` (`attachDrag`/`destroyReorder` accept a per-widget prune).
