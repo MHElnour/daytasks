@@ -90,16 +90,18 @@ Edit source files under `styles/`, not only the generated `styles.css`.
 
 ### Stubs And Deferred Areas
 
-Some modules exist as roadmap placeholders:
+One module remains a roadmap placeholder:
 
-- `src/detail-notes/detailNoteService.ts`
-- `src/api/*`
-- `src/commands/openTodayCommand.ts`
-- `src/obsidian/vaultAdapter.ts`
+- `src/obsidian/vaultAdapter.ts` - an `export {}` stub for a future vault file
+  adapter.
 
-Treat these as deferred unless the current milestone explicitly activates them.
-API and browser-extension work are not part of the current Obsidian-completion
-goal.
+Treat it as deferred unless a milestone explicitly activates it. API and
+browser-extension work are not part of the current Obsidian-completion goal.
+
+The former `src/api/*` stubs, the unwired daily-note write slice
+(`dailyNoteDocument`/`Formatter`/`Parser`/`Service`), `openTodayCommand`, and the
+duplicate `createTaskCommand` were removed in the 2026-06-28 cleanup.
+`src/detail-notes/detailNoteService.ts` shipped in 0.7.0 and is no longer a stub.
 
 ## Data Model Summary
 

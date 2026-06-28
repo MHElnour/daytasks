@@ -230,7 +230,7 @@ deletion unless a near-term milestone needs it. Update docs in the same commit.
 - **expected tests:** `npm run check` green.
 - **acceptance:** `formatMonthDay`/`isOverdue` untouched and still tested.
 
-### P4.5 — Refresh architecture docs (DOC-1)
+### P4.5 — Refresh architecture docs (DOC-1)  ✅ DONE (stub list now only vaultAdapter; notes the 2026-06-28 deletions; detailNoteService no longer listed)
 
 - **objective:** Make `architecture.md` "Stubs And Deferred Areas" accurate.
 - **files:** `docs/development/architecture.md` (91-100).
