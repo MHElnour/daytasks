@@ -156,7 +156,18 @@ export default class DayTasksPlugin extends Plugin {
 	}
 
 	onunload(): void {
+		// Stop scheduled work from firing into a torn-down plugin (LIFE-2):
+		// clear the reading-refresh timeout and cancel both debounced writers.
+		if (this.readingRefreshTimer !== null) {
+			window.clearTimeout(this.readingRefreshTimer);
+			this.readingRefreshTimer = null;
+		}
+		this.saveTaskListState.cancel();
+		this.syncDetailNotes.cancel();
 		this.destroyReorder();
+		// Best-effort persist so a debounced task-list-state save that hadn't fired
+		// yet isn't lost on disable/reload (the latest state is already in settings).
+		void this.persistTasks();
 	}
 
 	/** Rebuilds the status manager and services from current settings. */

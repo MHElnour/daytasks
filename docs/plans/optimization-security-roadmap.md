@@ -108,7 +108,7 @@ Highest priority. All touch user data; write tests first (TDD) where logic allow
 No hot-loop perf regressions were found (prior audit already fixed those). This phase
 is popout correctness + lifecycle cleanup.
 
-### P2.1 — Flush/clear timers and debounced saves on unload (LIFE-2)
+### P2.1 — Flush/clear timers and debounced saves on unload (LIFE-2)  ✅ DONE (onunload clears readingRefreshTimer, cancels debounces, best-effort persist; debounce flush/cancel already existed+tested; check 377. ⏸ disable/reload smoke manual)
 
 - **objective:** No timer fires into a torn-down plugin; no pending save/sync is dropped on reload.
 - **files:** `src/main.ts` (`onunload`), `src/util/debounce.ts` (add `.flush()` + `.cancel()`).
