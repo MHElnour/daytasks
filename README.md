@@ -59,10 +59,18 @@ estimate, tags, contexts, project links, subtasks, and dependencies.
 
 ![Edit task dialog](docs/assets/edit-modal.png)
 
-**Detail notes** — an optional Markdown note per task. DayTasks manages its task
-frontmatter and injects an interactive subtasks widget; the body stays yours.
+**Commands** — open the Task List or create a task for the current daily note
+straight from the command palette.
 
-![Detail note with injected subtasks widget](docs/assets/detail-note.png)
+![DayTasks commands in the command palette](docs/assets/commands.png)
+
+**Detail notes** — an optional Markdown note per task. DayTasks manages the task
+frontmatter and injects an interactive subtasks widget; the note body stays
+yours.
+
+![Detail note managed frontmatter](docs/assets/detail-note-properties.png)
+
+![Detail note injected subtasks widget](docs/assets/detail-note.png)
 
 **Settings** — daily-note detection, which fields the widget shows, and the
 defaults applied to new tasks.
