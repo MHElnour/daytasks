@@ -347,6 +347,25 @@ describe("DetailNoteService.sync", () => {
 		expect(port.readFrontmatter(path)!.contexts).toEqual(["home"]);
 	});
 
+	it("does NOT write when the note at the path belongs to a different task (DATA-3)", async () => {
+		// Note created for baseTask (taskId: task-001).
+		const path = await service.create(baseTask, "Notes/Tasks");
+		port.writeFrontmatterCallCount = 0;
+
+		// A different task now points at the same path (e.g. the file was replaced
+		// or the stored path drifted). Syncing must not clobber the other note.
+		const otherTask: DayTask = {
+			...baseTask,
+			id: "task-999",
+			status: "done",
+			detailNotePath: path,
+		};
+		await service.sync(otherTask);
+
+		expect(port.writeFrontmatterCallCount).toBe(0);
+		expect(port.readFrontmatter(path)!.taskId).toBe("task-001");
+	});
+
 	it("diff-guard does NOT misfire when only a non-managed key changed", async () => {
 		const path = await service.create(baseTask, "Notes/Tasks");
 
@@ -432,6 +451,21 @@ describe("DetailNoteService.migrate", () => {
 		expect(port.exists(legacy)).toBe(true);
 		expect(port.readFrontmatter(legacy)).not.toHaveProperty("title");
 		expect(port.readBody("Notes/Tasks/Write tests.md")).toBe("other note");
+	});
+
+	it("does not strip/rename a note that belongs to a different task (DATA-3)", async () => {
+		const port = new FakeVaultPort();
+		const service = new DetailNoteService(port, () => clock);
+		const legacy = "Notes/Tasks/Write tests-task-001.md";
+		await seed(port, legacy, { title: "Write tests", status: "todo", taskId: "task-001" });
+		port.writeFrontmatterCallCount = 0;
+
+		// A different task points at this note — migrate must leave it untouched.
+		const otherTask = taskWith({ id: "task-999", title: "Write tests", detailNotePath: legacy });
+		expect(await service.migrate(otherTask)).toBeNull();
+		expect(port.exists(legacy)).toBe(true);
+		expect(port.readFrontmatter(legacy)).toHaveProperty("title");
+		expect(port.writeFrontmatterCallCount).toBe(0);
 	});
 
 	it("is a no-op when the file is missing or the task has no note", async () => {

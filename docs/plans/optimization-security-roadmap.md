@@ -72,7 +72,7 @@ Highest priority. All touch user data; write tests first (TDD) where logic allow
 - **expected tests:** `folderTemplate.test.ts` — `resolveFolderTemplate("../x", iso)` and `"a/../../b"` contain no `..`; keep all existing template tests green.
 - **acceptance:** unit tests pass; smoke — set `detailNotesFolder` to `../escape`, create a note, confirm it stays inside the vault (`obsidian … dev:errors` clean).
 
-### P1.4 — Identity-check before frontmatter writes in `sync`/`migrate` (DATA-3)
+### P1.4 — Identity-check before frontmatter writes in `sync`/`migrate` (DATA-3)  ✅ DONE (taskId guard in sync + migrate; check 374)
 
 - **objective:** Bail when the note at the stored path has a `taskId` that isn't this task's, so a repointed/replaced note is never clobbered.
 - **files:** `src/detail-notes/detailNoteService.ts` (`sync` ~119-153, `migrate` ~168-191).

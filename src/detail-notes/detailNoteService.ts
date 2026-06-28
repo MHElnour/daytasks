@@ -129,6 +129,11 @@ export class DetailNoteService {
 
 		const current = this.port.readFrontmatter(path) ?? {};
 
+		// Identity guard: never write managed keys onto a note that belongs to a
+		// different task (the stored path may have been repointed or the file
+		// replaced). A missing taskId is treated as ours — legacy notes (DATA-3).
+		if (typeof current.taskId === "string" && current.taskId !== task.id) return;
+
 		// Preserve the original creation stamp; fall back to now if somehow absent.
 		const dateCreated =
 			(current["dateCreated"] as string) ?? localIso(this.now());
@@ -179,6 +184,17 @@ export class DetailNoteService {
 		const suffix = `-${task.id}.md`;
 		const isLegacyName = path.endsWith(suffix);
 		const current = this.port.readFrontmatter(path);
+
+		// Identity guard: don't strip/rename a note that belongs to a different
+		// task. A missing taskId is treated as ours — legacy notes (DATA-3).
+		if (
+			current !== null &&
+			typeof current.taskId === "string" &&
+			current.taskId !== task.id
+		) {
+			return null;
+		}
+
 		const hasTitle = current !== null && "title" in current;
 
 		// Already clean — write nothing.
