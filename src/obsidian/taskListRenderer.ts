@@ -239,6 +239,8 @@ export function renderTaskListView(
 		const head = el("div", "daytasks-tasklist__group-head");
 		const toggle = el("button", "daytasks-tasklist__group-toggle");
 		toggle.setAttribute("aria-expanded", String(!group.collapsed));
+		// Icon-only button needs an accessible name (A11Y-3).
+		toggle.setAttribute("aria-label", `${group.collapsed ? "Expand" : "Collapse"} ${group.label}`);
 		const chevron = el("span", "daytasks-tasklist__group-icon");
 		chevron.dataset.icon = group.collapsed ? "chevron-right" : "chevron-down";
 		toggle.appendChild(chevron);

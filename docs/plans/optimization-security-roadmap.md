@@ -273,7 +273,7 @@ this phase closes the rest.
 - **expected tests:** manual.
 - **acceptance:** Tab into a card chip — visible ring; Enter activates.
 
-### P5.4 — Group-toggle aria-label (A11Y-3)
+### P5.4 — Group-toggle aria-label (A11Y-3)  ✅ DONE (per-group `Expand`/`Collapse` aria-label + test; check 382, build green, eslint 0)
 
 - **objective:** Accessible name on the icon-only group toggle.
 - **files:** `src/obsidian/taskListRenderer.ts` (240-245).

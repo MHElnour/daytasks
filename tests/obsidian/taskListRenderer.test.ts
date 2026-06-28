@@ -49,6 +49,12 @@ describe("renderTaskListView", () => {
 		expect(root.querySelectorAll(".task-card").length).toBe(1);
 	});
 
+	it("group toggle has an accessible name (aria-label)", () => {
+		const root = render(model);
+		const toggle = root.querySelector(".daytasks-tasklist__group-toggle")!;
+		expect(toggle.getAttribute("aria-label")).toBe("Collapse Open");
+	});
+
 	it("group chevron calls onToggleGroup with the key", () => {
 		const onToggleGroup = vi.fn();
 		const root = render(model, { onToggleGroup });
