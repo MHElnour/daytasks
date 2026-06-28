@@ -313,7 +313,7 @@ this phase closes the rest.
 
 ## Phase 6 — Final build / test / manual verification
 
-### P6.1 — Full automated gate
+### P6.1 — Full automated gate  ✅ DONE (check 387, build green, eslint 0, lint:md clean on changed files, coverage 90% branch/93% func; line% low only on Obsidian-coupled main.ts/settingsTab.ts as expected)
 
 - **objective:** Everything passes from a clean tree.
 - **commands:** `npm run check`, `npm run build`, `npm run lint`, `npm run lint:md`, `npm run test:coverage`.
