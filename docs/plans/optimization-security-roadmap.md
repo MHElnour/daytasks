@@ -282,7 +282,7 @@ this phase closes the rest.
 - **expected tests:** `taskListRenderer.test.ts` asserts the `aria-label` attribute on the toggle.
 - **acceptance:** unit test green; axe over the Task List view shows the toggle named.
 
-### P5.5 — Theming cleanup (CSS-1, CSS-2, CSS-3)
+### P5.5 — Theming cleanup (CSS-1, CSS-2, CSS-3)  ✅ DONE (CSS-1 warm tint → overridable --daytasks-tint/-border-tint tokens; CSS-2 hex fallbacks → theme vars; CSS-3 rel-chip !important → +specificity; 0 real !important; build green, eslint 0. ⏸ light/dark/Minimal theme smoke manual)
 
 - **objective:** Remove hardcoded hex bias and `!important`.
 - **files:** `styles/variables.css` (26-31), `styles/task-card.css` (233, 489-491).

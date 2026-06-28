@@ -23,12 +23,17 @@
 	--tn-text-muted: var(--text-muted);
 	--tn-border-color: var(--background-modifier-border);
 	--tn-interactive-accent: var(--interactive-accent);
-	--tn-color-success: var(--color-green, #00aa00);
-	--tn-color-error: var(--color-red, #ff0000);
-	--daytasks-panel-bg: color-mix(in srgb, var(--background-primary) 96%, #f0dfc7 4%);
-	--daytasks-row-bg: color-mix(in srgb, var(--background-primary) 98%, #f0dfc7 2%);
-	--daytasks-row-bg-hover: color-mix(in srgb, var(--background-secondary) 94%, #f0dfc7 6%);
-	--daytasks-soft-border: color-mix(in srgb, var(--background-modifier-border) 82%, #d2ad7c 18%);
+	--tn-color-success: var(--color-green, var(--text-success));
+	--tn-color-error: var(--color-red, var(--text-error));
+	/* Warm-paper tints blended into surfaces. Exposed as single tokens so a theme
+	   or user snippet can override (or zero out) the bias instead of it being
+	   hardcoded per surface (CSS-1/CSS-2). */
+	--daytasks-tint: #f0dfc7;
+	--daytasks-border-tint: #d2ad7c;
+	--daytasks-panel-bg: color-mix(in srgb, var(--background-primary) 96%, var(--daytasks-tint) 4%);
+	--daytasks-row-bg: color-mix(in srgb, var(--background-primary) 98%, var(--daytasks-tint) 2%);
+	--daytasks-row-bg-hover: color-mix(in srgb, var(--background-secondary) 94%, var(--daytasks-tint) 6%);
+	--daytasks-soft-border: color-mix(in srgb, var(--background-modifier-border) 82%, var(--daytasks-border-tint) 18%);
 	--daytasks-chip-bg: color-mix(in srgb, var(--background-primary) 88%, var(--background-secondary) 12%);
 
 	/* Spacing aliases */

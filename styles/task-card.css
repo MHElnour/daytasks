@@ -230,7 +230,7 @@
 }
 
 .daytasks-plugin .task-card__estimate {
-	color: var(--color-orange, #b26a00);
+	color: var(--color-orange, var(--text-accent));
 }
 
 /* Context: plain, non-interactive label (not clickable, never boxed). */
@@ -488,15 +488,17 @@
 }
 
 /* Plain, never boxed (per design): monospace id, no border/background even on
-   hover — just an underline to signal it is clickable. */
-.daytasks-plugin .task-card__rel-chip {
+   hover — just an underline to signal it is clickable. The extra `.task-card`
+   ancestor raises specificity to beat theme `button` styling without
+   `!important` (CSS-3). */
+.daytasks-plugin .task-card .task-card__rel-chip {
 	display: inline-flex;
 	align-items: center;
 	flex: 0 0 auto;
 	padding: 0 1px;
-	border: none !important;
-	background: none !important;
-	box-shadow: none !important;
+	border: none;
+	background: none;
+	box-shadow: none;
 	appearance: none;
 	-webkit-appearance: none;
 	color: var(--text-muted);
