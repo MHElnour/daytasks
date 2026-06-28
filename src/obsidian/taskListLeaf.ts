@@ -54,6 +54,11 @@ export class TaskListView extends ItemView {
 		this.render();
 	}
 
+	async onClose(): Promise<void> {
+		// Release rendered DOM when the leaf closes (LIFE-5 hygiene).
+		this.contentEl.empty();
+	}
+
 	/** Re-renders from current tasks + persisted state. Called by the plugin on change. */
 	render(): void {
 		const container = this.contentEl;

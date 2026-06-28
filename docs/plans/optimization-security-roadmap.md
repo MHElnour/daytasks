@@ -144,7 +144,7 @@ is popout correctness + lifecycle cleanup.
 - **expected tests:** none (Obsidian-coupled); manual.
 - **acceptance:** open the create modal, immediately Esc — no error; timer cleared.
 
-### P2.5 — Add `TaskListView.onClose()` (LIFE-5)
+### P2.5 — Add `TaskListView.onClose()` (LIFE-5)  ✅ DONE (onClose empties contentEl; check 377, build green)
 
 - **objective:** Empty `contentEl` on close (hygiene).
 - **files:** `src/obsidian/taskListLeaf.ts`.
