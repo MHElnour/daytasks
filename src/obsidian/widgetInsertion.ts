@@ -84,15 +84,15 @@ function renderedBottom(element: HTMLElement): number | null {
 }
 
 /**
- * Removes the gap CodeMirror leaves between the last text line and the bottom of
- * .cm-contentContainer by shrinking the widget's top margin accordingly.
+ * Read-only measure of the gap CodeMirror leaves between the last text line and
+ * the bottom of .cm-contentContainer. Returns null when there is nothing to
+ * measure (no Live Preview content). Never mutates the DOM, so it cannot itself
+ * feed CodeMirror's ResizeObserver.
  */
-export function applyBottomOffset(container: HTMLElement, widget: HTMLElement): void {
-	widget.style.removeProperty(WIDGET_MARGIN_TOP_VAR);
-
+function measureSpacerGap(container: HTMLElement): number | null {
 	const cmContent = container.querySelector<HTMLElement>(".cm-content");
 	if (!cmContent) {
-		return;
+		return null;
 	}
 
 	const lines = htmlChildren(cmContent).filter((child) =>
@@ -108,13 +108,50 @@ export function applyBottomOffset(container: HTMLElement, widget: HTMLElement): 
 
 	const contentContainer = cmContent.closest<HTMLElement>(".cm-contentContainer");
 	if (contentBottom === null || !contentContainer) {
-		return;
+		return null;
 	}
 
-	const spacerGap = Math.max(
+	return Math.max(
 		0,
 		Math.round(contentContainer.getBoundingClientRect().bottom - contentBottom)
 	);
+}
+
+/**
+ * Last spacer gap we wrote a margin for, per widget. `-1` is the sentinel for
+ * "reset / no measurable content". Keyed weakly so a removed widget's entry is
+ * collected with it.
+ */
+const appliedSpacerGap = new WeakMap<HTMLElement, number>();
+
+/**
+ * Removes the gap CodeMirror leaves between the last text line and the bottom of
+ * .cm-contentContainer by shrinking the widget's top margin accordingly.
+ *
+ * Idempotent on purpose: writing the margin var resizes `.cm-sizer`, which fires
+ * CodeMirror's own ResizeObserver → `geometryChanged` → another call here. But
+ * the gap is measured on `.cm-contentContainer` (a sibling ABOVE the widget), so
+ * it is unaffected by our margin write — the repeat measure matches the cached
+ * value and returns without mutating, breaking the ResizeObserver feedback loop
+ * (and skipping a forced reflow on every keystroke/scroll frame).
+ */
+export function applyBottomOffset(container: HTMLElement, widget: HTMLElement): void {
+	const spacerGap = measureSpacerGap(container);
+
+	if (spacerGap === null) {
+		if (appliedSpacerGap.get(widget) !== -1) {
+			widget.style.removeProperty(WIDGET_MARGIN_TOP_VAR);
+			appliedSpacerGap.set(widget, -1);
+		}
+		return;
+	}
+
+	if (appliedSpacerGap.get(widget) === spacerGap) {
+		return;
+	}
+	appliedSpacerGap.set(widget, spacerGap);
+
+	widget.style.removeProperty(WIDGET_MARGIN_TOP_VAR);
 	if (spacerGap > 0) {
 		const adjusted = Math.round(defaultMarginTop(widget) - spacerGap);
 		widget.style.setProperty(WIDGET_MARGIN_TOP_VAR, `${adjusted}px`);
