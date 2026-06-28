@@ -2,6 +2,8 @@
 
 A lightweight, day-first task manager for your Obsidian daily notes.
 
+![DayTasks daily-note widget](docs/assets/daily-note-widget.png)
+
 DayTasks is built for people who plan from daily notes but still want structured
 task cards, filtering, subtasks, dependencies, and optional detail notes. It
 keeps task data in Obsidian plugin storage and renders tasks inside your daily
@@ -44,6 +46,28 @@ plugin experience is complete.
   body.
 - Detail-note folder templates such as `Tasks/{{year}}/{{month}}`.
 - Theme-aware styling, visible keyboard focus, and accessible icon controls.
+
+## Screenshots
+
+**Task List view** — every task across days in one place, filterable by status,
+tag, context, and project, then grouped and sorted however you work.
+
+![Task List view](docs/assets/task-list-view.png)
+
+**Create and edit tasks** — one dialog for scheduling, priority, due date,
+estimate, tags, contexts, project links, subtasks, and dependencies.
+
+![Edit task dialog](docs/assets/edit-modal.png)
+
+**Detail notes** — an optional Markdown note per task. DayTasks manages its task
+frontmatter and injects an interactive subtasks widget; the body stays yours.
+
+![Detail note with injected subtasks widget](docs/assets/detail-note.png)
+
+**Settings** — daily-note detection, which fields the widget shows, and the
+defaults applied to new tasks.
+
+![DayTasks settings](docs/assets/settings.png)
 
 ## Install
 
