@@ -3,6 +3,11 @@ import type { DayTask, ProjectLink, TimeEntry } from "../core/task";
 import { mergeSettings, type DayTasksSettings } from "../settings/settings";
 import { IN_PROGRESS_STATUS_VALUE } from "../core/status";
 import { isRecord } from "../util/isRecord";
+import {
+	asOptionalString,
+	asFiniteNumber,
+	asUniqueStringArray,
+} from "../util/coerce";
 
 /** Minimal surface of Obsidian's `Plugin` data API, kept narrow for testing. */
 export interface PluginDataPort {
@@ -43,30 +48,6 @@ function isProjectLink(value: unknown): value is ProjectLink {
 	return isRecord(value) && typeof value.path === "string";
 }
 
-function asString(value: unknown): string | undefined {
-	return typeof value === "string" ? value : undefined;
-}
-
-function asFiniteNumber(value: unknown): number | undefined {
-	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
-}
-
-/** Coerces to a list of unique strings (duplicates would double-index the task). */
-function asStringArray(value: unknown): string[] {
-	if (!Array.isArray(value)) {
-		return [];
-	}
-	const seen = new Set<string>();
-	const result: string[] = [];
-	for (const entry of value) {
-		if (typeof entry === "string" && !seen.has(entry)) {
-			seen.add(entry);
-			result.push(entry);
-		}
-	}
-	return result;
-}
-
 /** Coerces to project links, deduplicated by path (first occurrence wins). */
 function asProjects(value: unknown): ProjectLink[] {
 	if (!Array.isArray(value)) {
@@ -80,7 +61,7 @@ function asProjects(value: unknown): ProjectLink[] {
 		}
 		seen.add(raw.path);
 		const project: ProjectLink = { path: raw.path };
-		const title = asString(raw.title);
+		const title = asOptionalString(raw.title);
 		if (title !== undefined) {
 			project.title = title;
 		}
@@ -99,11 +80,11 @@ function asTimeEntries(value: unknown): TimeEntry[] {
 			continue;
 		}
 		const entry: TimeEntry = { startTime: raw.startTime };
-		const endTime = asString(raw.endTime);
+		const endTime = asOptionalString(raw.endTime);
 		if (endTime !== undefined) {
 			entry.endTime = endTime;
 		}
-		const description = asString(raw.description);
+		const description = asOptionalString(raw.description);
 		if (description !== undefined) {
 			entry.description = description;
 		}
@@ -124,8 +105,8 @@ function normalizeStoredTask(task: Record<string, unknown>): DayTask {
 		title: task.title as string,
 		status: task.status as string,
 		scheduledDate: task.scheduledDate as string,
-		tags: asStringArray(task.tags),
-		contexts: asStringArray(task.contexts),
+		tags: asUniqueStringArray(task.tags),
+		contexts: asUniqueStringArray(task.contexts),
 		projects: asProjects(task.projects),
 		timeEntries: asTimeEntries(task.timeEntries),
 		createdAt: task.createdAt as string,
@@ -143,7 +124,7 @@ function normalizeStoredTask(task: Record<string, unknown>): DayTask {
 		"sortOrder",
 	] as const;
 	for (const key of optionalStrings) {
-		const value = asString(task[key]);
+		const value = asOptionalString(task[key]);
 		if (value !== undefined) {
 			normalized[key] = value;
 		}
@@ -160,7 +141,7 @@ function normalizeStoredTask(task: Record<string, unknown>): DayTask {
 		normalized.estimateMinutes = estimateMinutes;
 	}
 
-	const blockedBy = asStringArray(task.blockedBy);
+	const blockedBy = asUniqueStringArray(task.blockedBy);
 	if (blockedBy.length > 0) {
 		normalized.blockedBy = blockedBy;
 	}

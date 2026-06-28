@@ -9,6 +9,12 @@ import {
 import { StatusManager } from "../core/statusManager";
 import { DEFAULT_TASK_LIST_STATE, type TaskListState } from "../core/taskListState";
 import { isRecord } from "../util/isRecord";
+import {
+	asStringOr,
+	asBooleanOr,
+	asFiniteNumberOr,
+	asStringArrayOr,
+} from "../util/coerce";
 
 export type WidgetPosition = "bottom";
 
@@ -74,25 +80,6 @@ export const DEFAULT_SETTINGS: DayTasksSettings = {
 	apiToken: "",
 	taskListState: { ...DEFAULT_TASK_LIST_STATE },
 };
-
-function asString(value: unknown, fallback: string): string {
-	return typeof value === "string" ? value : fallback;
-}
-
-function asBoolean(value: unknown, fallback: boolean): boolean {
-	return typeof value === "boolean" ? value : fallback;
-}
-
-function asNumber(value: unknown, fallback: number): number {
-	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function asStringArray(value: unknown, fallback: string[]): string[] {
-	if (!Array.isArray(value)) {
-		return [...fallback];
-	}
-	return value.filter((entry): entry is string => typeof entry === "string");
-}
 
 function isStatusConfig(value: unknown): value is StatusConfig {
 	return (
@@ -185,7 +172,7 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 	const statuses = asStatuses(s.statuses);
 	const statusValues = new Set(statuses.map((status) => status.value));
 
-	let defaultStatus = asString(s.defaultStatus, DEFAULT_STATUS_VALUE);
+	let defaultStatus = asStringOr(s.defaultStatus, DEFAULT_STATUS_VALUE);
 	if (!statusValues.has(defaultStatus)) {
 		defaultStatus = statusValues.has(DEFAULT_STATUS_VALUE)
 			? DEFAULT_STATUS_VALUE
@@ -193,47 +180,47 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 	}
 
 	return {
-		dailyNoteFolder: asString(s.dailyNoteFolder, DEFAULT_SETTINGS.dailyNoteFolder),
-		dailyNoteDateFormat: asString(
+		dailyNoteFolder: asStringOr(s.dailyNoteFolder, DEFAULT_SETTINGS.dailyNoteFolder),
+		dailyNoteDateFormat: asStringOr(
 			s.dailyNoteDateFormat,
 			DEFAULT_SETTINGS.dailyNoteDateFormat
 		),
-		showDailyNoteWidget: asBoolean(
+		showDailyNoteWidget: asBooleanOr(
 			s.showDailyNoteWidget,
 			DEFAULT_SETTINGS.showDailyNoteWidget
 		),
 		widgetPosition: "bottom",
-		showTaskIds: asBoolean(s.showTaskIds, DEFAULT_SETTINGS.showTaskIds),
-		showTags: asBoolean(s.showTags, DEFAULT_SETTINGS.showTags),
-		showContexts: asBoolean(s.showContexts, DEFAULT_SETTINGS.showContexts),
-		showProjects: asBoolean(s.showProjects, DEFAULT_SETTINGS.showProjects),
+		showTaskIds: asBooleanOr(s.showTaskIds, DEFAULT_SETTINGS.showTaskIds),
+		showTags: asBooleanOr(s.showTags, DEFAULT_SETTINGS.showTags),
+		showContexts: asBooleanOr(s.showContexts, DEFAULT_SETTINGS.showContexts),
+		showProjects: asBooleanOr(s.showProjects, DEFAULT_SETTINGS.showProjects),
 		defaultStatus,
-		defaultPriority: asString(
+		defaultPriority: asStringOr(
 			s.defaultPriority,
 			DEFAULT_SETTINGS.defaultPriority ?? DEFAULT_PRIORITY_VALUE
 		),
-		defaultTags: asStringArray(s.defaultTags, DEFAULT_SETTINGS.defaultTags),
-		defaultProjectPath: asString(
+		defaultTags: asStringArrayOr(s.defaultTags, DEFAULT_SETTINGS.defaultTags),
+		defaultProjectPath: asStringOr(
 			s.defaultProjectPath,
 			DEFAULT_SETTINGS.defaultProjectPath
 		),
-		createDetailNoteByDefault: asBoolean(
+		createDetailNoteByDefault: asBooleanOr(
 			s.createDetailNoteByDefault,
 			DEFAULT_SETTINGS.createDetailNoteByDefault
 		),
-		detailNotesFolder: asString(
+		detailNotesFolder: asStringOr(
 			s.detailNotesFolder,
 			DEFAULT_SETTINGS.detailNotesFolder
 		),
-		detailNotesMigrated: asBoolean(
+		detailNotesMigrated: asBooleanOr(
 			s.detailNotesMigrated,
 			DEFAULT_SETTINGS.detailNotesMigrated
 		),
 		statuses,
 		priorities: asPriorities(s.priorities),
-		apiEnabled: asBoolean(s.apiEnabled, DEFAULT_SETTINGS.apiEnabled),
-		apiPort: asNumber(s.apiPort, DEFAULT_SETTINGS.apiPort),
-		apiToken: asString(s.apiToken, DEFAULT_SETTINGS.apiToken),
+		apiEnabled: asBooleanOr(s.apiEnabled, DEFAULT_SETTINGS.apiEnabled),
+		apiPort: asFiniteNumberOr(s.apiPort, DEFAULT_SETTINGS.apiPort),
+		apiToken: asStringOr(s.apiToken, DEFAULT_SETTINGS.apiToken),
 		taskListState: asTaskListState(s.taskListState),
 	};
 }

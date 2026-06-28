@@ -169,7 +169,7 @@ TDD, no behavior change.
 - **expected tests:** extend `localIso.test.ts` + `time.test.ts` — `localDate(d) === localIso(d).slice(0,10)` across TZ-sensitive dates.
 - **acceptance:** `npm run check` green; no call-site behavior change.
 
-### P3.2 — Extract `src/util/coerce.ts` shared coercion vocabulary (DRY-8)
+### P3.2 — Extract `src/util/coerce.ts` shared coercion vocabulary (DRY-8)  ✅ DONE (named variants incl. asStringArrayOr vs asUniqueStringArray; settings+adapter migrated, their tests unchanged-green; check 391, eslint 0, build green)
 
 - **objective:** Replace the two divergent coercion toolkits with explicitly-named functions; preserve each call site's dedupe contract.
 - **files:** new `src/util/coerce.ts`; migrate `src/settings/settings.ts` (78-95) and `src/obsidian/pluginDataAdapter.ts` (37-59).
