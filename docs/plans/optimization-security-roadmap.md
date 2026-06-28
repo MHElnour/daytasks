@@ -264,7 +264,7 @@ this phase closes the rest.
 - **expected tests:** none unit; manual keyboard-tab smoke.
 - **acceptance:** Tab through the filter bar under a theme that hides UA outlines — visible ring on each control.
 
-### P5.3 — Chip focus styles (A11Y-2)
+### P5.3 — Chip focus styles (A11Y-2)  ✅ DONE (focus-visible on project/tag chips in task-card.css; build-css clean. ⏸ keyboard-tab smoke manual)
 
 - **objective:** Visible focus on keyboard-operable project/tag chips.
 - **files:** `styles/task-card.css`.

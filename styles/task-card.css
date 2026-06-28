@@ -262,6 +262,14 @@
 	border-color: color-mix(in srgb, var(--chip-color, var(--text-accent)) 30%, var(--tn-border-color));
 }
 
+/* Project/tag chips are keyboard-activatable (makeActivatable), so they need a
+   visible focus ring to match — hover alone left keyboard users unsighted (A11Y-2). */
+.daytasks-plugin .task-card__project:focus-visible,
+.daytasks-plugin .task-card__tag:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+
 /* ---- meta icons (slice A) ---- */
 
 .daytasks-plugin .task-card__meta-icon {
