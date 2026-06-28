@@ -160,7 +160,7 @@ is popout correctness + lifecycle cleanup.
 Drive from [refactor-consolidation-map.md](refactor-consolidation-map.md). Pure utils,
 TDD, no behavior change.
 
-### P3.1 — Extract `localDate(date)` date formatter (DRY-7)
+### P3.1 — Extract `localDate(date)` date formatter (DRY-7)  ✅ DONE (localDate in localIso.ts; localIso + todayDate reuse it; check 380)
 
 - **objective:** Single `YYYY-MM-DD` assembler; `localIso` and `todayDate` reuse it.
 - **files:** `src/util/localIso.ts`, `src/util/time.ts`.

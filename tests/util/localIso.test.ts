@@ -1,5 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { localIso } from "../../src/util/localIso";
+import { localIso, localDate } from "../../src/util/localIso";
+
+describe("localDate", () => {
+	it("returns the local date as YYYY-MM-DD", () => {
+		const date = new Date("2026-06-27T15:18:47.717Z");
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+		expect(localDate(date)).toBe(`${year}-${month}-${day}`);
+	});
+
+	it("equals the date portion of localIso for the same Date", () => {
+		const date = new Date("2026-01-05T23:30:00.000Z");
+		expect(localDate(date)).toBe(localIso(date).slice(0, 10));
+	});
+
+	it("zero-pads a single-digit month and day", () => {
+		const date = new Date(2026, 0, 5); // local 2026-01-05
+		expect(localDate(date)).toBe("2026-01-05");
+	});
+});
 
 describe("localIso", () => {
 	it("returns a string matching the expected format", () => {
