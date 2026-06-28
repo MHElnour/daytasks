@@ -344,7 +344,9 @@ export default class DayTasksPlugin extends Plugin {
 				return;
 			}
 
-			const host = activeDocument.createElement("div");
+			// Build in the view's own document so reading-mode injection works in a
+			// popout/detached window, not just the focused one (LIFE-1).
+			const host = container.ownerDocument.createElement("div");
 			host.className = WIDGET_HOST_CLASS;
 			host.dataset.notePath = path;
 			host.setAttribute("contenteditable", "false");

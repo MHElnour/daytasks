@@ -77,7 +77,9 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 				this.remove();
 				this.cleanupOrphans(container);
 
-				const wrapper = activeDocument.createElement("div");
+				// Build in THIS editor's document (not the focused window's) so the
+				// widget renders correctly in a popout/detached split (LIFE-1).
+				const wrapper = container.ownerDocument.createElement("div");
 				wrapper.className = CM_WIDGET_CLASS;
 				wrapper.setAttribute("contenteditable", "false");
 				wrapper.spellcheck = false;
@@ -99,7 +101,10 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 			}
 
 			private scheduleOffsetRefresh(container: HTMLElement, widget: HTMLElement): void {
-				window.requestAnimationFrame(() => {
+				// Schedule on the editor's own window so the measure runs on the
+				// right frame clock in a popout (LIFE-1).
+				const win = container.ownerDocument.defaultView ?? window;
+				win.requestAnimationFrame(() => {
 					if (widget.parentElement) {
 						applyBottomOffset(container, widget);
 					}

@@ -117,7 +117,7 @@ is popout correctness + lifecycle cleanup.
 - **expected tests:** `tests/util/debounce.test.ts` — `flush()` runs the pending call immediately and clears the timer; `cancel()` drops it.
 - **acceptance:** unit tests green; smoke — change a filter, immediately disable then re-enable the plugin, confirm state persisted and no console error.
 
-### P2.2 — Use the editor's own document/window for widget DOM (LIFE-1 + MNT-1)
+### P2.2 — Use the editor's own document/window for widget DOM (LIFE-1 + MNT-1)  ✅ DONE (LIFE-1: livePreview wrapper+rAF and reading host now use container.ownerDocument; check 377, build green. MNT-1 el() factories DEFERRED-low — children auto-adopt on append, cross-module refactor not worth the risk. ⏸ popout smoke manual)
 
 - **objective:** Create and measure widget DOM against `view.dom.ownerDocument` / `view.containerEl.ownerDocument`, not the active window — popout/split correctness; switch to `createEl`/`createDiv` helpers.
 - **files:** `src/obsidian/livePreview.ts` (~80, ~102), `src/main.ts` (reading injector ~322), optionally `src/obsidian/widgetRenderer.ts`/`taskListRenderer.ts` `el()` factories (thread owner doc).
