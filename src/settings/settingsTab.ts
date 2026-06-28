@@ -190,7 +190,7 @@ export class DayTasksSettingTab extends PluginSettingTab {
 				})
 			);
 
-		new Setting(containerEl).setName("API (inactive)").setHeading();
+		new Setting(containerEl).setName("API").setHeading();
 
 		new Setting(containerEl)
 			.setName("Enable local API")

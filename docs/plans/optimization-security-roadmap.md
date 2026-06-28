@@ -291,7 +291,7 @@ this phase closes the rest.
 - **expected tests:** manual theme switch (light/dark/high-contrast/Minimal).
 - **acceptance:** panels follow the theme; rel chips stay flat without `!important`; `grep -rn "!important" styles` → 0.
 
-### P5.6 — Settings heading cleanup (UX-1)
+### P5.6 — Settings heading cleanup (UX-1)  ✅ DONE (heading "API (inactive)" → "API"; "Reserved…" desc documents future work; check 382, build green. Follow-up option: remove the whole API settings section + schema fields now that api/* is deleted)
 
 - **objective:** Drop/rename "API (inactive)" heading.
 - **files:** `src/settings/settingsTab.ts` (193).
