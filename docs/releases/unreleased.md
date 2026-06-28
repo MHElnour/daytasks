@@ -23,6 +23,12 @@ required.
 - **Editing or syncing a task no longer overwrites an unrelated note.** If a
   task's detail-note link points at a file that now belongs to a different task
   (moved or replaced), DayTasks leaves that note's properties untouched.
+- **The daily-note task widget now works in popped-out windows and split
+  panes.** It is built against the note's own window, so it renders and sizes
+  correctly even when that note isn't the focused one.
+- **Task List view filters and layout survive a quick disable/reload.** Pending
+  view-state is saved when the plugin unloads instead of being dropped, and
+  scheduled refreshes no longer run after the plugin is gone.
 
 ## Security
 
