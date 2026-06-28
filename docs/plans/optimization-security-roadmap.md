@@ -81,7 +81,7 @@ Highest priority. All touch user data; write tests first (TDD) where logic allow
 - **expected tests:** `detailNoteService.test.ts` — note at `path` has `taskId:"other"` → `writeFrontmatter` not called (call count 0); same-id still syncs.
 - **acceptance:** new tests green; existing sync/migrate tests unchanged.
 
-### P1.5 — Surface task-drop on decode (DATA-4)
+### P1.5 — Surface task-drop on decode (DATA-4)  ✅ DONE (decode returns droppedTasks; main.ts Notice+warn; check 376, build green)
 
 - **objective:** Never silently erase a task; warn before a save finalizes the loss.
 - **files:** `src/obsidian/pluginDataAdapter.ts` (`decodePluginData` returns/reports a dropped count), `src/main.ts` (`loadPluginData` emits a Notice/`console.warn` when `raw.tasks.length > decoded.tasks.length`).

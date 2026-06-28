@@ -15,6 +15,15 @@ export interface DayTasksPluginData {
 	tasks: DayTask[];
 }
 
+/**
+ * Decode result: the persisted data plus `droppedTasks` — how many stored task
+ * entries were discarded as malformed. The host surfaces a non-zero count so a
+ * later save never silently finalizes the loss (DATA-4).
+ */
+export interface DecodedPluginData extends DayTasksPluginData {
+	droppedTasks: number;
+}
+
 function isValidTask(value: unknown): value is Record<string, unknown> {
 	if (!isRecord(value)) {
 		return false;
@@ -193,14 +202,16 @@ function validateDependencies(tasks: DayTask[]): void {
 }
 
 /** Decodes raw plugin data, repairing or discarding anything malformed. */
-export function decodePluginData(raw: unknown): DayTasksPluginData {
+export function decodePluginData(raw: unknown): DecodedPluginData {
 	if (!isRecord(raw)) {
-		return { settings: mergeSettings(undefined), tasks: [] };
+		return { settings: mergeSettings(undefined), tasks: [], droppedTasks: 0 };
 	}
 
+	const rawTaskCount = Array.isArray(raw.tasks) ? raw.tasks.length : 0;
 	const tasks = Array.isArray(raw.tasks)
 		? raw.tasks.filter(isValidTask).map(normalizeStoredTask)
 		: [];
+	const droppedTasks = rawTaskCount - tasks.length;
 
 	validateDependencies(tasks);
 
@@ -216,6 +227,7 @@ export function decodePluginData(raw: unknown): DayTasksPluginData {
 	return {
 		settings,
 		tasks,
+		droppedTasks,
 	};
 }
 
@@ -231,7 +243,7 @@ export function encodePluginData(data: DayTasksPluginData): DayTasksPluginData {
 export class DayTasksDataStore {
 	constructor(private readonly port: PluginDataPort) {}
 
-	async load(): Promise<DayTasksPluginData> {
+	async load(): Promise<DecodedPluginData> {
 		const raw = await this.port.loadData();
 		return decodePluginData(raw);
 	}

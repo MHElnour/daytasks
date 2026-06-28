@@ -40,10 +40,12 @@ describe("decodePluginData", () => {
 		expect(decodePluginData(undefined)).toEqual({
 			settings: DEFAULT_SETTINGS,
 			tasks: [],
+			droppedTasks: 0,
 		});
 		expect(decodePluginData("garbage")).toEqual({
 			settings: DEFAULT_SETTINGS,
 			tasks: [],
+			droppedTasks: 0,
 		});
 	});
 
@@ -226,6 +228,16 @@ describe("decodePluginData", () => {
 		// One direction is kept, the back-edge that would close the cycle is dropped.
 		expect(edges).toHaveLength(1);
 	});
+
+	it("reports how many malformed tasks were dropped (DATA-4)", () => {
+		const decoded = decodePluginData({ tasks: [validTask, null, { id: "x" }] });
+		expect(decoded.tasks).toHaveLength(1);
+		expect(decoded.droppedTasks).toBe(2);
+	});
+
+	it("reports zero dropped for all-valid data", () => {
+		expect(decodePluginData({ tasks: [validTask] }).droppedTasks).toBe(0);
+	});
 });
 
 describe("DayTasksDataStore", () => {
@@ -255,6 +267,8 @@ describe("DayTasksDataStore", () => {
 
 		await store.save(data);
 
-		expect(await store.load()).toEqual(data);
+		// load() returns the decode result, which carries droppedTasks alongside
+		// the round-tripped settings/tasks.
+		expect(await store.load()).toEqual({ ...data, droppedTasks: 0 });
 	});
 });

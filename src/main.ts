@@ -181,7 +181,17 @@ export default class DayTasksPlugin extends Plugin {
 
 	private async loadPluginData(): Promise<DayTasksPluginData> {
 		try {
-			return await this.dataStore.load();
+			const decoded = await this.dataStore.load();
+			if (decoded.droppedTasks > 0) {
+				// Don't let a later save silently finalize the loss (DATA-4).
+				console.warn(
+					`DayTasks: dropped ${decoded.droppedTasks} unreadable task(s) from stored data.`
+				);
+				new Notice(
+					`DayTasks: ${decoded.droppedTasks} unreadable task(s) were skipped. Back up your data before making changes if this is unexpected.`
+				);
+			}
+			return { settings: decoded.settings, tasks: decoded.tasks };
 		} catch (error) {
 			console.error("DayTasks: failed to load plugin data, using defaults", error);
 			new Notice("DayTasks: stored data was unreadable. Started with defaults.");
