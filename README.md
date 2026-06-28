@@ -2,139 +2,124 @@
 
 A lightweight, day-first task manager for your Obsidian daily notes.
 
-![DayTasks daily-note widget](docs/assets/daily-note-widget.png)
+![DayTasks daily-note widget](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/daily-note-widget.png)
 
-DayTasks is built for people who plan from daily notes but still want structured
-task cards, filtering, subtasks, dependencies, and optional detail notes. It
-keeps task data in Obsidian plugin storage and renders tasks inside your daily
-notes, so your note body stays yours.
+DayTasks is for people who plan from daily notes and want more structure than
+plain Markdown checkboxes. It renders task cards inside your daily notes, keeps
+the canonical task data in local Obsidian plugin storage, and gives you a Task
+List view for reviewing work across days.
+
+Your daily note stays yours: DayTasks does not write a managed `## Tasks`
+section into the note body. When a task needs more context, you can create an
+optional Markdown detail note; DayTasks manages the task frontmatter and leaves
+the note body to you.
 
 ```text
 plugin task store -> task index -> daily-note widget -> task cards
 ```
 
-Stable `TSK-xxxxxxxx` IDs let cards, detail notes, subtasks, dependencies, and
-project links all point at the same task without turning every task into a
-Markdown file.
+## Install
 
-## Status
+DayTasks is available from Obsidian Community Plugins.
 
-DayTasks is under active development and is being prepared for public release.
-It is currently desktop-only and English-only.
+1. Open `Settings -> Community plugins` in Obsidian.
+2. Select `Browse` and search for `DayTasks`.
+3. Install DayTasks, then enable it.
 
-API, browser extension, sync, and i18n work are out of scope until the Obsidian
-plugin experience is complete.
-
-## Requirements
+Requirements:
 
 - Obsidian `1.8.0` or newer.
 - Desktop Obsidian. DayTasks is currently marked `isDesktopOnly`.
+- English UI.
 
-## Features
-
-- Daily-note widget in Live Preview and reading mode.
-- Task creation, editing, completion, deletion, status cycling, and priority
-  cycling.
-- Scheduled dates, due dates, tags, contexts, project links, estimates, and
-  descriptions.
-- Collapsible task cards with manual drag reorder.
-- Subtasks with nested cards and progress.
-- Dependencies with blocked-status behavior and cycle prevention.
-- Task List view for all tasks across days, with filtering, grouping, sorting,
-  and persisted view state.
-- Optional Markdown detail notes with managed task frontmatter and a user-owned
-  body.
-- Detail-note folder templates such as `Tasks/{{year}}/{{month}}`.
-- Theme-aware styling, visible keyboard focus, and accessible icon controls.
-
-## Screenshots
-
-**Task List view** — every task across days in one place, filterable by status,
-tag, context, and project, then grouped and sorted however you work.
-
-![Task List view](docs/assets/task-list-view.png)
-
-**Create and edit tasks** — one dialog for scheduling, priority, due date,
-estimate, tags, contexts, project links, subtasks, and dependencies.
-
-![Edit task dialog](docs/assets/edit-modal.png)
-
-**Commands** — open the Task List or create a task for the current daily note
-straight from the command palette.
-
-![DayTasks commands in the command palette](docs/assets/commands.png)
-
-**Detail notes** — an optional Markdown note per task. DayTasks manages the task
-frontmatter and injects an interactive subtasks widget; the note body stays
-yours.
-
-![Detail note managed frontmatter](docs/assets/detail-note-properties.png)
-
-![Detail note injected subtasks widget](docs/assets/detail-note.png)
-
-**Settings** — daily-note detection, which fields the widget shows, and the
-defaults applied to new tasks.
-
-![DayTasks settings](docs/assets/settings.png)
-
-## Install
-
-DayTasks is not yet listed in Obsidian Community Plugins.
-
-For local testing, build and install into the bundled test vault:
-
-```bash
-npm run build:test
-```
-
-To install into another vault:
-
-```bash
-npm run build
-npm run install-plugin -- /path/to/Vault
-```
-
-The plugin is installed to:
+To install manually from GitHub, download `manifest.json`, `main.js`, and
+`styles.css` from the [latest release](https://github.com/MHElnour/daytasks/releases/latest),
+then copy them into:
 
 ```text
 <vault>/.obsidian/plugins/daytasks/
 ```
 
-When GitHub releases are available, install by copying the release assets
-`manifest.json`, `main.js`, and `styles.css` into that same folder.
+## Quick Start
 
-## Usage
-
-1. Enable DayTasks in Obsidian.
-2. Open a daily note named with a `YYYY-MM-DD` prefix, such as
+1. Open a daily note whose filename starts with `YYYY-MM-DD`, such as
    `2026-06-25.md`.
-3. Use the daily-note widget or the `Create task for current daily note` command
-   to create a task.
-4. Open the Task List view from the ribbon icon or the `Open task list` command
-   to review tasks across days.
+2. Create a task from the widget at the bottom of the daily note, or run
+   `Create task for current daily note` from the command palette.
+3. Use the task card to complete, edit, reorder, collapse, cycle status,
+   cycle priority, or create a detail note.
+4. Open the Task List view from the ribbon icon or the `Open task list`
+   command to review tasks across days.
+5. Configure defaults in `Settings -> Community plugins -> DayTasks`.
 
-See [Features](docs/features.md), [Settings](docs/settings.md), and
-[Troubleshooting](docs/troubleshooting.md) for the full workflow.
+## Features
 
-## Support
+- **Daily-note widget** for Live Preview, reading mode, split panes, and
+  popped-out windows.
+- **Task cards** with status, priority, scheduled date, due date, tags,
+  contexts, project links, estimates, descriptions, and manual ordering.
+- **Task List view** for all tasks across days, with filtering, grouping,
+  sorting, text search, and persisted view state.
+- **Subtasks** as real task records, not checklist text, with nested cards and
+  parent progress.
+- **Dependencies** with blocked-status behavior and cycle prevention.
+- **Optional detail notes** with managed task frontmatter and user-owned
+  Markdown bodies.
+- **Configurable defaults** for status, priority, tags, project link, detail
+  note behavior, and detail note folders.
+- **Theme-aware and accessible UI** using Obsidian theme variables, keyboard
+  focus states, and named icon controls.
 
-- **Bug or feature request?** [Open an issue](https://github.com/MHElnour/daytasks/issues/new/choose)
-  — the bug form asks for your DayTasks/Obsidian versions, steps to reproduce,
-  and any console errors so it can be fixed quickly.
-- **Question, idea, or want to share your setup?** Use
-  [Discussions](https://github.com/MHElnour/daytasks/discussions).
+## Screenshots
 
-When reporting a bug, the console log helps most: open the developer console with
-`Ctrl`/`Cmd`+`Shift`+`I`, reproduce the issue, and paste any DayTasks errors.
+**Task List view** shows every task across days in one place, filterable by
+status, date, tag, context, project, and search text.
 
-## Data Model
+![Task List view](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/task-list-view.png)
 
-DayTasks stores tasks in Obsidian plugin data, not in daily-note bodies. Optional
-detail notes are normal Markdown files in your vault. DayTasks manages their
-task frontmatter and leaves the note body untouched.
+**Create and edit tasks** from one dialog with scheduling, priority, due date,
+estimate, tags, contexts, project links, subtasks, dependencies, and detail
+note options.
+
+![Edit task dialog](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/edit-modal.png)
+
+**Commands** let you open the Task List or create a task for the current daily
+note straight from the command palette.
+
+![DayTasks commands in the command palette](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/commands.png)
+
+**Detail notes** give a task a normal Markdown note. DayTasks manages the task
+frontmatter and injects an interactive subtasks widget; the note body remains
+yours.
+
+![Detail note managed frontmatter](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/detail-note-properties.png)
+
+![Detail note injected subtasks widget](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/detail-note.png)
+
+**Settings** control daily-note detection, card metadata, task defaults, and
+detail-note behavior.
+
+![DayTasks settings](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/settings.png)
+
+## Data And Privacy
+
+DayTasks is local-first. It stores task records through Obsidian plugin storage
+and writes optional detail notes inside your vault when you ask it to create
+them.
+
+DayTasks does not send task data to a server, does not implement sync, and does
+not write managed task lists into daily-note bodies. Optional detail notes are
+normal Markdown files; DayTasks manages task frontmatter and preserves the note
+body plus non-managed frontmatter keys.
 
 See [Core concepts](docs/core-concepts.md) and [Privacy](docs/privacy.md) for
 details.
+
+## Current Scope
+
+DayTasks is intentionally focused on the desktop Obsidian daily-note workflow.
+API, browser extension, sync, mobile, and multilingual work are not part of the
+current release scope.
 
 ## Documentation
 
@@ -142,10 +127,27 @@ details.
 - [Core concepts](docs/core-concepts.md)
 - [Features](docs/features.md)
 - [Settings](docs/settings.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Privacy](docs/privacy.md)
 - [Roadmap](docs/roadmap.md)
+
+Development docs:
+
 - [Architecture](docs/development/architecture.md)
 - [Testing](docs/development/testing.md)
 - [Security and data safety](docs/development/security-and-data-safety.md)
+- [Release process](docs/development/release-process.md)
+
+## Support
+
+- **Bug or feature request?**
+  [Open an issue](https://github.com/MHElnour/daytasks/issues/new/choose).
+- **Question, idea, or setup discussion?**
+  [Start a discussion](https://github.com/MHElnour/daytasks/discussions).
+
+When reporting a bug, include your DayTasks version, Obsidian version, steps to
+reproduce, and any console errors. Open the developer console with
+`Ctrl`/`Cmd`+`Shift`+`I`, reproduce the issue, and copy any DayTasks errors.
 
 ## Development
 
@@ -174,8 +176,8 @@ npm run install-plugin -- /path/to/Vault
 
 ## Release
 
-Bump and tag locally, then push — GitHub Actions builds, attests build
-provenance, and publishes the release with the assets attached.
+Releases are bumped and tagged locally, then GitHub Actions builds, attests, and
+publishes the release assets.
 
 ```bash
 npm run release -- patch   # bump, check, build, roll notes, commit, tag
