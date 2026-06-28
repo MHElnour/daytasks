@@ -255,7 +255,7 @@ this phase closes the rest.
 - **expected tests:** the four cases in TEST-1 (renamed→flag set; throw→flag not set, others processed; re-run idempotency; already-migrated→no-op).
 - **acceptance:** new file green; existing detail-note tests unchanged; `npm run check` green.
 
-### P5.2 — Task List filter-bar focus styles (A11Y-1)
+### P5.2 — Task List filter-bar focus styles (A11Y-1)  ✅ DONE (focus-visible accent outline on all 11 filter/group controls in task-list-view.css; build-css clean. ⏸ keyboard-tab smoke manual)
 
 - **objective:** Visible focus on every filter-bar control.
 - **files:** `styles/task-list-view.css` (regenerate `styles.css` via `npm run build-css`).

@@ -246,3 +246,21 @@
 	font-size: var(--font-ui-smaller);
 	text-align: center;
 }
+
+/* Visible keyboard focus for every filter-bar / group control. These are
+   custom-styled native button/input/select elements whose UA outline many
+   themes suppress, so a keyboard user would otherwise see no focus (A11Y-1). */
+.daytasks-tasklist__search:focus-visible,
+.daytasks-tasklist__facet-chip:focus-visible,
+.daytasks-tasklist__facet-btn:focus-visible,
+.daytasks-tasklist__facet-search:focus-visible,
+.daytasks-tasklist__facet-opt:focus-visible,
+.daytasks-tasklist__groupby:focus-visible,
+.daytasks-tasklist__sortby:focus-visible,
+.daytasks-tasklist__sortdir:focus-visible,
+.daytasks-tasklist__date:focus-visible,
+.daytasks-tasklist__clear:focus-visible,
+.daytasks-tasklist__group-toggle:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
