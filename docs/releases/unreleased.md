@@ -10,6 +10,5 @@ Sections:
 - Removed
 - Security
 
-DayTasks is private and English-only right now; no i18n release workflow is
-required.
+DayTasks is English-only right now; no i18n release workflow is required.
 -->

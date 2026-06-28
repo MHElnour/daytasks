@@ -67,10 +67,11 @@ unit tests. See `docs/development/testing.md` for the full workflow.
   `docs/development/`.
 - Delete stale design drafts, implementation plans, and private working notes
   after their useful content is migrated.
-- Keep audits, bug investigations, and resolution tracking under
-  `issue-analysis/`.
-- New issue-analysis files must include YAML front matter with at least:
-  `id`, `status`, `severity`, `opened`, `area`, and `resolution`.
+- Only create `issue-analysis/` for an active investigation that cannot be
+  captured in the current docs. Once resolved, migrate durable lessons into
+  `docs/development/` and delete the investigation file before public release.
+- New temporary issue-analysis files must include YAML front matter with at
+  least: `id`, `status`, `severity`, `opened`, `area`, and `resolution`.
 
 ## Issue Status Values
 
@@ -85,8 +86,8 @@ Use these values in YAML front matter and issue-analysis tables:
 
 ## Release Notes
 
-DayTasks is private and English-only right now. Do not add i18n overhead unless
-the project actually becomes multilingual.
+DayTasks is English-only right now. Do not add i18n overhead unless the project
+actually becomes multilingual.
 
 When a user-facing behavior changes, add a short note to
 `docs/releases/unreleased.md` (no entries for tests — it is user-facing).

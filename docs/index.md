@@ -32,11 +32,6 @@ plans, and private working notes should be consolidated here or deleted.
 - [Release process](development/release-process.md) - local release workflow and
   release asset rules.
 
-## Audit Tracking
-
-- [Issue analysis](../issue-analysis/README.md) - resolved audits, active
-  findings, and follow-up decisions.
-
 ## Documentation Policy
 
 Keep the tree small and current:
@@ -52,7 +47,6 @@ docs/
   roadmap.md
   development/
   releases/
-issue-analysis/
 ```
 
 Do not recreate `docs/design/`, `docs/plans/`, or `docs/private/`. If a draft
