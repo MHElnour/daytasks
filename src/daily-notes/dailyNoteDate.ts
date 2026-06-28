@@ -1,5 +1,5 @@
 import { isValidCalendarDate } from "../util/calendarDate";
-import { noteBasename } from "../util/notePath";
+import { noteBasename, stripTrailingSlashes } from "../util/notePath";
 
 const DAILY_NOTE_DATE_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:$|\s)/;
 
@@ -14,7 +14,7 @@ export function getDailyNoteDateFromPath(path: string): string | null {
 
 /** True when `path` lives inside `folder` (empty folder matches anything). */
 export function isWithinDailyNoteFolder(path: string, folder: string): boolean {
-	const normalized = folder.replace(/\/+$/, "");
+	const normalized = stripTrailingSlashes(folder);
 	if (!normalized) {
 		return true;
 	}
@@ -27,7 +27,7 @@ export function isWithinDailyNoteFolder(path: string, folder: string): boolean {
  * `resolveDailyNoteDate(dailyNotePathForDate(d, f) + ".md", f) === d`.
  */
 export function dailyNotePathForDate(date: string, folder: string): string {
-	const normalized = folder.replace(/\/+$/, "");
+	const normalized = stripTrailingSlashes(folder);
 	if (!normalized) {
 		return date;
 	}

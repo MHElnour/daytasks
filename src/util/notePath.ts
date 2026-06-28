@@ -1,5 +1,10 @@
 export const MARKDOWN_EXTENSION_PATTERN = /\.md$/i;
 
+/** Removes any trailing slash(es) from a folder path (`"a/b/"` → `"a/b"`). */
+export function stripTrailingSlashes(folder: string): string {
+	return folder.replace(/\/+$/, "");
+}
+
 /**
  * Returns the final path segment with the `.md` extension removed.
  * Handles both forward and backslash separators.

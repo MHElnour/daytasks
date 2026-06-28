@@ -178,7 +178,7 @@ TDD, no behavior change.
 - **expected tests:** new `tests/util/coerce.test.ts`; `settings.test.ts` + `pluginDataAdapter.test.ts` pass **unchanged**.
 - **acceptance:** behavior identical (dedup vs non-dedup preserved per call site); `npm run check` green.
 
-### P3.3 — Extract `stripTrailingSlashes` (DRY-9)
+### P3.3 — Extract `stripTrailingSlashes` (DRY-9)  ✅ DONE (in notePath.ts; both dailyNoteDate sites reuse it; check 382)
 
 - **objective:** One trailing-slash folder normalizer used by both `dailyNoteDate` sites.
 - **files:** `src/util/notePath.ts`, `src/daily-notes/dailyNoteDate.ts` (18, 31).
