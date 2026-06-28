@@ -194,7 +194,7 @@ TDD, no behavior change.
 Each is a delete-and-verify. Decide keep-as-scaffold vs delete per milestone; default to
 deletion unless a near-term milestone needs it. Update docs in the same commit.
 
-### P4.1 — Resolve `src/api/*` (DEAD-1)
+### P4.1 — Resolve `src/api/*` (DEAD-1)  ✅ DONE (decision: delete; 5 stubs removed; check 391, build green; architecture.md updated in P4.5)
 
 - **objective:** Delete the empty API stubs (or formally re-mark them as roadmap).
 - **files:** `src/api/*`, `docs/development/architecture.md` (stub list).
