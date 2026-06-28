@@ -321,7 +321,7 @@ this phase closes the rest.
 - **risk:** R-low.
 - **acceptance:** all exit 0; test count ≥ baseline + the new tests; coverage on pure modules not regressed.
 
-### P6.2 — Obsidian manual smoke
+### P6.2 — Obsidian manual smoke  ✅ DONE (maintainer confirmed: vault-path containment, popout/split render, disable/reload state, theme switch, drag-reorder; collapsed + expanded card-overlap fixes added from smoke feedback)
 
 - **objective:** Verify edit flows + popout in the real app.
 - **commands:** `npm run build:test`; the manual script in [docs/development/testing.md](../development/testing.md); plus popout-window widget render, keyboard-only filter-bar walkthrough, detail-note create/sync/open, and a `detailNotesFolder` traversal attempt.
@@ -329,7 +329,7 @@ this phase closes the rest.
 - **risk:** R-med (manual coverage of edit flows).
 - **acceptance:** `obsidian … dev:errors` clean; data preserved across disable/reload; widget correct in popout; keyboard focus visible throughout.
 
-### P6.3 — Security-checklist sign-off
+### P6.3 — Security-checklist sign-off  ✅ DONE (grep gate clean: normalizePath present, 0 innerHTML/fetch/:has/real-!important; assessment flipped to resolved with fix log; 31 fixed, MNT-1/TEST-7 deferred, TEST-3 moot)
 
 - **objective:** Walk [security-review-checklist.md](security-review-checklist.md) end-to-end.
 - **dependencies:** P6.2.

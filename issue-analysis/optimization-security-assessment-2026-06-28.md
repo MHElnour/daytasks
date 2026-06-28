@@ -2,30 +2,33 @@
 id: optimization-security-assessment-2026-06-28
 title: Optimization, Security & Maintainability Assessment 2026-06-28
 type: audit
-status: open
+status: resolved
 severity: high
 opened: 2026-06-28
-closed:
+closed: 2026-06-28
 area: [core, obsidian, detail-notes, daily-notes, settings, ui, util, styles, api, docs, tests]
 passes: 1
 eyes: [claude-opus-4.8]
-tests: { before: 370, after: 370 }
+tests: { before: 370, after: 387 }
 issues:
-  open: [DATA-1, DATA-2, DATA-3, DATA-4, DATA-5, LIFE-1, LIFE-2, LIFE-3, LIFE-4,
-    LIFE-5, A11Y-1, A11Y-2, A11Y-3, CSS-1, CSS-2, CSS-3, UX-1, MNT-1, DEAD-1,
-    DEAD-2, DEAD-3, DEAD-4, DOC-1, DRY-7, DRY-8, DRY-9, TEST-1, TEST-2, TEST-3,
-    TEST-4, TEST-5, TEST-6, TEST-7]
-  carried: [SEC-4]
-  closed: []
+  closed: [DATA-1, DATA-2, DATA-3, DATA-4, DATA-5, SEC-4, LIFE-1, LIFE-2, LIFE-3,
+    LIFE-4, LIFE-5, A11Y-1, A11Y-2, A11Y-3, CSS-1, CSS-2, CSS-3, UX-1, DEAD-1,
+    DEAD-2, DEAD-3, DEAD-4, DOC-1, DRY-7, DRY-8, DRY-9, TEST-1, TEST-2, TEST-4,
+    TEST-5, TEST-6]
+  deferred: [MNT-1, TEST-7]
+  moot: [TEST-3]
+  open: []
   partial: []
   wontfix: []
-  deferred: []
 resolution: >
-  Assessment-only follow-up to code-audit-2026-06-25. Single Opus pass, six
-  parallel evidence-gathering agents, top findings hand-verified against source.
-  0 critical, 4 high, 13 medium, 17 low (+ SEC-4 carried). No code changed; build
-  green (npm run check). Implementation tracked in
-  docs/plans/optimization-security-roadmap.md.
+  Implemented test-first on branch opt-security-fixes (one finding per commit,
+  suite green throughout: 370 -> 387 tests, eslint 0, build green). 31 findings
+  fixed, including SEC-4 eliminated by deleting the dead daily-note slice. MNT-1
+  (renderer el() factories — children auto-adopt on append) and TEST-7 (shared
+  test fixture) deferred as low/by-design; TEST-3 moot (parser deleted). Maintainer
+  confirmed manual Obsidian smoke: vault-path containment, popout/split render,
+  disable/reload state, theme switch, and drag-reorder. See the Resolution fix log
+  below; roadmap docs/plans/optimization-security-roadmap.md. Pending merge to main.
 ---
 
 # Optimization, Security & Maintainability Assessment 2026-06-28
@@ -415,3 +418,39 @@ a11y/CSS/settings · API-scope/build · tests/duplication). Every high/medium fi
 was re-read and hand-verified against source by the lead before inclusion; one agent
 over-claim (migrate clean-name clobber) was caught and downgraded to TEST-1. No code
 was modified. `npm run check` green at assessment time.
+
+## Resolution (2026-06-28)
+
+Fixed test-first on branch `opt-security-fixes` — one finding per commit, suite green
+at every commit (370 → 387 tests), eslint 0, build green. Security-review checklist
+grep gate clean (`normalizePath` present; no `innerHTML`/`fetch`/`:has`/real
+`!important`).
+
+| Finding | Commit | Finding | Commit |
+|---------|--------|---------|--------|
+| DATA-2 | `023d1b3` | DEAD-1 | `d1e4f78` |
+| DATA-1 | `4bfd368` | DEAD-2 (+SEC-4) | `8673482` |
+| DATA-3 | `f931b1f` | DEAD-3 | `cfeca68` |
+| DATA-4 | `0734f01` | DEAD-4 | `0ec5bd9` |
+| DATA-5 | `f452c02` | DOC-1 | `794ad10` |
+| LIFE-2 | `0df9609` | TEST-1 | `cb34c15` |
+| LIFE-1 | `713fd8a` | A11Y-1 | `5b83a22` |
+| LIFE-3 | `62e6897` | A11Y-2 | `e48d194` |
+| LIFE-4 | `220a31c` | A11Y-3 | `6d943fe` |
+| LIFE-5 | `6829899` | CSS-1/2/3 | `7ae89bd` |
+| DRY-7 | `e775818` | UX-1 | `18c34a7` |
+| DRY-9 | `03cad7b` | TEST-4/5/6 | `74b1e5d` |
+| DRY-8 | `bc14027` | TEST-2 | `023d1b3` |
+
+Plus two maintainer-requested card-layout fixes (room for the 5th detail-note
+control): collapsed-row due date (`c4be17e`) and expanded title clearance (`55bbecf`).
+
+**Deferred (low, by design):** MNT-1 — renderer `el()` factories keep using
+`activeDocument`; children auto-adopt into the correct-document root on append, so a
+cross-module document-threading refactor is not worth the risk. TEST-7 — shared task
+fixture; a 3-file migration churn for marginal gain. **Moot:** TEST-3 — the daily-note
+parser it would have tested was deleted in DEAD-2.
+
+**Maintainer manual smoke (Obsidian):** vault-path containment
+(`../../../DayTasks/...` → stayed in vault), popout/split widget render, disable/reload
+view-state, light/dark/Minimal theme switch, drag-reorder — all confirmed working.

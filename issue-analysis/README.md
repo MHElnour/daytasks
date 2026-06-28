@@ -27,5 +27,5 @@ resolution:
 
 | File | Status | Purpose |
 |------|--------|---------|
-| [optimization-security-assessment-2026-06-28.md](optimization-security-assessment-2026-06-28.md) | open | Assessment-only: 34 findings (4 high, 13 medium, 17 low). Roadmap in docs/plans/. |
+| [optimization-security-assessment-2026-06-28.md](optimization-security-assessment-2026-06-28.md) | resolved | 34 findings; 31 fixed on `opt-security-fixes`, 2 deferred (low), 1 moot. 370→387 tests. |
 | [code-audit-2026-06-25.md](code-audit-2026-06-25.md) | resolved | Two-pass Claude+Codex audit: 35 closed, 0 open, 2 won't-fix, 3 deferred. |
