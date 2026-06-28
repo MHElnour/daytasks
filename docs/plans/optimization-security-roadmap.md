@@ -63,7 +63,7 @@ Highest priority. All touch user data; write tests first (TDD) where logic allow
 - **expected tests:** P1.1's collision test turns green; add a numeric-suffix-loop test if that strategy is chosen.
 - **acceptance:** creating two same-title tasks (one with the fallback name pre-taken) yields distinct paths, no throw; `npm test tests/detail-notes/detailNoteService.test.ts` green.
 
-### P1.3 — Normalize & sanitize detail-note folder paths (DATA-1)
+### P1.3 — Normalize & sanitize detail-note folder paths (DATA-1)  ✅ DONE (folderTemplate strips ./..; main.ts wraps vault paths in normalizePath; check 372, build green. ⏸ live `../escape` vault smoke still manual)
 
 - **objective:** Strip `.`/`..` segments and apply Obsidian `normalizePath()` before any vault write.
 - **files:** `src/detail-notes/folderTemplate.ts` (segment filter), `src/main.ts` (`VaultPort` wiring: wrap `create`/`createFolder`/`renameFile` paths with `normalizePath`).

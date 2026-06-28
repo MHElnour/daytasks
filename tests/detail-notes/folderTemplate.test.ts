@@ -45,4 +45,11 @@ describe("resolveFolderTemplate", () => {
 	it("returns an empty string for a template that resolves to only slashes (vault root)", () => {
 		expect(resolveFolderTemplate("/", date)).toBe("");
 	});
+
+	it("drops . and .. segments so a folder can't traverse out of the vault (DATA-1)", () => {
+		expect(resolveFolderTemplate("../Outside", date)).toBe("Outside");
+		expect(resolveFolderTemplate("a/../../b", date)).toBe("a/b");
+		expect(resolveFolderTemplate("./Tasks/{{year}}", date)).toBe("Tasks/2026");
+		expect(resolveFolderTemplate("..", date)).toBe("");
+	});
 });

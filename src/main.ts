@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { MarkdownView, Menu, Notice, Plugin, TFile, TFolder, setIcon } from "obsidian";
+import { MarkdownView, Menu, Notice, Plugin, TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { dependencyCandidates } from "./core/dependencies";
 import { nextPriority } from "./core/priorityCycle";
@@ -72,23 +72,27 @@ export default class DayTasksPlugin extends Plugin {
 		this.rebuildServices();
 
 		// VaultPort + DetailNoteService — instantiated once; settings-independent.
+		// Every path is run through Obsidian's normalizePath() at this boundary so a
+		// user-derived folder (settings/template) can't reach the vault unnormalized
+		// (DATA-1); folderTemplate already strips `.`/`..` traversal segments.
 		const port: VaultPort = {
 			exists: (path: string): boolean =>
-				this.app.vault.getAbstractFileByPath(path) !== null,
+				this.app.vault.getAbstractFileByPath(normalizePath(path)) !== null,
 			ensureFolder: async (path: string): Promise<void> => {
-				if (this.app.vault.getAbstractFileByPath(path) instanceof TFolder) return;
+				const folder = normalizePath(path);
+				if (this.app.vault.getAbstractFileByPath(folder) instanceof TFolder) return;
 				try {
-					await this.app.vault.createFolder(path);
+					await this.app.vault.createFolder(folder);
 				} catch (e) {
 					// Swallow "already exists" race
 					if (!(e instanceof Error && e.message.includes("already exists"))) throw e;
 				}
 			},
 			create: async (path: string, content: string): Promise<void> => {
-				await this.app.vault.create(path, content);
+				await this.app.vault.create(normalizePath(path), content);
 			},
 			readFrontmatter: (path: string): Record<string, unknown> | null => {
-				const file = this.app.vault.getAbstractFileByPath(path);
+				const file = this.app.vault.getAbstractFileByPath(normalizePath(path));
 				if (!(file instanceof TFile)) return null;
 				return this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
 			},
@@ -96,14 +100,14 @@ export default class DayTasksPlugin extends Plugin {
 				path: string,
 				mutate: (fm: Record<string, unknown>) => void
 			): Promise<void> => {
-				const file = this.app.vault.getAbstractFileByPath(path);
+				const file = this.app.vault.getAbstractFileByPath(normalizePath(path));
 				if (!(file instanceof TFile)) return;
 				await this.app.fileManager.processFrontMatter(file, mutate);
 			},
 			rename: async (from: string, to: string): Promise<void> => {
-				const file = this.app.vault.getAbstractFileByPath(from);
+				const file = this.app.vault.getAbstractFileByPath(normalizePath(from));
 				if (!(file instanceof TFile)) return;
-				await this.app.fileManager.renameFile(file, to);
+				await this.app.fileManager.renameFile(file, normalizePath(to));
 			},
 		};
 		this.detailNotes = new DetailNoteService(port, () => new Date());

@@ -21,12 +21,14 @@ export function resolveFolderTemplate(template: string, isoDate: string): string
 		.replace(/\{\{\s*month\s*\}\}/g, month)
 		.replace(/\{\{\s*day\s*\}\}/g, day)
 		.replace(/\{\{\s*date\s*\}\}/g, isoDate);
-	// Normalize per segment: trim whitespace around each path part and drop empty
-	// parts — this collapses repeated slashes, strips leading/trailing slashes, and
-	// tidies spaces left around tokens (`{{ year }} / {{ month }}`).
+	// Normalize per segment: trim whitespace around each path part, drop empty
+	// parts, and drop `.`/`..` traversal segments — this collapses repeated
+	// slashes, strips leading/trailing slashes, tidies spaces left around tokens
+	// (`{{ year }} / {{ month }}`), and keeps the folder inside the vault so a
+	// `../Outside` setting can't escape it (DATA-1).
 	return expanded
 		.split("/")
 		.map((segment) => segment.trim())
-		.filter((segment) => segment.length > 0)
+		.filter((segment) => segment.length > 0 && segment !== "." && segment !== "..")
 		.join("/");
 }
