@@ -90,7 +90,7 @@ Highest priority. All touch user data; write tests first (TDD) where logic allow
 - **expected tests:** `pluginDataAdapter.test.ts` — `decodePluginData({tasks:[valid,{id:"x"}]})` → 1 task + dropped count 1; round-trip of valid data unchanged.
 - **acceptance:** tests green; manual — load a `data.json` with one malformed task, confirm the Notice and that the valid tasks survive.
 
-### P1.6 — Validate or document `sortOrder` (DATA-5)
+### P1.6 — Validate or document `sortOrder` (DATA-5)  ✅ DONE (decision: opaque key; documented in task.ts + verbatim-keep test; check 377)
 
 - **objective:** Decide opaque-vs-validated for `sortOrder` and the optional strings; implement the chosen policy.
 - **files:** `src/obsidian/pluginDataAdapter.ts` (~126-141).

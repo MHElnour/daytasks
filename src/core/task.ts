@@ -81,6 +81,12 @@ export interface DayTask {
 
 	estimateMinutes?: number;
 	description?: string;
+	/**
+	 * Opaque manual-ordering key. Written as a zero-padded numeric string
+	 * (e.g. "000010") and compared lexicographically among siblings — it is a
+	 * sort key, NOT a number, so it is intentionally stored/decoded verbatim with
+	 * no numeric validation (DATA-5). A malformed value only sorts oddly.
+	 */
 	sortOrder?: string;
 
 	timeEntries: TimeEntry[];

@@ -238,6 +238,12 @@ describe("decodePluginData", () => {
 	it("reports zero dropped for all-valid data", () => {
 		expect(decodePluginData({ tasks: [validTask] }).droppedTasks).toBe(0);
 	});
+
+	it("keeps sortOrder verbatim — it is an opaque lexicographic key, not validated (DATA-5)", () => {
+		const decoded = decodePluginData({ tasks: [{ ...validTask, sortOrder: "abc" }] });
+		expect(decoded.tasks[0].sortOrder).toBe("abc");
+		expect(decoded.droppedTasks).toBe(0);
+	});
 });
 
 describe("DayTasksDataStore", () => {
