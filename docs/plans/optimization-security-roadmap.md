@@ -300,7 +300,7 @@ this phase closes the rest.
 - **expected tests:** manual settings open.
 - **acceptance:** consistent sentence-case headings, no out-of-scope API advertised.
 
-### P5.7 — Remaining test gaps (TEST-3, TEST-4, TEST-5, TEST-6, TEST-7)
+### P5.7 — Remaining test gaps (TEST-3, TEST-4, TEST-5, TEST-6, TEST-7)  ✅ DONE (TEST-4 zero-completed + statuses[0] fallback; TEST-5 rejecting-port propagation; TEST-6 withBlockedStatus; check 387, eslint 0. TEST-3 MOOT — parser deleted in P4.2. TEST-7 fixture DEFERRED-low — 3-file migration churn not worth it now)
 
 - **objective:** Backfill parser-rejection (if slice kept), settings-repair branches, load-error recovery, `withBlockedStatus`, shared fixture.
 - **files:** `tests/daily-notes/dailyNoteParser.test.ts` (only if P4.2 keeps the slice), `tests/settings/settings.test.ts`, `tests/obsidian/pluginDataAdapter.test.ts`, `tests/core/` (status), `tests/fixtures/task.ts`.

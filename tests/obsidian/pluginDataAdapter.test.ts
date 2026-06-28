@@ -277,4 +277,12 @@ describe("DayTasksDataStore", () => {
 		// the round-tripped settings/tasks.
 		expect(await store.load()).toEqual({ ...data, droppedTasks: 0 });
 	});
+
+	it("propagates a rejecting loadData so the host can recover with defaults (TEST-5)", async () => {
+		const store = new DayTasksDataStore({
+			loadData: () => Promise.reject(new Error("corrupt data.json")),
+			saveData: () => Promise.resolve(),
+		});
+		await expect(store.load()).rejects.toThrow("corrupt data.json");
+	});
 });
