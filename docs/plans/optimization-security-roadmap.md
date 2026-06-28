@@ -135,7 +135,7 @@ is popout correctness + lifecycle cleanup.
 - **expected tests:** `tests/obsidian/dragReorder.test.ts` — destroy path; existing reorder tests green.
 - **acceptance:** drag-reorder, close the leaf without editing, heap-snapshot shows no retained `Sortable`/listeners on a detached sizer.
 
-### P2.4 — Track the modal focus timer (LIFE-4)
+### P2.4 — Track the modal focus timer (LIFE-4)  ✅ DONE (focusTimer handle tracked + cleared in onClose; check 377, build green. ⏸ Esc-on-open smoke manual)
 
 - **objective:** Clear the `setTimeout(focus,0)` in `onClose`.
 - **files:** `src/obsidian/taskCreationModal.ts` (~185, `onClose`).

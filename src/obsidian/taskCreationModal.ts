@@ -67,6 +67,7 @@ interface MenuChipOptions {
  */
 export class TaskCreationModal extends Modal {
 	private submitted = false;
+	private focusTimer: number | null = null;
 	private preview!: HTMLElement;
 
 	private title = "";
@@ -182,7 +183,12 @@ export class TaskCreationModal extends Modal {
 			titleCounter.setText(`${this.title.length}/${MAX_TITLE_LENGTH}`);
 			this.updatePreview();
 		});
-		window.setTimeout(() => titleInput.focus(), 0);
+		// Defer focus to the next tick; track the handle so a modal closed within
+		// the same tick clears it instead of focusing a detached input (LIFE-4).
+		this.focusTimer = window.setTimeout(() => {
+			this.focusTimer = null;
+			titleInput.focus();
+		}, 0);
 
 		const description = box1.createEl("textarea", {
 			cls: "daytasks-description-input",
@@ -612,6 +618,10 @@ export class TaskCreationModal extends Modal {
 	}
 
 	onClose(): void {
+		if (this.focusTimer !== null) {
+			window.clearTimeout(this.focusTimer);
+			this.focusTimer = null;
+		}
 		this.contentEl.empty();
 		if (!this.submitted) {
 			this.options.onSubmit(null);
