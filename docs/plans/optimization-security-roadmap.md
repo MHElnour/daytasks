@@ -212,7 +212,7 @@ deletion unless a near-term milestone needs it. Update docs in the same commit.
 - **expected tests:** after deletion `npm run check` green, count drops ~5-12; `grep` confirms no live importer of the deleted symbols.
 - **acceptance:** live daily-note widget still renders (`build:test` smoke); no broken imports.
 
-### P4.3 — Remove the duplicated create-task command (DEAD-3)
+### P4.3 — Remove the duplicated create-task command (DEAD-3)  ✅ DONE (deleted createTaskCommand.ts + test; inline runCreateTaskCommand kept; check 379, build green)
 
 - **objective:** Delete `createTaskCommand.ts` + its test (keep the inline `runCreateTaskCommand`), or unify on the module.
 - **files:** `src/commands/createTaskCommand.ts`, `tests/commands/createTaskCommand.test.ts`.
