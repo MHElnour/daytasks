@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	formatMonthDay,
-	formatRelativeDate,
-	isOverdue,
-} from "../../src/util/relativeDate";
+import { formatMonthDay, isOverdue } from "../../src/util/relativeDate";
 
 describe("formatMonthDay", () => {
 	it("formats YYYY-MM-DD as 'Mon D'", () => {
@@ -14,21 +10,6 @@ describe("formatMonthDay", () => {
 
 	it("returns the input when unparseable", () => {
 		expect(formatMonthDay("nope")).toBe("nope");
-	});
-});
-
-describe("formatRelativeDate", () => {
-	const ref = "2026-06-25";
-
-	it("labels today, tomorrow, and yesterday relative to the reference", () => {
-		expect(formatRelativeDate("2026-06-25", ref)).toBe("Today");
-		expect(formatRelativeDate("2026-06-26", ref)).toBe("Tomorrow");
-		expect(formatRelativeDate("2026-06-24", ref)).toBe("Yesterday");
-	});
-
-	it("falls back to the raw date for anything further out", () => {
-		expect(formatRelativeDate("2026-07-10", ref)).toBe("2026-07-10");
-		expect(formatRelativeDate("2026-06-20", ref)).toBe("2026-06-20");
 	});
 });
 

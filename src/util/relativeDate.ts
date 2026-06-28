@@ -14,29 +14,6 @@ export function formatMonthDay(date: string): string {
 	return `${MONTHS[parsed.month - 1]} ${parsed.day}`;
 }
 
-function toUtcDays(date: string): number | null {
-	const parsed = parseCalendarDate(date);
-	if (!parsed) {
-		return null;
-	}
-	const ms = Date.UTC(parsed.year, parsed.month - 1, parsed.day);
-	return Math.floor(ms / 86400000);
-}
-
-/** "Today" / "Tomorrow" / "Yesterday" relative to `reference`, else the date. */
-export function formatRelativeDate(date: string, reference: string): string {
-	const a = toUtcDays(date);
-	const b = toUtcDays(reference);
-	if (a === null || b === null) {
-		return date;
-	}
-	const diff = a - b;
-	if (diff === 0) return "Today";
-	if (diff === 1) return "Tomorrow";
-	if (diff === -1) return "Yesterday";
-	return date;
-}
-
 /** True when a due date is before the reference and the task is not completed. */
 export function isOverdue(
 	due: string | undefined,

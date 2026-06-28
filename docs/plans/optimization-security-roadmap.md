@@ -221,7 +221,7 @@ deletion unless a near-term milestone needs it. Update docs in the same commit.
 - **expected tests:** after deletion `grep -rn createTaskForActiveNote src` → 0; `npm run check` + `npm run build` green.
 - **acceptance:** the create-task command still works in Obsidian (`build:test` smoke).
 
-### P4.4 — Remove `formatRelativeDate` (DEAD-4)
+### P4.4 — Remove `formatRelativeDate` (DEAD-4)  ✅ DONE (removed formatRelativeDate + toUtcDays + tests; formatMonthDay/isOverdue kept; check 377, build green, eslint 0)
 
 - **objective:** Delete the unused export + its test (or wire it).
 - **files:** `src/util/relativeDate.ts`, `tests/util/relativeDate.test.ts`.
