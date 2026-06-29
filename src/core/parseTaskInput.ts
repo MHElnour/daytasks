@@ -72,13 +72,14 @@ function extractProjects(text: string): { projects: string[]; rest: string } {
 	return { projects: dedupe(projects.filter(Boolean)), rest };
 }
 
-const PRIORITY_MARKER_RE = /(^|\s)!([\p{L}\p{N}_-]+)/gu;
-
 /** `!high` (marker only) → a configured priority value; bare words are ignored. */
 function extractPriority(
 	text: string,
 	priorities: PriorityConfig[]
 ): { priority?: string; rest: string } {
+	// Local (fresh per call) so the global flag's shared lastIndex can't leak
+	// across callers; the `g` flag is required so replace scans every `!marker`.
+	const priorityMarkerRe = /(^|\s)!([\p{L}\p{N}_-]+)/gu;
 	const byToken = new Map<string, string>();
 	for (const p of priorities) {
 		byToken.set(p.value.toLowerCase(), p.value);
@@ -86,7 +87,7 @@ function extractPriority(
 	}
 	let priority: string | undefined;
 
-	const rest = text.replace(PRIORITY_MARKER_RE, (whole, lead: string, token: string) => {
+	const rest = text.replace(priorityMarkerRe, (whole, lead: string, token: string) => {
 		const match = byToken.get(token.toLowerCase());
 		if (match && priority === undefined) {
 			priority = match;
