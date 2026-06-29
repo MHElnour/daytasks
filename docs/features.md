@@ -42,6 +42,36 @@ The task modal supports:
 A due date cannot be before the scheduled date. Descriptions and titles are
 trimmed and clamped before storage.
 
+## Inline Capture
+
+The `Capture task from line` command turns a note line into a scheduled DayTasks
+task. Run it on the line under the cursor, or on a multi-line selection where the
+lines after the first become the task description.
+
+The line is parsed for tokens anywhere in the text:
+
+- `#tag` adds a tag;
+- `@context` adds a context;
+- `+project` or `+[[wikilink]]` links a project note;
+- `!priority` sets the priority, for example `!high`;
+- an estimate: `45m`, `2h`, `1h30m`, or a bare number read as minutes.
+
+Priority is marker-only. A bare word such as "high" in "high level plan" stays in
+the title; only the `!` form sets a priority.
+
+Dates use colon markers or a bare date phrase:
+
+- `due:`, `by:`, or `deadline:` set the due date;
+- `scheduled:` sets the scheduled date;
+- a bare date phrase, such as "tomorrow", is read as the scheduled date.
+
+When no date is typed, the task is scheduled for the note's daily date if the note
+is a daily note, otherwise for today.
+
+After capture, the line is replaced with the task title followed by the new task
+id, and the task records the note it was captured from. The command is gated by
+the **Enable inline task capture** setting.
+
 ## Task List View
 
 The Task List view shows tasks across all days. Open it from the ribbon icon or

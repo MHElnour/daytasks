@@ -13,6 +13,7 @@ include:
 - tags, contexts, and project note paths;
 - subtask and dependency ids;
 - optional detail-note path;
+- for captured tasks, the source note's vault path (`sourceNote`);
 - Task List view state.
 
 Optional detail notes are normal Markdown files in the vault. DayTasks manages

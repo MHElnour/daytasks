@@ -31,6 +31,12 @@ commands. DayTasks also ensures the `daytask` tag is present.
 **Default project** links new tasks to one project note. Use the picker to
 search for a Markdown note in the vault.
 
+## Inline Capture
+
+**Enable inline task capture** is on by default. It gates the `Capture task from
+line` command, which turns a note line into a scheduled task. When it is off, the
+command does nothing.
+
 ## Detail Notes
 
 **Detail notes folder** controls where new detail notes are created. It supports
