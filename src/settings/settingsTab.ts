@@ -215,25 +215,5 @@ export class DayTasksSettingTab extends PluginSettingTab {
 					await this.saveSettingsWithNotice();
 				})
 			);
-
-		new Setting(containerEl).setName("API").setHeading();
-
-		new Setting(containerEl)
-			.setName("Enable local API")
-			.setDesc("Reserved. The local HTTP API ships in a later milestone.")
-			.addToggle((toggle) =>
-				toggle.setValue(settings.apiEnabled).onChange(async (value) => {
-					settings.apiEnabled = value;
-					await this.saveSettingsWithNotice();
-				})
-			);
-
-		new Setting(containerEl).setName("API port").addText((text) =>
-			text.setValue(String(settings.apiPort)).onChange((value) => {
-				const parsed = Number(value);
-				settings.apiPort = Number.isFinite(parsed) ? parsed : settings.apiPort;
-				this.persistDebounced();
-			})
-		);
 	}
 }

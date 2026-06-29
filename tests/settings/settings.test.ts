@@ -16,9 +16,6 @@ describe("DEFAULT_SETTINGS", () => {
 			defaultProjectPath: "",
 			detailNotesFolder: "DayTasks/Tasks",
 			createDetailNoteByDefault: false,
-			apiEnabled: false,
-			apiPort: 9982,
-			apiToken: "",
 		});
 	});
 });
@@ -33,13 +30,13 @@ describe("mergeSettings", () => {
 	it("overlays stored values on top of defaults", () => {
 		const merged = mergeSettings({
 			showTags: false,
-			apiPort: 1234,
+			dailyNoteFolder: "Journal",
 			defaultTags: ["work"],
 			defaultProjectPath: "Projects/Home.md",
 		});
 
 		expect(merged.showTags).toBe(false);
-		expect(merged.apiPort).toBe(1234);
+		expect(merged.dailyNoteFolder).toBe("Journal");
 		expect(merged.defaultTags).toEqual(["work"]);
 		expect(merged.defaultProjectPath).toBe("Projects/Home.md");
 		expect(merged.showProjects).toBe(true);
@@ -49,7 +46,6 @@ describe("mergeSettings", () => {
 	it("ignores unknown keys and wrongly-typed values", () => {
 		const merged = mergeSettings({
 			bogus: "x",
-			apiPort: "not-a-number",
 			defaultTags: "not-an-array",
 		});
 

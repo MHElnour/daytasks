@@ -69,6 +69,6 @@ does not create a separate project database.
 
 ## Scope Boundaries
 
-DayTasks is English-only right now. Do not add i18n, browser extension, sync, or
-API scope until the Obsidian plugin experience is complete and the roadmap
-explicitly activates that work.
+DayTasks is English-only right now. A local API and a browser extension are out
+of scope. Do not add i18n or sync scope until the Obsidian plugin experience is
+complete and the roadmap explicitly activates that work.

@@ -118,8 +118,8 @@ details.
 ## Current Scope
 
 DayTasks is intentionally focused on the desktop Obsidian daily-note workflow.
-API, browser extension, sync, mobile, and multilingual work are not part of the
-current release scope.
+Sync, mobile, and multilingual work are not part of the current release scope; a
+local API and a browser extension are out of scope.
 
 ## Documentation
 

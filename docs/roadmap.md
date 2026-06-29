@@ -33,8 +33,6 @@ Engineering foundation:
 ## Before Public Release
 
 - Add screenshots or GIFs to the README once the release UI is final.
-- Remove or fully implement the reserved API settings section. Public UI should
-  not expose controls for features that do not work yet.
 - Run a final Obsidian smoke pass on a clean vault: daily widget, Task List,
   subtasks, dependencies, detail notes, popouts, theme switching, and keyboard
   navigation.
@@ -61,10 +59,9 @@ Engineering foundation:
 
 - Time tracking inside Obsidian.
 - Pomodoro inside Obsidian.
-- Local API.
-- Browser extension.
 - Sync.
 - i18n.
 
-Do not start API, browser-extension, sync, or i18n work until the Obsidian
-workflow is fully functional, documented, and tested.
+A local HTTP API and a browser extension are out of scope for DayTasks. Do not
+start sync or i18n work until the Obsidian workflow is fully functional,
+documented, and tested.

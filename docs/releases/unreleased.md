@@ -41,3 +41,11 @@ DayTasks is English-only right now; no i18n release workflow is required.
 - Inline capture: estimates now require a unit (`45m`, `2h`, `1h30m`). A bare
   number is kept in the title instead of being read as minutes, so "Buy 2 apples"
   no longer becomes a 2-minute task.
+
+## Removed
+
+- Removed the reserved local API settings (Enable local API, API port) from the
+  settings tab and the stored settings. They were schema-only and never shipped a
+  working API. A local HTTP API and a browser extension are out of scope for
+  DayTasks. Existing stored API values are dropped harmlessly on the next save;
+  tasks are unaffected.

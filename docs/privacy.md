@@ -21,8 +21,8 @@ their task frontmatter and leaves the body to the user.
 
 ## Network
 
-DayTasks does not send task data to a server. The local API settings are
-reserved and the API is not implemented in the current plugin.
+DayTasks does not send task data to a server. It has no API or network
+integration.
 
 ## Vault Writes
 

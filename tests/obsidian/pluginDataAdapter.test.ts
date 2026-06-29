@@ -260,12 +260,12 @@ describe("decodePluginData", () => {
 
 describe("DayTasksDataStore", () => {
 	it("loads decoded data through the port", async () => {
-		const port = fakePort({ settings: { apiPort: 5000 }, tasks: [validTask] });
+		const port = fakePort({ settings: { dailyNoteFolder: "Journal" }, tasks: [validTask] });
 		const store = new DayTasksDataStore(port);
 
 		const data = await store.load();
 
-		expect(data.settings.apiPort).toBe(5000);
+		expect(data.settings.dailyNoteFolder).toBe("Journal");
 		expect(data.tasks).toEqual([validTask]);
 	});
 

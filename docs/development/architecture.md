@@ -125,8 +125,8 @@ One module remains a roadmap placeholder:
 - `src/obsidian/vaultAdapter.ts` - an `export {}` stub for a future vault file
   adapter.
 
-Treat it as deferred unless a milestone explicitly activates it. API and
-browser-extension work are not part of the current Obsidian-completion goal.
+Treat it as deferred unless a milestone explicitly activates it. A local API and
+a browser extension are out of scope for DayTasks.
 
 The former `src/api/*` stubs, the unwired daily-note write slice
 (`dailyNoteDocument`/`Formatter`/`Parser`/`Service`), `openTodayCommand`, and the

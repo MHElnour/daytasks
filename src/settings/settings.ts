@@ -12,7 +12,6 @@ import { isRecord } from "../util/isRecord";
 import {
 	asStringOr,
 	asBooleanOr,
-	asFiniteNumberOr,
 	asStringArrayOr,
 } from "../util/coerce";
 
@@ -44,10 +43,6 @@ export interface DayTasksSettings {
 	// Status / priority config
 	statuses: StatusConfig[];
 	priorities: PriorityConfig[];
-	// API (schema only for this slice)
-	apiEnabled: boolean;
-	apiPort: number;
-	apiToken: string;
 	// Task list view
 	taskListState: TaskListState;
 }
@@ -80,9 +75,6 @@ export const DEFAULT_SETTINGS: DayTasksSettings = {
 	detailNotesMigrated: false,
 	statuses: cloneStatuses(DEFAULT_STATUSES),
 	priorities: clonePriorities(DEFAULT_PRIORITIES),
-	apiEnabled: false,
-	apiPort: 9982,
-	apiToken: "",
 	taskListState: { ...DEFAULT_TASK_LIST_STATE },
 };
 
@@ -231,9 +223,6 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 		),
 		statuses,
 		priorities: asPriorities(s.priorities),
-		apiEnabled: asBooleanOr(s.apiEnabled, DEFAULT_SETTINGS.apiEnabled),
-		apiPort: asFiniteNumberOr(s.apiPort, DEFAULT_SETTINGS.apiPort),
-		apiToken: asStringOr(s.apiToken, DEFAULT_SETTINGS.apiToken),
 		taskListState: asTaskListState(s.taskListState),
 	};
 }

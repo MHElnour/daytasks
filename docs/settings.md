@@ -59,9 +59,3 @@ such as `../Outside` cannot write outside the vault.
 
 **Create detail note by default** turns on the create-detail-note toggle by
 default in the task modal.
-
-## API
-
-The API settings are reserved for a later milestone. The local HTTP API is not
-implemented in the current plugin, and API/browser-extension work remains out of
-scope until the Obsidian workflow is complete.
