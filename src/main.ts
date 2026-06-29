@@ -1,11 +1,13 @@
 import { EditorView } from "@codemirror/view";
-import { MarkdownView, Menu, Notice, Plugin, TFile, TFolder, normalizePath, setIcon } from "obsidian";
+import { Editor, MarkdownView, Menu, Notice, Plugin, TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { DayTaskService } from "./core/dayTaskService";
 import { dependencyCandidates } from "./core/dependencies";
 import { nextPriority } from "./core/priorityCycle";
 import { StatusManager } from "./core/statusManager";
 import { withBlockedStatus } from "./core/status";
-import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask } from "./core/task";
+import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask, type ProjectLink } from "./core/task";
+import { parseTaskInput, splitListPrefix } from "./core/parseTaskInput";
+import { formatCapturedLine, resolveCaptureScheduledDate } from "./core/captureTask";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { DetailNoteService, type VaultPort } from "./detail-notes/detailNoteService";
@@ -130,6 +132,21 @@ export default class DayTasksPlugin extends Plugin {
 			id: CREATE_TASK_COMMAND_ID,
 			name: "Create task for current daily note",
 			callback: () => this.runCreateTaskCommand(),
+		});
+
+		this.addCommand({
+			id: "capture-task-from-line",
+			name: "Capture task from line",
+			editorCheckCallback: (checking, editor, ctx) => {
+				if (!this.settings.enableInlineCapture) {
+					return false;
+				}
+				if (checking) {
+					return true;
+				}
+				void this.runCaptureTaskCommand(editor, ctx.file?.path ?? null);
+				return true;
+			},
 		});
 
 		this.registerEditorExtension(
@@ -503,6 +520,81 @@ export default class DayTasksPlugin extends Plugin {
 			return;
 		}
 		this.openCreateModal(date);
+	}
+
+	/**
+	 * Maps parsed `+project` raw values onto ProjectLinks whose paths match the
+	 * picker's convention. A `[[wikilink]]` target or bare word is resolved through
+	 * the metadata cache to a real vault path (e.g. `Projects/Foo` -> `Projects/Foo.md`)
+	 * so captured projects dedupe and filter alongside picker-created ones; an
+	 * unresolved value is kept verbatim.
+	 */
+	private resolveProjectLinks(rawProjects: string[], sourcePath: string): ProjectLink[] {
+		return rawProjects.map((raw) => {
+			const dest = this.app.metadataCache.getFirstLinkpathDest(raw, sourcePath);
+			return dest ? { path: dest.path } : { path: raw };
+		});
+	}
+
+	private async runCaptureTaskCommand(
+		editor: Editor,
+		notePath: string | null
+	): Promise<void> {
+		const selection = editor.getSelection();
+		const hasSelection = selection.trim().length > 0;
+		const cursor = editor.getCursor();
+		const lines = hasSelection ? selection.split("\n") : [editor.getLine(cursor.line)];
+		const firstLine = lines[0];
+
+		const parsed = parseTaskInput(firstLine, {
+			priorities: this.settings.priorities,
+			today: new Date(),
+		});
+		if (!parsed.title) {
+			new Notice("DayTasks: nothing to capture on this line.");
+			return;
+		}
+
+		const noteDate = notePath
+			? resolveDailyNoteDate(notePath, this.settings.dailyNoteFolder)
+			: null;
+		const scheduledDate = resolveCaptureScheduledDate(parsed, noteDate, todayDate());
+		const description = lines.slice(1).join("\n").trim();
+
+		const input: CreateDayTaskInput = {
+			title: parsed.title,
+			scheduledDate,
+			tags: parsed.tags,
+			contexts: parsed.contexts,
+			projects: this.resolveProjectLinks(parsed.projects, notePath ?? ""),
+			...(parsed.dueDate ? { dueDate: parsed.dueDate } : {}),
+			...(parsed.priority ? { priority: parsed.priority } : {}),
+			...(parsed.estimateMinutes !== undefined
+				? { estimateMinutes: parsed.estimateMinutes }
+				: {}),
+			...(description ? { description } : {}),
+			...(notePath ? { sourceNote: notePath } : {}),
+		};
+
+		let task: DayTask;
+		try {
+			task = await this.service.createTask(input);
+			await this.persistTasks();
+			this.refreshViews();
+		} catch (error) {
+			console.error("DayTasks: failed to capture task", error);
+			new Notice("DayTasks: could not capture that task.");
+			return;
+		}
+
+		const { prefix } = splitListPrefix(firstLine);
+		const marker = formatCapturedLine(prefix, parsed.title, task.id);
+		if (hasSelection) {
+			editor.replaceSelection(marker);
+		} else {
+			editor.setLine(cursor.line, marker);
+		}
+		new Notice(`DayTasks: captured ${task.id}.`);
 	}
 
 	private openCreateModal(scheduledDate: string): void {
