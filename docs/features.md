@@ -61,12 +61,15 @@ the title; only the `!` form sets a priority.
 
 Dates use colon markers or a bare date phrase:
 
-- `due:`, `by:`, or `deadline:` set the due date;
+- `due:`, `by:`, or `deadline:` set the due date (a deadline only);
 - `scheduled:` sets the scheduled date;
 - a bare date phrase, such as "tomorrow", is read as the scheduled date.
 
-When no date is typed, the task is scheduled for the note's daily date if the note
-is a daily note, otherwise for today.
+The scheduled date is the day the task sits on: an explicit `scheduled:` (or bare
+date), otherwise the note's daily date if the note is a daily note, otherwise
+today. A `due:` date is a deadline and never moves the scheduled day — so
+`due:friday` with no `scheduled:` lands the task on today (or the note's day) with
+Friday as its deadline.
 
 After capture, the line is replaced with the task title followed by the new task
 id, and the task records the note it was captured from. The command is gated by

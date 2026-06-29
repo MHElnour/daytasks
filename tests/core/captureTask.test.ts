@@ -14,13 +14,22 @@ describe("resolveCaptureScheduledDate", () => {
 		expect(date).toBe("2026-07-02");
 	});
 
-	it("falls back to the parsed due date", () => {
+	it("ignores a parsed due date for scheduling (due is a deadline only) and uses the note's day", () => {
 		const date = resolveCaptureScheduledDate(
 			{ dueDate: "2026-07-05" },
 			"2026-07-01",
 			"2026-06-29"
 		);
-		expect(date).toBe("2026-07-05");
+		expect(date).toBe("2026-07-01");
+	});
+
+	it("schedules a due-only task on today when there is no daily-note date", () => {
+		const date = resolveCaptureScheduledDate(
+			{ dueDate: "2026-07-05" },
+			null,
+			"2026-06-29"
+		);
+		expect(date).toBe("2026-06-29");
 	});
 
 	it("falls back to the source note's daily date", () => {
