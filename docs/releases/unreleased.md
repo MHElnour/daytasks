@@ -12,12 +12,3 @@ Sections:
 
 DayTasks is English-only right now; no i18n release workflow is required.
 -->
-
-## Changed
-
-- **Task changes now save more efficiently.** A burst of quick actions (checking
-  off, reordering, or editing several tasks in a row) used to rewrite the whole
-  task store on every single change. The first change still saves immediately,
-  but rapid follow-ups are now coalesced into one write — far less disk and sync
-  churn on large or synced vaults. Pending changes are flushed when you leave or
-  background the app, so nothing is lost; on-screen behavior is unchanged.
