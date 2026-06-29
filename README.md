@@ -46,11 +46,14 @@ then copy them into:
    `2026-06-25.md`.
 2. Create a task from the widget at the bottom of the daily note, or run
    `Create task for current daily note` from the command palette.
-3. Use the task card to complete, edit, reorder, collapse, cycle status,
+3. Capture inline: on a `- [ ]` line in any note, click the capture button at
+   the end of the line, or run `Capture task from line` (see
+   [Inline Capture](#inline-capture)).
+4. Use the task card to complete, edit, reorder, collapse, cycle status,
    cycle priority, or create a detail note.
-4. Open the Task List view from the ribbon icon or the `Open task list`
+5. Open the Task List view from the ribbon icon or the `Open task list`
    command to review tasks across days.
-5. Configure defaults in `Settings -> Community plugins -> DayTasks`.
+6. Configure defaults in `Settings -> Community plugins -> DayTasks`.
 
 ## Features
 
@@ -60,6 +63,9 @@ then copy them into:
   contexts, project links, estimates, descriptions, and manual ordering.
 - **Task List view** for all tasks across days, with filtering, grouping,
   sorting, text search, and persisted view state.
+- **Inline capture** to turn a note line into a scheduled task from an in-editor
+  button or a command, parsing `#tag @context +project !priority`, an estimate,
+  and `scheduled:`/`due:` date markers.
 - **Subtasks** as real task records, not checklist text, with nested cards and
   parent progress.
 - **Dependencies** with blocked-status behavior and cycle prevention.
@@ -69,6 +75,47 @@ then copy them into:
   note behavior, and detail note folders.
 - **Theme-aware and accessible UI** using Obsidian theme variables, keyboard
   focus states, and named icon controls.
+
+## Inline Capture
+
+Turn a note line into a scheduled task without opening a dialog.
+
+- Put the cursor on a Markdown task line (`- [ ]`) and click the capture button
+  that appears at the end of the line, or run `Capture task from line` from the
+  command palette on the current line (or a multi-line selection).
+- The line is parsed, replaced with the task title followed by its new task id,
+  and becomes a real DayTasks task. Multi-line selections use the lines after the
+  first as the task description.
+
+Put these tokens anywhere in the line:
+
+- `#tag` adds a tag.
+- `@context` adds a context.
+- `+project` or `+[[Project note]]` links a project.
+- `!priority` sets the priority, for example `!high`. This is marker-only: a bare
+  word like "high" stays in the title.
+- An estimate: `45m`, `2h`, or `1h30m`. A unit is required; a bare number stays in
+  the title.
+- `scheduled:<date>` sets the scheduled day, for example `scheduled:friday` or
+  `scheduled:2026-07-05`.
+- `due:`, `by:`, or `deadline:` followed by a date set a deadline only.
+
+Dates come only from `scheduled:`/`due:` markers, so ordinary prose is never
+mistaken for a date. With no `scheduled:` marker, the task lands on the note's
+daily date if it is a daily note, otherwise today.
+
+For example, capturing this line:
+
+```text
+- [ ] Email the board #work !high scheduled:friday 45m
+```
+
+creates a high-priority task tagged `work`, scheduled for the upcoming Friday,
+with a 45-minute estimate, and rewrites the line to `Email the board` plus the new
+task id.
+
+Toggle the command and the in-editor button under
+`Settings -> Community plugins -> DayTasks -> Inline capture`.
 
 ## Screenshots
 
