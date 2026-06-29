@@ -174,4 +174,10 @@ describe("mergeSettings", () => {
 	it("falls back to default taskListState when stored value is malformed", () => {
 		expect(mergeSettings({ taskListState: 42 }).taskListState).toEqual(DEFAULT_TASK_LIST_STATE);
 	});
+
+	it("defaults enableInlineCapture to true and coerces a non-boolean", () => {
+		expect(mergeSettings({}).enableInlineCapture).toBe(true);
+		expect(mergeSettings({ enableInlineCapture: false }).enableInlineCapture).toBe(false);
+		expect(mergeSettings({ enableInlineCapture: "nope" }).enableInlineCapture).toBe(true);
+	});
 });

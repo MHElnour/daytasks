@@ -102,6 +102,20 @@ export class DayTasksSettingTab extends PluginSettingTab {
 			})
 		);
 
+		new Setting(containerEl).setName("Inline capture").setHeading();
+
+		new Setting(containerEl)
+			.setName("Enable inline task capture")
+			.setDesc(
+				"Adds the 'Capture task from line' command. Turn a note line into a scheduled task."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(settings.enableInlineCapture).onChange(async (value) => {
+					settings.enableInlineCapture = value;
+					await this.saveSettingsWithNotice();
+				})
+			);
+
 		new Setting(containerEl).setName("Task defaults").setHeading();
 
 		new Setting(containerEl)
