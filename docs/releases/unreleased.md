@@ -41,6 +41,13 @@ DayTasks is English-only right now; no i18n release workflow is required.
 - Inline capture: estimates now require a unit (`45m`, `2h`, `1h30m`). A bare
   number is kept in the title instead of being read as minutes, so "Buy 2 apples"
   no longer becomes a 2-minute task.
+- Inline capture: running the command on a line that is already captured (one
+  ending in a task id) no longer creates a duplicate task — it reports that the
+  line is already captured and does nothing.
+- Inline capture: the line is marked only after re-checking it is unchanged once
+  the task is saved, so a concurrent edit during the save can no longer overwrite
+  the wrong line; a stale capture button that lingers after the feature is turned
+  off no longer captures.
 
 ## Removed
 

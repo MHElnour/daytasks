@@ -8,6 +8,7 @@ import { withBlockedStatus } from "./core/status";
 import { toUpdateDayTaskInput, type CreateDayTaskInput, type DayTask, type ProjectLink } from "./core/task";
 import { parseTaskInput, splitListPrefix } from "./core/parseTaskInput";
 import { formatCapturedLine, resolveCaptureScheduledDate } from "./core/captureTask";
+import { hasCaptureMarker } from "./core/captureButton";
 import { MemoryTaskIndex } from "./core/taskIndex";
 import { MemoryTaskStore } from "./core/taskStore";
 import { DetailNoteService, type VaultPort } from "./detail-notes/detailNoteService";
@@ -552,6 +553,13 @@ export default class DayTasksPlugin extends Plugin {
 		notePath: string | null,
 		line?: number
 	): Promise<void> {
+		// Guard the entry point itself: a capture button can linger in an editor
+		// after the feature is toggled off (its decoration only rebuilds on the
+		// next interaction), so a late click must not still capture.
+		if (!this.settings.enableInlineCapture) {
+			return;
+		}
+
 		const targetLine = line ?? editor.getCursor().line;
 		// An explicit line (from the capture button) captures just that line; the
 		// command path (no line) still supports a multi-line selection.
@@ -559,6 +567,14 @@ export default class DayTasksPlugin extends Plugin {
 		const hasSelection = selection.trim().length > 0;
 		const lines = hasSelection ? selection.split("\n") : [editor.getLine(targetLine)];
 		const firstLine = lines[0];
+
+		// Don't re-capture a line that already carries a task marker — that would
+		// create a duplicate task and sweep the old id into the new title. (The
+		// button hides on such lines; the command path must reject them too.)
+		if (hasCaptureMarker(firstLine)) {
+			new Notice("DayTasks: this line is already captured.");
+			return;
+		}
 
 		const parsed = parseTaskInput(firstLine, {
 			priorities: this.settings.priorities,
@@ -601,12 +617,31 @@ export default class DayTasksPlugin extends Plugin {
 			return;
 		}
 
+		// The task is now persisted. Writing the marker back is a separate,
+		// best-effort step: the document may have changed during the awaits above
+		// (concurrent edit, closed leaf), so re-validate the target before
+		// overwriting — never clobber unrelated text — and keep any write error
+		// from escaping as an unhandled rejection after a successful save.
 		const { prefix } = splitListPrefix(firstLine);
 		const marker = formatCapturedLine(prefix, parsed.title, task.id);
-		if (hasSelection) {
-			editor.replaceSelection(marker);
-		} else {
-			editor.setLine(targetLine, marker);
+		try {
+			if (hasSelection) {
+				if (editor.getSelection() !== selection) {
+					new Notice(`DayTasks: captured ${task.id}, but the selection changed — line not marked.`);
+					return;
+				}
+				editor.replaceSelection(marker);
+			} else {
+				if (editor.getLine(targetLine) !== firstLine) {
+					new Notice(`DayTasks: captured ${task.id}, but the line changed — not marked.`);
+					return;
+				}
+				editor.setLine(targetLine, marker);
+			}
+		} catch (error) {
+			console.error("DayTasks: failed to write the capture marker", error);
+			new Notice(`DayTasks: captured ${task.id}, but the line could not be updated.`);
+			return;
 		}
 		new Notice(`DayTasks: captured ${task.id}.`);
 	}
