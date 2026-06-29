@@ -74,6 +74,8 @@ export interface DayTask {
 	parentId?: string;
 	blockedBy?: string[];
 	detailNotePath?: string;
+	/** Path of the note this task was captured from, via inline capture. Opaque. */
+	sourceNote?: string;
 
 	tags: string[];
 	contexts: string[];
@@ -106,6 +108,7 @@ export interface CreateDayTaskInput {
 	blockedBy?: string[];
 	detailNote?: boolean;
 	detailNotePath?: string;
+	sourceNote?: string;
 
 	tags?: string[];
 	contexts?: string[];

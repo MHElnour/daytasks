@@ -142,4 +142,20 @@ describe("createDayTask", () => {
 		);
 		expect(task.blockedBy).toBeUndefined();
 	});
+
+	it("copies sourceNote through when provided", () => {
+		const task = createDayTask(
+			{ title: "T", scheduledDate: "2026-06-25", sourceNote: "Notes/Inbox.md" },
+			fixedDeps
+		);
+		expect(task.sourceNote).toBe("Notes/Inbox.md");
+	});
+
+	it("omits sourceNote when not provided", () => {
+		const task = createDayTask(
+			{ title: "T", scheduledDate: "2026-06-25" },
+			fixedDeps
+		);
+		expect(task.sourceNote).toBeUndefined();
+	});
 });

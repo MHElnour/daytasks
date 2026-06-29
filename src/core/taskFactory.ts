@@ -104,6 +104,9 @@ export function createDayTask(
 	if (input.detailNotePath) {
 		task.detailNotePath = input.detailNotePath;
 	}
+	if (input.sourceNote) {
+		task.sourceNote = input.sourceNote;
+	}
 	if (input.estimateMinutes !== undefined) {
 		task.estimateMinutes = input.estimateMinutes;
 	}
