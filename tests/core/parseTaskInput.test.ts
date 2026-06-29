@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { parseTaskInput, splitListPrefix } from "../../src/core/parseTaskInput";
+import { DEFAULT_PRIORITIES } from "../../src/core/status";
+
+// Local noon on Mon 2026-06-29 — avoids UTC-midnight timezone drift.
+const TODAY = new Date(2026, 5, 29, 12, 0, 0);
 
 function parse(input: string) {
-	return parseTaskInput(input);
+	return parseTaskInput(input, { priorities: DEFAULT_PRIORITIES, today: TODAY });
 }
 
 describe("splitListPrefix", () => {
@@ -63,5 +67,49 @@ describe("parseTaskInput — tags, contexts, projects", () => {
 		const r = parse("- [ ] Email the board #work");
 		expect(r.title).toBe("Email the board");
 		expect(r.tags).toEqual(["work"]);
+	});
+});
+
+describe("parseTaskInput — priority", () => {
+	it("matches a !marker priority by value", () => {
+		const r = parse("Ship release !high");
+		expect(r.priority).toBe("high");
+		expect(r.title).toBe("Ship release");
+	});
+
+	it("does NOT treat a bare priority word as a priority", () => {
+		// 'high' without the ! marker is ordinary title text — no collision.
+		const r = parse("Ship release high level plan");
+		expect(r.priority).toBeUndefined();
+		expect(r.title).toBe("Ship release high level plan");
+	});
+
+	it("leaves priority undefined when none is present", () => {
+		const r = parse("Ship release");
+		expect(r.priority).toBeUndefined();
+	});
+});
+
+describe("parseTaskInput — estimate", () => {
+	it("parses hours and minutes", () => {
+		expect(parse("Write report 1h30m").estimateMinutes).toBe(90);
+	});
+
+	it("parses hours only", () => {
+		expect(parse("Write report 2h").estimateMinutes).toBe(120);
+	});
+
+	it("parses minutes only", () => {
+		expect(parse("Write report 45m").estimateMinutes).toBe(45);
+	});
+
+	it("parses a bare number as minutes", () => {
+		const r = parse("Write report 90");
+		expect(r.estimateMinutes).toBe(90);
+		expect(r.title).toBe("Write report");
+	});
+
+	it("leaves estimate undefined when absent", () => {
+		expect(parse("Write report").estimateMinutes).toBeUndefined();
 	});
 });

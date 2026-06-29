@@ -1,3 +1,6 @@
+import { parseEstimateMinutes } from "../util/estimate";
+import type { PriorityConfig } from "./status";
+
 export interface ParsedTaskInput {
 	title: string;
 	scheduledDate?: string; // YYYY-MM-DD
@@ -7,6 +10,11 @@ export interface ParsedTaskInput {
 	contexts: string[];
 	projects: string[]; // raw +project values (word or wikilink target)
 	estimateMinutes?: number;
+}
+
+export interface ParseTaskInputOptions {
+	priorities: PriorityConfig[];
+	today: Date;
 }
 
 // A leading list/checkbox/quote prefix: optional indent, any number of `>`
@@ -64,7 +72,55 @@ function extractProjects(text: string): { projects: string[]; rest: string } {
 	return { projects: dedupe(projects.filter(Boolean)), rest };
 }
 
-export function parseTaskInput(input: string): ParsedTaskInput {
+const PRIORITY_MARKER_RE = /(^|\s)!([\p{L}\p{N}_-]+)/gu;
+
+/** `!high` (marker only) → a configured priority value; bare words are ignored. */
+function extractPriority(
+	text: string,
+	priorities: PriorityConfig[]
+): { priority?: string; rest: string } {
+	const byToken = new Map<string, string>();
+	for (const p of priorities) {
+		byToken.set(p.value.toLowerCase(), p.value);
+		byToken.set(p.label.toLowerCase(), p.value);
+	}
+	let priority: string | undefined;
+
+	const rest = text.replace(PRIORITY_MARKER_RE, (whole, lead: string, token: string) => {
+		const match = byToken.get(token.toLowerCase());
+		if (match && priority === undefined) {
+			priority = match;
+			return lead;
+		}
+		return whole;
+	});
+
+	return { priority, rest };
+}
+
+// Locates an estimate token anywhere in the residue; the actual parse (and the
+// supported forms) is owned by parseEstimateMinutes — this regex only finds the
+// candidate so a sentence word isn't fed to the util. The separating whitespace
+// (capture group 1) is preserved when the token is stripped.
+const ESTIMATE_TOKEN_RE = /(^|\s)(\d+h\d+m|\d+h|\d+m|\d+)(?=\s|$)/u;
+
+function extractEstimate(text: string): { estimateMinutes?: number; rest: string } {
+	const m = text.match(ESTIMATE_TOKEN_RE);
+	if (!m || m.index === undefined) {
+		return { rest: text };
+	}
+	const minutes = parseEstimateMinutes(m[2]);
+	if (minutes === undefined) {
+		return { rest: text };
+	}
+	const rest = text.slice(0, m.index) + m[1] + text.slice(m.index + m[0].length);
+	return { estimateMinutes: minutes, rest };
+}
+
+export function parseTaskInput(
+	input: string,
+	opts: ParseTaskInputOptions
+): ParsedTaskInput {
 	const { body } = splitListPrefix(input);
 	let text = body;
 
@@ -74,13 +130,24 @@ export function parseTaskInput(input: string): ParsedTaskInput {
 	text = ctxR.rest;
 	const projR = extractProjects(text);
 	text = projR.rest;
+	const prioR = extractPriority(text, opts.priorities);
+	text = prioR.rest;
+	const estR = extractEstimate(text);
+	text = estR.rest;
 
 	const title = text.replace(/\s+/g, " ").trim();
 
-	return {
+	const result: ParsedTaskInput = {
 		title,
 		tags: tagsR.tags,
 		contexts: ctxR.contexts,
 		projects: projR.projects,
 	};
+	if (prioR.priority !== undefined) {
+		result.priority = prioR.priority;
+	}
+	if (estR.estimateMinutes !== undefined) {
+		result.estimateMinutes = estR.estimateMinutes;
+	}
+	return result;
 }
