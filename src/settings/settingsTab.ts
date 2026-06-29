@@ -116,6 +116,18 @@ export class DayTasksSettingTab extends PluginSettingTab {
 				})
 			);
 
+		new Setting(containerEl)
+			.setName("Show capture button")
+			.setDesc(
+				"Show a button at the end of the current line to capture it as a task."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(settings.showCaptureButton).onChange(async (value) => {
+					settings.showCaptureButton = value;
+					await this.saveSettingsWithNotice();
+				})
+			);
+
 		new Setting(containerEl).setName("Task defaults").setHeading();
 
 		new Setting(containerEl)

@@ -180,4 +180,10 @@ describe("mergeSettings", () => {
 		expect(mergeSettings({ enableInlineCapture: false }).enableInlineCapture).toBe(false);
 		expect(mergeSettings({ enableInlineCapture: "nope" }).enableInlineCapture).toBe(true);
 	});
+
+	it("defaults showCaptureButton to true and coerces a non-boolean", () => {
+		expect(mergeSettings({}).showCaptureButton).toBe(true);
+		expect(mergeSettings({ showCaptureButton: false }).showCaptureButton).toBe(false);
+		expect(mergeSettings({ showCaptureButton: "nope" }).showCaptureButton).toBe(true);
+	});
 });

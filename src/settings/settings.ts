@@ -31,6 +31,7 @@ export interface DayTasksSettings {
 	showProjects: boolean;
 	// Inline capture
 	enableInlineCapture: boolean;
+	showCaptureButton: boolean;
 	// Task defaults
 	defaultStatus: string;
 	defaultPriority?: string;
@@ -69,6 +70,7 @@ export const DEFAULT_SETTINGS: DayTasksSettings = {
 	showContexts: true,
 	showProjects: true,
 	enableInlineCapture: true,
+	showCaptureButton: true,
 	defaultStatus: DEFAULT_STATUS_VALUE,
 	defaultPriority: DEFAULT_PRIORITY_VALUE,
 	defaultTags: [],
@@ -200,6 +202,10 @@ export function mergeSettings(stored: unknown): DayTasksSettings {
 		enableInlineCapture: asBooleanOr(
 			s.enableInlineCapture,
 			DEFAULT_SETTINGS.enableInlineCapture
+		),
+		showCaptureButton: asBooleanOr(
+			s.showCaptureButton,
+			DEFAULT_SETTINGS.showCaptureButton
 		),
 		defaultStatus,
 		defaultPriority: asStringOr(
