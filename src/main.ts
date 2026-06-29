@@ -538,12 +538,15 @@ export default class DayTasksPlugin extends Plugin {
 
 	private async runCaptureTaskCommand(
 		editor: Editor,
-		notePath: string | null
+		notePath: string | null,
+		line?: number
 	): Promise<void> {
-		const selection = editor.getSelection();
+		const targetLine = line ?? editor.getCursor().line;
+		// An explicit line (from the capture button) captures just that line; the
+		// command path (no line) still supports a multi-line selection.
+		const selection = line === undefined ? editor.getSelection() : "";
 		const hasSelection = selection.trim().length > 0;
-		const cursor = editor.getCursor();
-		const lines = hasSelection ? selection.split("\n") : [editor.getLine(cursor.line)];
+		const lines = hasSelection ? selection.split("\n") : [editor.getLine(targetLine)];
 		const firstLine = lines[0];
 
 		const parsed = parseTaskInput(firstLine, {
@@ -592,7 +595,7 @@ export default class DayTasksPlugin extends Plugin {
 		if (hasSelection) {
 			editor.replaceSelection(marker);
 		} else {
-			editor.setLine(cursor.line, marker);
+			editor.setLine(targetLine, marker);
 		}
 		new Notice(`DayTasks: captured ${task.id}.`);
 	}
