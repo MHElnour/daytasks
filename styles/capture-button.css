@@ -1,0 +1,44 @@
+.daytasks-capture-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	margin-left: var(--size-4-2);
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	opacity: 0.55;
+	vertical-align: middle;
+	transition: opacity 0.1s ease, background-color 0.1s ease, color 0.1s ease;
+}
+
+.daytasks-capture-button:hover {
+	opacity: 1;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.daytasks-capture-button:active {
+	transform: scale(0.95);
+}
+
+.daytasks-capture-button:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+
+.daytasks-capture-button__icon {
+	display: inline-flex;
+	width: 14px;
+	height: 14px;
+}
+
+.daytasks-capture-button__icon svg {
+	width: 14px;
+	height: 14px;
+}

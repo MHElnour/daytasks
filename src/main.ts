@@ -14,6 +14,7 @@ import { DetailNoteService, type VaultPort } from "./detail-notes/detailNoteServ
 import { resolveFolderTemplate } from "./detail-notes/folderTemplate";
 import { runDetailNoteMigration } from "./detail-notes/migrateDetailNotes";
 import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyNoteDate";
+import { captureButtonExtension } from "./obsidian/captureButton";
 import { attachReorder, type ReorderHandle } from "./obsidian/dragReorder";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
 import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
@@ -156,6 +157,19 @@ export default class DayTasksPlugin extends Plugin {
 					this.renderWidgetInto(container, notePath),
 				version: () => this.dataVersion,
 				detachDragFor: (widget) => this.detachDragFor(widget),
+			})
+		);
+
+		this.registerEditorExtension(
+			captureButtonExtension({
+				isEnabled: () =>
+					this.settings.enableInlineCapture && this.settings.showCaptureButton,
+				capture: (line) => {
+					const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+					if (view?.file) {
+						void this.runCaptureTaskCommand(view.editor, view.file.path, line);
+					}
+				},
 			})
 		);
 
