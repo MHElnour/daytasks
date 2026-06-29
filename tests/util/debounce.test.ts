@@ -77,4 +77,75 @@ describe("debounce", () => {
 		debounced.flush();
 		expect(fn).not.toHaveBeenCalled();
 	});
+
+	describe("leading edge", () => {
+		it("invokes immediately on the first call and not again for a lone call", () => {
+			const fn = vi.fn();
+			const debounced = debounce(fn, 100, { leading: true });
+
+			debounced("a");
+			expect(fn).toHaveBeenCalledTimes(1);
+			expect(fn).toHaveBeenCalledWith("a");
+
+			// A single call has no trailing follow-up, so the timer must not re-fire.
+			vi.advanceTimersByTime(100);
+			expect(fn).toHaveBeenCalledTimes(1);
+		});
+
+		it("fires once immediately then once trailing with the last args for a burst", () => {
+			const fn = vi.fn();
+			const debounced = debounce(fn, 100, { leading: true });
+
+			debounced("a"); // leading edge — durable at once
+			expect(fn).toHaveBeenCalledTimes(1);
+
+			debounced("b");
+			debounced("c"); // coalesced into one trailing write
+			expect(fn).toHaveBeenCalledTimes(1);
+
+			vi.advanceTimersByTime(100);
+			expect(fn).toHaveBeenCalledTimes(2);
+			expect(fn).toHaveBeenLastCalledWith("c");
+		});
+
+		it("flush writes the pending trailing call immediately", () => {
+			const fn = vi.fn();
+			const debounced = debounce(fn, 100, { leading: true });
+
+			debounced("a"); // leading
+			debounced("b"); // trailing pending
+			expect(fn).toHaveBeenCalledTimes(1);
+
+			debounced.flush();
+			expect(fn).toHaveBeenCalledTimes(2);
+			expect(fn).toHaveBeenLastCalledWith("b");
+
+			vi.advanceTimersByTime(100);
+			expect(fn).toHaveBeenCalledTimes(2);
+		});
+
+		it("flush after a lone leading call does nothing", () => {
+			const fn = vi.fn();
+			const debounced = debounce(fn, 100, { leading: true });
+
+			debounced("a");
+			expect(fn).toHaveBeenCalledTimes(1);
+
+			debounced.flush();
+			expect(fn).toHaveBeenCalledTimes(1);
+		});
+
+		it("starts a fresh leading edge after the window settles", () => {
+			const fn = vi.fn();
+			const debounced = debounce(fn, 100, { leading: true });
+
+			debounced("a"); // leading
+			vi.advanceTimersByTime(100); // window closes, no trailing
+			expect(fn).toHaveBeenCalledTimes(1);
+
+			debounced("b"); // new window → leading again
+			expect(fn).toHaveBeenCalledTimes(2);
+			expect(fn).toHaveBeenLastCalledWith("b");
+		});
+	});
 });

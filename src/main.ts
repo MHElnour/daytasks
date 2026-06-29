@@ -61,6 +61,22 @@ export default class DayTasksPlugin extends Plugin {
 	private readingRefreshTimer: number | null = null;
 	private readonly saveTaskListState = debounce(() => void this.saveSettings(), 400);
 	private readonly syncDetailNotes = debounce(() => void this.runDetailNoteSync(), 800);
+	/**
+	 * Coalesces task writes so a burst of edits (toggles, reorders, …) doesn't
+	 * rewrite the whole data.json each time. Leading edge: the first edit of a
+	 * quiet period is written at once (a lone edit is durable immediately); rapid
+	 * follow-ups collapse into one trailing write. Flushed on background/blur/
+	 * unload, so only a hard crash mid-burst could drop the last <1s of edits.
+	 * Durable flows (capture, detail-note writes, migration) still persist inline.
+	 */
+	private readonly schedulePersist = debounce(
+		() =>
+			void this.persistTasks().catch((error) =>
+				console.error("DayTasks: failed to persist tasks", error)
+			),
+		750,
+		{ leading: true }
+	);
 
 	async onload(): Promise<void> {
 		this.dataStore = new DayTasksDataStore(this);
@@ -121,6 +137,15 @@ export default class DayTasksPlugin extends Plugin {
 		}
 
 		this.addSettingTab(new DayTasksSettingTab(this.app, this));
+
+		// Flush any coalesced task write before the app can vanish — leaving the
+		// window (blur) or backgrounding the app (visibilitychange → hidden)
+		// usually precedes a quit or OS kill, so persist deferred edits right then.
+		const flushPersist = (): void => this.schedulePersist.flush();
+		this.registerDomEvent(activeWindow, "blur", flushPersist);
+		this.registerDomEvent(activeDocument, "visibilitychange", () => {
+			if (activeDocument.hidden) flushPersist();
+		});
 
 		this.registerView(VIEW_TYPE_TASK_LIST, (leaf) => new TaskListView(leaf, this.taskListHost()));
 		this.addRibbonIcon("list-checks", "DayTasks: task list", () => void this.openTaskList());
@@ -195,6 +220,9 @@ export default class DayTasksPlugin extends Plugin {
 		}
 		this.saveTaskListState.cancel();
 		this.syncDetailNotes.cancel();
+		// Drop any pending coalesced task write; the unconditional persist below
+		// captures the latest tasks + settings, so it supersedes it (no double write).
+		this.schedulePersist.cancel();
 		this.destroyReorder();
 		// Best-effort persist so a debounced task-list-state save that hadn't fired
 		// yet isn't lost on disable/reload (the latest state is already in settings).
@@ -434,7 +462,7 @@ export default class DayTasksPlugin extends Plugin {
 	private async handleReorder(parentId: string | null, orderedIds: string[]): Promise<void> {
 		try {
 			await this.service.reorderSiblings(parentId, orderedIds);
-			await this.persistTasks();
+			this.schedulePersist();
 		} catch (error) {
 			console.error("DayTasks: reorder failed", error);
 		}
@@ -496,7 +524,7 @@ export default class DayTasksPlugin extends Plugin {
 		}
 		try {
 			await this.service.cycleStatus(taskId);
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to update task status", error);
@@ -514,7 +542,7 @@ export default class DayTasksPlugin extends Plugin {
 				taskId,
 				nextPriority(task.priority, this.settings.priorities)
 			);
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to change task priority", error);
@@ -762,7 +790,7 @@ export default class DayTasksPlugin extends Plugin {
 				title,
 				scheduledDate: parent.scheduledDate,
 			});
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to add subtask", error);
@@ -773,7 +801,7 @@ export default class DayTasksPlugin extends Plugin {
 	private async unlinkSubtask(childId: string): Promise<void> {
 		try {
 			await this.service.unlinkSubtask(childId);
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to unlink subtask", error);
@@ -784,7 +812,7 @@ export default class DayTasksPlugin extends Plugin {
 	private async deleteTask(id: string): Promise<void> {
 		try {
 			await this.service.deleteTask(id);
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 			new Notice("DayTasks: task deleted.");
 		} catch (error) {
@@ -797,7 +825,7 @@ export default class DayTasksPlugin extends Plugin {
 		try {
 			// The edit modal submits the full editable state (omitted = cleared).
 			await this.service.updateTask(id, toUpdateDayTaskInput(input));
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to update task", error);
@@ -835,7 +863,7 @@ export default class DayTasksPlugin extends Plugin {
 	private async addDependency(taskId: string, blockerId: string): Promise<void> {
 		try {
 			await this.service.addDependency(taskId, blockerId);
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to add dependency", error);
@@ -846,7 +874,7 @@ export default class DayTasksPlugin extends Plugin {
 	private async removeDependency(taskId: string, blockerId: string): Promise<void> {
 		try {
 			await this.service.removeDependency(taskId, blockerId);
-			await this.persistTasks();
+			this.schedulePersist();
 			this.refreshViews();
 		} catch (error) {
 			console.error("DayTasks: failed to remove dependency", error);
