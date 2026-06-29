@@ -120,8 +120,6 @@ describe("parseTaskInput — estimate", () => {
 	});
 });
 
-const ISO = /^\d{4}-\d{2}-\d{2}$/;
-
 describe("parseTaskInput — dates", () => {
 	it("routes a due: marker to dueDate (ISO date)", () => {
 		const r = parse("Submit form due:2026-07-05");
@@ -142,12 +140,6 @@ describe("parseTaskInput — dates", () => {
 		expect(r.title).toBe("Plan week");
 	});
 
-	it("routes a bare date phrase to scheduledDate", () => {
-		const r = parse("Plan week 2026-07-02");
-		expect(r.scheduledDate).toBe("2026-07-02");
-		expect(r.dueDate).toBeUndefined();
-	});
-
 	it("supports both scheduled and due in one line", () => {
 		const r = parse("Plan launch scheduled:2026-07-02 due:2026-07-05");
 		expect(r.scheduledDate).toBe("2026-07-02");
@@ -155,19 +147,30 @@ describe("parseTaskInput — dates", () => {
 		expect(r.title).toBe("Plan launch");
 	});
 
-	it("resolves a relative bare date with the injected today", () => {
-		const r = parse("Call dentist friday");
-		expect(r.scheduledDate).toMatch(ISO);
-		// forwardDate: the upcoming Friday is after Mon 2026-06-29.
-		expect(r.scheduledDate! > "2026-06-29").toBe(true);
+	it("leaves a bare date phrase in the title (dates are marker-only)", () => {
+		const r = parse("Plan week 2026-07-02");
+		expect(r.scheduledDate).toBeUndefined();
 		expect(r.dueDate).toBeUndefined();
+		expect(r.title).toBe("Plan week 2026-07-02");
 	});
 
-	it("does NOT treat bare prose 'by' as a due marker (no colon)", () => {
-		const r = parse("Email report by friday");
-		// 'by' without a colon is not a due marker...
+	it("does not schedule from a bare relative date word", () => {
+		const r = parse("Call dentist friday");
+		expect(r.scheduledDate).toBeUndefined();
 		expect(r.dueDate).toBeUndefined();
-		// ...but the bare date 'friday' is still scheduled.
-		expect(r.scheduledDate).toMatch(ISO);
+		expect(r.title).toBe("Call dentist friday");
+	});
+
+	it("does not treat bare prose 'by <day>' as a date", () => {
+		const r = parse("Email report by friday");
+		expect(r.dueDate).toBeUndefined();
+		expect(r.scheduledDate).toBeUndefined();
+		expect(r.title).toBe("Email report by friday");
+	});
+
+	it("leaves mid-sentence date words alone (no prose collision)", () => {
+		const r = parse("Discuss the March numbers");
+		expect(r.scheduledDate).toBeUndefined();
+		expect(r.title).toBe("Discuss the March numbers");
 	});
 });

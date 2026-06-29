@@ -59,17 +59,20 @@ The line is parsed for tokens anywhere in the text:
 Priority is marker-only. A bare word such as "high" in "high level plan" stays in
 the title; only the `!` form sets a priority.
 
-Dates use colon markers or a bare date phrase:
+Dates use colon markers only, so ordinary prose is never mistaken for a date:
 
 - `due:`, `by:`, or `deadline:` set the due date (a deadline only);
-- `scheduled:` sets the scheduled date;
-- a bare date phrase, such as "tomorrow", is read as the scheduled date.
+- `scheduled:` sets the scheduled date.
 
-The scheduled date is the day the task sits on: an explicit `scheduled:` (or bare
-date), otherwise the note's daily date if the note is a daily note, otherwise
-today. A `due:` date is a deadline and never moves the scheduled day — so
-`due:friday` with no `scheduled:` lands the task on today (or the note's day) with
-Friday as its deadline.
+Example: `scheduled:friday`, `due:2026-07-05`. A line with no marker — even one
+that contains a date word like "Discuss the March numbers" — keeps that text in
+the title and is simply scheduled for the default day.
+
+The scheduled date is the day the task sits on: an explicit `scheduled:` marker,
+otherwise the note's daily date if the note is a daily note, otherwise today. A
+`due:` date is a deadline and never moves the scheduled day — so `due:friday` with
+no `scheduled:` lands the task on today (or the note's day) with Friday as its
+deadline.
 
 After capture, the line is replaced with the task title followed by the new task
 id, and the task records the note it was captured from. The command is gated by

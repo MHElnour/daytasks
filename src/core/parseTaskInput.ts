@@ -152,18 +152,6 @@ function extractMarkerDate(
 	return { date, rest };
 }
 
-/** Scans the remaining text for any bare date phrase → scheduledDate. */
-function extractBareDate(text: string, today: Date): { date?: string; rest: string } {
-	const results = chrono.parse(text, today, { forwardDate: true });
-	if (results.length === 0) {
-		return { rest: text };
-	}
-	const result = results[0];
-	const date = localDate(result.start.date());
-	const rest = text.slice(0, result.index) + text.slice(result.index + result.text.length);
-	return { date, rest };
-}
-
 export function parseTaskInput(
 	input: string,
 	opts: ParseTaskInputOptions
@@ -182,18 +170,14 @@ export function parseTaskInput(
 	const estR = extractEstimate(text);
 	text = estR.rest;
 
-	// Marker dates first (due, then scheduled), then a bare date → scheduled.
+	// Dates are marker-only (`due:`/`by:`/`deadline:` and `scheduled:`). There is
+	// no bare-date scan, so ordinary prose date words ("the March numbers",
+	// "by friday") are never mistaken for a date and never stripped from the title.
 	const dueR = extractMarkerDate(text, DUE_MARKERS, opts.today);
 	text = dueR.rest;
 	const schedMarkerR = extractMarkerDate(text, SCHEDULED_MARKERS, opts.today);
 	text = schedMarkerR.rest;
-
-	let scheduledDate = schedMarkerR.date;
-	if (scheduledDate === undefined) {
-		const bareR = extractBareDate(text, opts.today);
-		text = bareR.rest;
-		scheduledDate = bareR.date;
-	}
+	const scheduledDate = schedMarkerR.date;
 
 	const title = text.replace(/\s+/g, " ").trim();
 
