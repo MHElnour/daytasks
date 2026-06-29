@@ -37,6 +37,10 @@ search for a Markdown note in the vault.
 line` command, which turns a note line into a scheduled task. When it is off, the
 command does nothing.
 
+**Show capture button** shows a one-click capture button at the end of the current
+line in the editor. It requires **Enable inline task capture** and is on by
+default.
+
 ## Detail Notes
 
 **Detail notes folder** controls where new detail notes are created. It supports

@@ -75,6 +75,11 @@ After capture, the line is replaced with the task title followed by the new task
 id, and the task records the note it was captured from. The command is gated by
 the **Enable inline task capture** setting.
 
+You can also capture without the command: with inline capture enabled, a small
+button appears at the end of the line your cursor is on. Click it to capture that
+line. The button is hidden on empty lines and on lines that already hold a captured
+task. Toggle it with **Settings → Inline capture → Show capture button**.
+
 ## Task List View
 
 The Task List view shows tasks across all days. Open it from the ribbon icon or

@@ -26,6 +26,11 @@ DayTasks is English-only right now; no i18n release workflow is required.
   and the task records the note it came from. New setting: **Inline capture › Enable inline task
   capture** (on by default). Multi-line selections use the lines after the first as
   the task description.
+- **Inline capture button.** With inline capture enabled, a small button appears
+  at the end of the current line in editor / Live Preview mode; click it to capture
+  that line as a task — no command palette needed. The button is hidden on blank
+  lines and on lines already captured. New setting: **Inline capture › Show capture
+  button** (on by default).
 
 ## Fixed
 
