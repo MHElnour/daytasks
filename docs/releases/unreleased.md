@@ -26,3 +26,10 @@ DayTasks is English-only right now; no i18n release workflow is required.
   and the task records the note it came from. New setting: **Inline capture › Enable inline task
   capture** (on by default). Multi-line selections use the lines after the first as
   the task description.
+
+## Fixed
+
+- Inline capture: a `due:` date is now treated as a deadline only and no longer
+  sets the day a captured task is scheduled. A task with a `due:` date but no
+  `scheduled:` marker lands on today (or the note's daily date) instead of jumping
+  to the due date.
