@@ -113,3 +113,55 @@ describe("parseTaskInput — estimate", () => {
 		expect(parse("Write report").estimateMinutes).toBeUndefined();
 	});
 });
+
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+describe("parseTaskInput — dates", () => {
+	it("routes a due: marker to dueDate (ISO date)", () => {
+		const r = parse("Submit form due:2026-07-05");
+		expect(r.dueDate).toBe("2026-07-05");
+		expect(r.scheduledDate).toBeUndefined();
+		expect(r.title).toBe("Submit form");
+	});
+
+	it("treats by: and deadline: as due markers", () => {
+		expect(parse("Submit form by:2026-07-05").dueDate).toBe("2026-07-05");
+		expect(parse("Submit form deadline:2026-07-05").dueDate).toBe("2026-07-05");
+	});
+
+	it("routes a scheduled: marker to scheduledDate (ISO date)", () => {
+		const r = parse("Plan week scheduled:2026-07-02");
+		expect(r.scheduledDate).toBe("2026-07-02");
+		expect(r.dueDate).toBeUndefined();
+		expect(r.title).toBe("Plan week");
+	});
+
+	it("routes a bare date phrase to scheduledDate", () => {
+		const r = parse("Plan week 2026-07-02");
+		expect(r.scheduledDate).toBe("2026-07-02");
+		expect(r.dueDate).toBeUndefined();
+	});
+
+	it("supports both scheduled and due in one line", () => {
+		const r = parse("Plan launch scheduled:2026-07-02 due:2026-07-05");
+		expect(r.scheduledDate).toBe("2026-07-02");
+		expect(r.dueDate).toBe("2026-07-05");
+		expect(r.title).toBe("Plan launch");
+	});
+
+	it("resolves a relative bare date with the injected today", () => {
+		const r = parse("Call dentist friday");
+		expect(r.scheduledDate).toMatch(ISO);
+		// forwardDate: the upcoming Friday is after Mon 2026-06-29.
+		expect(r.scheduledDate! > "2026-06-29").toBe(true);
+		expect(r.dueDate).toBeUndefined();
+	});
+
+	it("does NOT treat bare prose 'by' as a due marker (no colon)", () => {
+		const r = parse("Email report by friday");
+		// 'by' without a colon is not a due marker...
+		expect(r.dueDate).toBeUndefined();
+		// ...but the bare date 'friday' is still scheduled.
+		expect(r.scheduledDate).toMatch(ISO);
+	});
+});

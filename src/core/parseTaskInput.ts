@@ -1,3 +1,5 @@
+import * as chrono from "chrono-node";
+import { localDate } from "../util/localIso";
 import { parseEstimateMinutes } from "../util/estimate";
 import type { PriorityConfig } from "./status";
 
@@ -118,6 +120,49 @@ function extractEstimate(text: string): { estimateMinutes?: number; rest: string
 	return { estimateMinutes: minutes, rest };
 }
 
+const DUE_MARKERS = ["due", "by", "deadline"];
+const SCHEDULED_MARKERS = ["scheduled"];
+
+/**
+ * Finds `marker:` (one of `markers`) followed immediately by a chrono-parseable
+ * date phrase, returns that date (YYYY-MM-DD) and the text with marker+phrase
+ * removed. Requires the chrono match to start right after the marker so an
+ * unrelated later date isn't grabbed.
+ */
+function extractMarkerDate(
+	text: string,
+	markers: string[],
+	today: Date
+): { date?: string; rest: string } {
+	const markerRe = new RegExp(`(^|\\s)(?:${markers.join("|")}):\\s*`, "iu");
+	const m = text.match(markerRe);
+	if (!m || m.index === undefined) {
+		return { rest: text };
+	}
+	const afterIndex = m.index + m[0].length;
+	const tail = text.slice(afterIndex);
+	const results = chrono.parse(tail, today, { forwardDate: true });
+	if (results.length === 0 || results[0].index !== 0) {
+		return { rest: text };
+	}
+	const result = results[0];
+	const date = localDate(result.start.date());
+	const rest = text.slice(0, m.index) + m[1] + text.slice(afterIndex + result.text.length);
+	return { date, rest };
+}
+
+/** Scans the remaining text for any bare date phrase → scheduledDate. */
+function extractBareDate(text: string, today: Date): { date?: string; rest: string } {
+	const results = chrono.parse(text, today, { forwardDate: true });
+	if (results.length === 0) {
+		return { rest: text };
+	}
+	const result = results[0];
+	const date = localDate(result.start.date());
+	const rest = text.slice(0, result.index) + text.slice(result.index + result.text.length);
+	return { date, rest };
+}
+
 export function parseTaskInput(
 	input: string,
 	opts: ParseTaskInputOptions
@@ -136,6 +181,19 @@ export function parseTaskInput(
 	const estR = extractEstimate(text);
 	text = estR.rest;
 
+	// Marker dates first (due, then scheduled), then a bare date → scheduled.
+	const dueR = extractMarkerDate(text, DUE_MARKERS, opts.today);
+	text = dueR.rest;
+	const schedMarkerR = extractMarkerDate(text, SCHEDULED_MARKERS, opts.today);
+	text = schedMarkerR.rest;
+
+	let scheduledDate = schedMarkerR.date;
+	if (scheduledDate === undefined) {
+		const bareR = extractBareDate(text, opts.today);
+		text = bareR.rest;
+		scheduledDate = bareR.date;
+	}
+
 	const title = text.replace(/\s+/g, " ").trim();
 
 	const result: ParsedTaskInput = {
@@ -149,6 +207,12 @@ export function parseTaskInput(
 	}
 	if (estR.estimateMinutes !== undefined) {
 		result.estimateMinutes = estR.estimateMinutes;
+	}
+	if (scheduledDate !== undefined) {
+		result.scheduledDate = scheduledDate;
+	}
+	if (dueR.date !== undefined) {
+		result.dueDate = dueR.date;
 	}
 	return result;
 }
