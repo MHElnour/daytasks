@@ -103,10 +103,16 @@ describe("parseTaskInput — estimate", () => {
 		expect(parse("Write report 45m").estimateMinutes).toBe(45);
 	});
 
-	it("parses a bare number as minutes", () => {
+	it("does NOT treat a bare number as an estimate (kept in the title)", () => {
+		const r = parse("Buy 2 apples");
+		expect(r.estimateMinutes).toBeUndefined();
+		expect(r.title).toBe("Buy 2 apples");
+	});
+
+	it("keeps a bare number in the title", () => {
 		const r = parse("Write report 90");
-		expect(r.estimateMinutes).toBe(90);
-		expect(r.title).toBe("Write report");
+		expect(r.estimateMinutes).toBeUndefined();
+		expect(r.title).toBe("Write report 90");
 	});
 
 	it("leaves estimate undefined when absent", () => {

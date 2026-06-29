@@ -18,7 +18,7 @@ DayTasks is English-only right now; no i18n release workflow is required.
 - **Inline task capture.** Run the **Capture task from line** command on any note
   line (or a multi-line selection) to turn it into a scheduled DayTasks task. The
   line is parsed for `#tags`, `@contexts`, `+project` (or `+[[wikilink]]`),
-  `!priority`, a time estimate (`45m`, `2h`, `1h30m`, or a bare number of minutes),
+  `!priority`, a time estimate (`45m`, `2h`, or `1h30m`),
   and a date. A `scheduled:` marker or a bare date phrase sets the day the task
   sits on; `due:`/`by:`/`deadline:` set a deadline only. With no `scheduled:` date,
   the task lands on the note's daily date if it is a daily note, otherwise today.
@@ -33,3 +33,6 @@ DayTasks is English-only right now; no i18n release workflow is required.
   sets the day a captured task is scheduled. A task with a `due:` date but no
   `scheduled:` marker lands on today (or the note's daily date) instead of jumping
   to the due date.
+- Inline capture: estimates now require a unit (`45m`, `2h`, `1h30m`). A bare
+  number is kept in the title instead of being read as minutes, so "Buy 2 apples"
+  no longer becomes a 2-minute task.

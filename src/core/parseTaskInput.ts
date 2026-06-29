@@ -101,11 +101,12 @@ function extractPriority(
 	return { priority, rest };
 }
 
-// Locates an estimate token anywhere in the residue; the actual parse (and the
-// supported forms) is owned by parseEstimateMinutes — this regex only finds the
-// candidate so a sentence word isn't fed to the util. The separating whitespace
-// (capture group 1) is preserved when the token is stripped.
-const ESTIMATE_TOKEN_RE = /(^|\s)(\d+h\d+m|\d+h|\d+m|\d+)(?=\s|$)/u;
+// Locates an estimate token anywhere in the residue; the actual parse is owned by
+// parseEstimateMinutes — this regex only finds the candidate so a sentence word
+// isn't fed to the util. A unit suffix (h/m) is REQUIRED: a bare number (e.g.
+// "Buy 2 apples") is ordinary title text, not an estimate. The separating
+// whitespace (capture group 1) is preserved when the token is stripped.
+const ESTIMATE_TOKEN_RE = /(^|\s)(\d+h\d+m|\d+h|\d+m)(?=\s|$)/u;
 
 function extractEstimate(text: string): { estimateMinutes?: number; rest: string } {
 	const m = text.match(ESTIMATE_TOKEN_RE);

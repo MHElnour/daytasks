@@ -54,7 +54,7 @@ The line is parsed for tokens anywhere in the text:
 - `@context` adds a context;
 - `+project` or `+[[wikilink]]` links a project note;
 - `!priority` sets the priority, for example `!high`;
-- an estimate: `45m`, `2h`, `1h30m`, or a bare number read as minutes.
+- an estimate: `45m`, `2h`, or `1h30m` (a unit is required; a bare number stays in the title).
 
 Priority is marker-only. A bare word such as "high" in "high level plan" stays in
 the title; only the `!` form sets a priority.
