@@ -120,6 +120,7 @@ function normalizeStoredTask(task: Record<string, unknown>): DayTask {
 		"archivedAt",
 		"parentId",
 		"detailNotePath",
+		"sourceNote",
 		"description",
 		"sortOrder",
 	] as const;

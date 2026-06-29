@@ -244,6 +244,18 @@ describe("decodePluginData", () => {
 		expect(decoded.tasks[0].sortOrder).toBe("abc");
 		expect(decoded.droppedTasks).toBe(0);
 	});
+
+	it("decodes a string sourceNote and drops a non-string one", () => {
+		const decoded = decodePluginData({
+			tasks: [
+				{ ...validTask, id: "TSK-aaaaaaaa", sourceNote: "Notes/Inbox.md" },
+				{ ...validTask, id: "TSK-bbbbbbbb", sourceNote: 42 },
+			],
+		});
+		const [a, b] = decoded.tasks;
+		expect(a.sourceNote).toBe("Notes/Inbox.md");
+		expect(b.sourceNote).toBeUndefined();
+	});
 });
 
 describe("DayTasksDataStore", () => {
