@@ -32,7 +32,7 @@ export function createTaskListModel(
 	const isCompleted = (status: string): boolean => statusManager.isCompletedStatus(status);
 	const filtered = filterTasks(tasks, state, referenceDate, isCompleted);
 	const sorted = sortTasks(filtered, state.sortBy, state.sortDir, priorities);
-	const rawGroups = groupTasks(sorted, state.groupBy, statusManager);
+	const rawGroups = groupTasks(sorted, state.groupBy, statusManager, state.projects);
 
 	const groups: TaskListGroup[] = rawGroups.map((group) => ({
 		key: group.key,

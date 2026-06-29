@@ -79,7 +79,8 @@ export function sortTasks(
 export function groupTasks(
 	tasks: DayTask[],
 	groupBy: TaskListState["groupBy"],
-	statusManager: StatusManager
+	statusManager: StatusManager,
+	projectFilter: string[] = []
 ): TaskGroup[] {
 	const groups = new Map<string, TaskGroup>();
 	const ensure = (key: string, label: string): TaskGroup => {
@@ -110,13 +111,25 @@ export function groupTasks(
 		return [...groups.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 	}
 
-	// project: first project path (or no-project bucket, keyed "" and ordered last)
+	// project: a task joins EVERY project it belongs to (multi-membership), so a
+	// task in projects A+B appears under both A and B — matching how the project
+	// filter works. When a project filter is active we restrict the groups a task
+	// joins to the filtered projects, so filtering project A never surfaces a
+	// co-project B group (no leak). Projects are deduped per task, so a task lands
+	// in any one group at most once. A task with no projects goes in the no-project
+	// bucket (keyed "" and ordered last). The distinct task total is computed by
+	// the caller, so per-group counts summing above it is expected, not a dup.
 	for (const task of tasks) {
-		const first = task.projects[0];
-		if (first) {
-			ensure(first.path, first.title ?? noteBasename(first.path)).tasks.push(task);
-		} else {
+		const projects =
+			projectFilter.length === 0
+				? task.projects
+				: task.projects.filter((p) => projectFilter.includes(p.path));
+		if (projects.length === 0) {
 			ensure("", "(No project)").tasks.push(task);
+		} else {
+			for (const project of projects) {
+				ensure(project.path, project.title ?? noteBasename(project.path)).tasks.push(task);
+			}
 		}
 	}
 	return [...groups.values()].sort((a, b) => {

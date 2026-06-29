@@ -129,6 +129,26 @@ describe("groupTasks", () => {
 		expect(groups[1].label).toBe("(No project)");
 	});
 
+	it("puts a multi-project task under each of its projects (once per group)", () => {
+		const tasks = [
+			task({ id: "a", projects: [{ path: "A.md", title: "A" }, { path: "B.md", title: "B" }] }),
+			task({ id: "b", projects: [{ path: "B.md", title: "B" }] }),
+		];
+		const groups = groupTasks(tasks, "project", sm);
+		const byKey = Object.fromEntries(groups.map((g) => [g.key, g.tasks.map((t) => t.id)]));
+		expect(byKey["A.md"]).toEqual(["a"]);
+		expect(byKey["B.md"]).toEqual(["a", "b"]);
+	});
+
+	it("restricts project groups to the active project filter (no co-project leak)", () => {
+		const tasks = [
+			task({ id: "a", projects: [{ path: "A.md", title: "A" }, { path: "B.md", title: "B" }] }),
+		];
+		const groups = groupTasks(tasks, "project", sm, ["A.md"]);
+		expect(groups.map((g) => g.key)).toEqual(["A.md"]);
+		expect(groups[0].tasks.map((t) => t.id)).toEqual(["a"]);
+	});
+
 	it("groups by scheduledDate ascending, label via formatMonthDay", () => {
 		// Input is intentionally out of date order to verify sort
 		const tasks = [
