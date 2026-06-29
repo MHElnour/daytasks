@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderTaskListView, type TaskListFacets, type TaskListHandlers, type TaskListUiState } from "../../src/obsidian/taskListRenderer";
+import { groupIconFor, renderTaskListView, type TaskListFacets, type TaskListHandlers, type TaskListUiState } from "../../src/obsidian/taskListRenderer";
 import type { TaskListModel } from "../../src/ui/taskListModel";
 import { DEFAULT_TASK_LIST_STATE } from "../../src/core/taskListState";
 import type { WidgetRenderOptions } from "../../src/obsidian/widgetRenderer";
@@ -33,6 +33,14 @@ function render(
 	renderTaskListView(parent, model, facetsOverride, options, { onCycleStatus: vi.fn() }, { ...noopHandlers, ...lh }, ui);
 	return parent;
 }
+
+describe("groupIconFor", () => {
+	it("maps each group-by to its icon", () => {
+		expect(groupIconFor("scheduled")).toBe("calendar-days");
+		expect(groupIconFor("status")).toBe("list-checks");
+		expect(groupIconFor("project")).toBe("folder");
+	});
+});
 
 describe("renderTaskListView", () => {
 	const model: TaskListModel = {

@@ -57,6 +57,19 @@ function withIcon(name: string, control: HTMLElement): HTMLElement {
 	return wrap;
 }
 
+/** Lucide icon for a group header, chosen by the active group-by. */
+export function groupIconFor(groupBy: TaskListState["groupBy"]): string {
+	switch (groupBy) {
+		case "scheduled":
+			return "calendar-days";
+		case "project":
+			return "folder";
+		case "status":
+		default:
+			return "list-checks";
+	}
+}
+
 function select<T extends string>(
 	className: string,
 	current: T,
@@ -283,6 +296,9 @@ export function renderTaskListView(
 		toggle.appendChild(chevron);
 		toggle.addEventListener("click", () => listHandlers.onToggleGroup(group.key));
 		head.appendChild(toggle);
+		const typeIcon = el("span", "daytasks-tasklist__group-type-icon");
+		typeIcon.dataset.icon = groupIconFor(model.state.groupBy);
+		head.appendChild(typeIcon);
 		head.appendChild(el("span", "daytasks-tasklist__group-label", group.label));
 		head.appendChild(el("span", "daytasks-tasklist__group-count", String(group.count)));
 		section.appendChild(head);

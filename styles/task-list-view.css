@@ -122,19 +122,25 @@
 	font-size: var(--font-ui-smaller);
 }
 
+/* Each group is a bordered, rounded container holding its task rows. */
 .daytasks-tasklist__group {
 	display: flex;
 	flex-direction: column;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
 }
 
 .daytasks-tasklist__group-head {
 	display: flex;
 	align-items: center;
 	gap: var(--size-2-2);
-	padding: var(--size-2-2) 0;
+	padding: var(--size-2-2) var(--size-2-3);
 	position: sticky;
 	top: 0;
-	background: var(--background-primary);
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m) var(--radius-m) 0 0;
 	z-index: 1;
 }
 
@@ -147,19 +153,36 @@
 	padding: 0;
 }
 
+.daytasks-tasklist__group-icon svg,
+.daytasks-tasklist__group-type-icon svg {
+	width: var(--icon-s, 16px);
+	height: var(--icon-s, 16px);
+}
+
+.daytasks-tasklist__group-type-icon {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
 .daytasks-tasklist__group-label {
 	font-weight: 600;
 }
 
+/* Count rendered as a small pill badge in the group header. */
 .daytasks-tasklist__group-count {
-	color: var(--text-faint);
+	margin-left: var(--size-2-1);
+	padding: 0 var(--size-2-2);
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 }
 
 .daytasks-tasklist__cards {
 	list-style: none;
 	margin: 0;
-	padding: 0;
+	padding: var(--size-2-3);
 	display: flex;
 	flex-direction: column;
 	gap: var(--size-2-2);
