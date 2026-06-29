@@ -132,7 +132,12 @@ export class TaskListView extends ItemView {
 			task.projects.forEach((p) => projects.set(p.path, p.title ?? noteBasename(p.path)));
 		}
 		return {
-			statuses: this.host.statusManager().getStatusesByOrder().map((s) => ({ value: s.value, label: s.label })),
+			statuses: this.host.statusManager().getStatusesByOrder().map((s) => ({
+				value: s.value,
+				label: s.label,
+				icon: s.icon,
+				color: s.color,
+			})),
 			tags: [...tags].sort(),
 			contexts: [...contexts].sort(),
 			projects: Array.from(projects, ([path, label]) => ({ path, label }))

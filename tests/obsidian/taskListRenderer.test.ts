@@ -49,6 +49,11 @@ describe("renderTaskListView", () => {
 		expect(root.querySelectorAll(".task-card").length).toBe(1);
 	});
 
+	it("renders the filter bar as two rows", () => {
+		const root = render(model);
+		expect(root.querySelectorAll(".daytasks-tasklist__filterbar-row").length).toBe(2);
+	});
+
 	it("group toggle has an accessible name (aria-label)", () => {
 		const root = render(model);
 		const toggle = root.querySelector(".daytasks-tasklist__group-toggle")!;

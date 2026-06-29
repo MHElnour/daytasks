@@ -3,7 +3,7 @@ import type { TaskListModel } from "../ui/taskListModel";
 import type { TaskListState } from "../core/taskListState";
 
 export interface TaskListFacets {
-	statuses: { value: string; label: string }[];
+	statuses: { value: string; label: string; icon?: string; color?: string }[];
 	tags: string[];
 	contexts: string[];
 	projects: { path: string; label: string }[];
@@ -42,6 +42,21 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 	return node;
 }
 
+/** A `data-icon` placeholder span; the host's applyIcons pass fills the glyph. */
+function iconSpan(name: string, className = "daytasks-tasklist__ctrl-icon"): HTMLSpanElement {
+	const span = el("span", className);
+	span.dataset.icon = name;
+	return span;
+}
+
+/** Wraps a control (e.g. a native select) with a leading icon for the toolbar. */
+function withIcon(name: string, control: HTMLElement): HTMLElement {
+	const wrap = el("div", "daytasks-tasklist__control");
+	wrap.appendChild(iconSpan(name));
+	wrap.appendChild(control);
+	return wrap;
+}
+
 function select<T extends string>(
 	className: string,
 	current: T,
@@ -59,16 +74,21 @@ function select<T extends string>(
 	return sel;
 }
 
-/** Multiselect rendered as a row of toggle chips (kept simple + testable). */
+/** Multiselect rendered as a row of toggle chips (kept simple + testable). Each
+ *  choice may carry an icon (data-icon) and a color (a status color), surfaced via
+ *  a `--dt-status-color` custom property the stylesheet uses for the active state. */
 function chipMultiselect(
 	className: string,
 	selected: string[],
-	choices: { value: string; label: string }[],
+	choices: { value: string; label: string; icon?: string; color?: string }[],
 	onChange: (values: string[]) => void
 ): HTMLElement {
 	const wrap = el("div", className);
 	for (const choice of choices) {
-		const chip = el("button", "daytasks-tasklist__facet-chip", choice.label);
+		const chip = el("button", "daytasks-tasklist__facet-chip");
+		if (choice.icon) chip.appendChild(iconSpan(choice.icon, "daytasks-tasklist__chip-icon"));
+		chip.appendChild(el("span", "daytasks-tasklist__chip-label", choice.label));
+		if (choice.color) chip.style.setProperty("--dt-status-color", choice.color);
 		const on = selected.includes(choice.value);
 		if (on) chip.classList.add("is-active");
 		chip.addEventListener("click", () => {
@@ -89,6 +109,7 @@ function chipMultiselect(
 function facetDropdown(
 	facetKey: FacetKey,
 	label: string,
+	icon: string,
 	selected: string[],
 	choices: { value: string; label: string }[],
 	ui: TaskListUiState,
@@ -97,10 +118,14 @@ function facetDropdown(
 ): HTMLElement {
 	const wrap = el("div", "daytasks-tasklist__facet");
 
-	const btn = el(
-		"button",
-		"daytasks-tasklist__facet-btn",
-		selected.length ? `${label} (${selected.length})` : label
+	const btn = el("button", "daytasks-tasklist__facet-btn");
+	btn.appendChild(iconSpan(icon));
+	btn.appendChild(
+		el(
+			"span",
+			"daytasks-tasklist__facet-btn-label",
+			selected.length ? `${label} (${selected.length})` : label
+		)
 	);
 	if (selected.length) btn.classList.add("is-active");
 	const caret = el("span", "daytasks-tasklist__facet-caret", "▾");
@@ -157,54 +182,66 @@ function renderFilterBar(
 	lh: TaskListHandlers
 ): HTMLElement {
 	const bar = el("div", "daytasks-tasklist__filterbar");
+	const row1 = el("div", "daytasks-tasklist__filterbar-row daytasks-tasklist__filterbar-row--primary");
+	const row2 = el("div", "daytasks-tasklist__filterbar-row daytasks-tasklist__filterbar-row--secondary");
 
+	// Row 1 — search + status pills.
+	const searchWrap = el("div", "daytasks-tasklist__search-wrap");
+	searchWrap.appendChild(iconSpan("search"));
 	const search = el("input", "daytasks-tasklist__search");
 	search.type = "search";
 	search.placeholder = "Search title / description…";
 	search.value = state.search;
 	search.addEventListener("input", () => lh.onSetSearch(search.value));
-	bar.appendChild(search);
+	searchWrap.appendChild(search);
+	row1.appendChild(searchWrap);
 
-	bar.appendChild(chipMultiselect("daytasks-tasklist__statuses", state.statuses, facets.statuses, (values) => lh.onSetStatuses(values)));
+	row1.appendChild(chipMultiselect("daytasks-tasklist__statuses", state.statuses, facets.statuses, (values) => lh.onSetStatuses(values)));
 
-	bar.appendChild(select<TaskListState["datePreset"]>("daytasks-tasklist__date", state.datePreset, [
+	// Row 2 — date · group · sort (+dir) · tags · contexts · projects · clear.
+	row2.appendChild(withIcon("calendar", select<TaskListState["datePreset"]>("daytasks-tasklist__date", state.datePreset, [
 		{ value: "all", label: "All dates" }, { value: "today", label: "Today" },
 		{ value: "overdue", label: "Overdue" }, { value: "next7", label: "Next 7 days" },
-	], (preset) => lh.onSetDatePreset(preset)));
+	], (preset) => lh.onSetDatePreset(preset))));
 
-	if (facets.tags.length) {
-		bar.appendChild(facetDropdown("tags", "Tags", state.tags,
-			facets.tags.map((t) => ({ value: t, label: `#${t}` })), ui, (values) => lh.onSetTags(values), lh));
-	}
-	if (facets.contexts.length) {
-		bar.appendChild(facetDropdown("contexts", "Contexts", state.contexts,
-			facets.contexts.map((c) => ({ value: c, label: `@${c}` })), ui, (values) => lh.onSetContexts(values), lh));
-	}
-	if (facets.projects.length) {
-		bar.appendChild(facetDropdown("projects", "Projects", state.projects,
-			facets.projects.map((p) => ({ value: p.path, label: p.label })), ui, (values) => lh.onSetProjects(values), lh));
-	}
-
-	bar.appendChild(select<TaskListState["groupBy"]>("daytasks-tasklist__groupby", state.groupBy, [
+	row2.appendChild(withIcon("layout-list", select<TaskListState["groupBy"]>("daytasks-tasklist__groupby", state.groupBy, [
 		{ value: "status", label: "Group: Status" }, { value: "scheduled", label: "Group: Date" },
 		{ value: "project", label: "Group: Project" },
-	], (groupBy) => lh.onSetGroupBy(groupBy)));
+	], (groupBy) => lh.onSetGroupBy(groupBy))));
 
-	bar.appendChild(select<TaskListState["sortBy"]>("daytasks-tasklist__sortby", state.sortBy, [
+	row2.appendChild(withIcon("arrow-up-down", select<TaskListState["sortBy"]>("daytasks-tasklist__sortby", state.sortBy, [
 		{ value: "scheduled", label: "Sort: Scheduled" }, { value: "due", label: "Sort: Due" },
 		{ value: "priority", label: "Sort: Priority" }, { value: "created", label: "Sort: Created" },
 		{ value: "title", label: "Sort: Title" },
-	], (value) => lh.onSetSort(value, state.sortDir)));
+	], (value) => lh.onSetSort(value, state.sortDir))));
 
-	const dir = el("button", "daytasks-tasklist__sortdir", state.sortDir === "asc" ? "↑" : "↓");
-	dir.setAttribute("aria-label", "Toggle sort direction");
+	const dir = el("button", "daytasks-tasklist__sortdir");
+	dir.dataset.icon = state.sortDir === "asc" ? "arrow-up" : "arrow-down";
+	dir.setAttribute("aria-label", `Sort direction: ${state.sortDir === "asc" ? "ascending" : "descending"}`);
 	dir.addEventListener("click", () => lh.onSetSort(state.sortBy, state.sortDir === "asc" ? "desc" : "asc"));
-	bar.appendChild(dir);
+	row2.appendChild(dir);
 
-	const clear = el("button", "daytasks-tasklist__clear", "Clear");
+	if (facets.tags.length) {
+		row2.appendChild(facetDropdown("tags", "Tags", "hash", state.tags,
+			facets.tags.map((t) => ({ value: t, label: `#${t}` })), ui, (values) => lh.onSetTags(values), lh));
+	}
+	if (facets.contexts.length) {
+		row2.appendChild(facetDropdown("contexts", "Contexts", "at-sign", state.contexts,
+			facets.contexts.map((c) => ({ value: c, label: `@${c}` })), ui, (values) => lh.onSetContexts(values), lh));
+	}
+	if (facets.projects.length) {
+		row2.appendChild(facetDropdown("projects", "Projects", "folder", state.projects,
+			facets.projects.map((p) => ({ value: p.path, label: p.label })), ui, (values) => lh.onSetProjects(values), lh));
+	}
+
+	const clear = el("button", "daytasks-tasklist__clear");
+	clear.appendChild(iconSpan("x"));
+	clear.appendChild(el("span", undefined, "Clear"));
 	clear.addEventListener("click", () => lh.onClear());
-	bar.appendChild(clear);
+	row2.appendChild(clear);
 
+	bar.appendChild(row1);
+	bar.appendChild(row2);
 	return bar;
 }
 

@@ -10,31 +10,80 @@
 	gap: var(--size-4-2);
 }
 
+/* Filter bar: two stacked rows (search + status; then date/group/sort/facets). */
 .daytasks-tasklist__filterbar {
 	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--size-4-2);
+	flex-direction: column;
+	gap: var(--size-2-3);
 	padding-bottom: var(--size-4-2);
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.daytasks-tasklist__search {
-	flex: 1 1 180px;
-	min-width: 140px;
+.daytasks-tasklist__filterbar-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
 }
 
-.daytasks-tasklist__statuses,
-.daytasks-tasklist__tags,
-.daytasks-tasklist__contexts,
-.daytasks-tasklist__projects {
+/* Search field wrapped with a leading icon; the input itself is borderless. */
+.daytasks-tasklist__search-wrap {
+	flex: 1 1 240px;
+	min-width: 160px;
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	padding: 0 var(--size-2-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+}
+
+.daytasks-tasklist__search-wrap:focus-within {
+	border-color: var(--interactive-accent);
+}
+
+.daytasks-tasklist__search {
+	flex: 1 1 auto;
+	min-width: 0;
+	border: none;
+	background: transparent;
+	box-shadow: none;
+	padding: var(--size-2-1) 0;
+}
+
+/* A leading-icon + native-select control on the secondary row. */
+.daytasks-tasklist__control {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.daytasks-tasklist__ctrl-icon,
+.daytasks-tasklist__chip-icon {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.daytasks-tasklist__ctrl-icon svg,
+.daytasks-tasklist__chip-icon svg,
+.daytasks-tasklist__sortdir svg {
+	width: var(--icon-s, 16px);
+	height: var(--icon-s, 16px);
+}
+
+.daytasks-tasklist__statuses {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--size-2-2);
 }
 
 .daytasks-tasklist__facet-chip {
-	padding: 0 var(--size-2-3);
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-1);
+	padding: var(--size-2-1) var(--size-2-3);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
 	background: transparent;
@@ -43,10 +92,34 @@
 	font-size: var(--font-ui-smaller);
 }
 
+/* Status chips tint to their status color (data-driven via --dt-status-color). */
+.daytasks-tasklist__facet-chip .daytasks-tasklist__chip-icon {
+	color: var(--dt-status-color, var(--text-muted));
+}
+
 .daytasks-tasklist__facet-chip.is-active {
-	background: var(--interactive-accent);
+	background: var(--dt-status-color, var(--interactive-accent));
 	color: var(--text-on-accent);
-	border-color: var(--interactive-accent);
+	border-color: var(--dt-status-color, var(--interactive-accent));
+}
+
+.daytasks-tasklist__facet-chip.is-active .daytasks-tasklist__chip-icon {
+	color: var(--text-on-accent);
+}
+
+/* Sort-direction + Clear are icon buttons matching the facet buttons. */
+.daytasks-tasklist__sortdir,
+.daytasks-tasklist__clear {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-1);
+	padding: var(--size-2-1) var(--size-2-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
 }
 
 .daytasks-tasklist__group {

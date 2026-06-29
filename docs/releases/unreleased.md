@@ -13,6 +13,12 @@ Sections:
 DayTasks is English-only right now; no i18n release workflow is required.
 -->
 
+## Changed
+
+- Task List view: the filter toolbar is now two tidy rows with icons — search and
+  status pills on top; date, group, sort, tags, contexts, projects, and clear
+  below. Status pills show their status icon and color. Same filtering behavior.
+
 ## Fixed
 
 - Inline capture: dates are now recognized only from colon markers
