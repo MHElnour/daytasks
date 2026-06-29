@@ -38,8 +38,8 @@ line` command, which turns a note line into a scheduled task. When it is off, th
 command does nothing.
 
 **Show capture button** shows a one-click capture button at the end of the current
-line in the editor. It requires **Enable inline task capture** and is on by
-default.
+Markdown task line (`- [ ]`) in the editor. It requires **Enable inline task
+capture** and is on by default.
 
 ## Detail Notes
 

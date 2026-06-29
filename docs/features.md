@@ -76,9 +76,11 @@ id, and the task records the note it was captured from. The command is gated by
 the **Enable inline task capture** setting.
 
 You can also capture without the command: with inline capture enabled, a small
-button appears at the end of the line your cursor is on. Click it to capture that
-line. The button is hidden on empty lines and on lines that already hold a captured
-task. Toggle it with **Settings → Inline capture → Show capture button**.
+button appears at the end of a Markdown task line (`- [ ]`) when your cursor is on
+it. Click it to capture that line. The button only shows on checkbox/task lines —
+plain prose lines get no button (the command still captures any line) — and it is
+hidden on lines that already hold a captured task. Toggle it with
+**Settings → Inline capture → Show capture button**.
 
 ## Task List View
 
