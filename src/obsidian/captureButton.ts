@@ -8,7 +8,7 @@ import {
 	ViewUpdate,
 	WidgetType,
 } from "@codemirror/view";
-import { setIcon, setTooltip } from "obsidian";
+import { Editor, editorInfoField, setIcon, setTooltip } from "obsidian";
 import { shouldShowCaptureButton } from "../core/captureButton";
 
 /** Everything the capture button needs from the plugin, kept narrow. */
@@ -16,7 +16,7 @@ export interface CaptureButtonHost {
 	/** enableInlineCapture && showCaptureButton */
 	isEnabled(): boolean;
 	/** Capture the given 0-based editor line as a task. */
-	capture(line: number): void;
+	capture(editor: Editor, notePath: string | null, line: number): void;
 }
 
 const BUTTON_CLASS = "daytasks-capture-button";
@@ -55,7 +55,13 @@ class CaptureButtonWidget extends WidgetType {
 				: "mousedown";
 		button.addEventListener(activationEvent, (event) => {
 			event.preventDefault();
-			this.host.capture(this.line);
+			// Resolve the editor + path from THIS view (split/popout safe), not
+			// the workspace-active one, so we capture the line in the right note.
+			const info = view.state.field(editorInfoField, false);
+			const editor = info?.editor;
+			if (editor) {
+				this.host.capture(editor, info.file?.path ?? null, this.line);
+			}
 		});
 		return button;
 	}

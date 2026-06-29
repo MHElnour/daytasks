@@ -164,11 +164,8 @@ export default class DayTasksPlugin extends Plugin {
 			captureButtonExtension({
 				isEnabled: () =>
 					this.settings.enableInlineCapture && this.settings.showCaptureButton,
-				capture: (line) => {
-					const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-					if (view?.file) {
-						void this.runCaptureTaskCommand(view.editor, view.file.path, line);
-					}
+				capture: (editor, notePath, line) => {
+					void this.runCaptureTaskCommand(editor, notePath, line);
 				},
 			})
 		);
