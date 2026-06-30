@@ -157,12 +157,23 @@
 
 /* ---- injection wrappers (Live Preview + reading mode) ---- */
 
-.daytasks-cm-widget,
+/* Live Preview: a CodeMirror block widget. CodeMirror reserves its height by
+   measuring the border box, so vertical MARGIN would not be counted and would
+   mis-size the gap under the text — use padding instead. `flow-root` contains
+   the inner card's margins so they can't collapse out through the wrapper. */
+.daytasks-cm-widget {
+	display: flow-root;
+	user-select: none;
+	padding-block: 1.5em 2em;
+}
+
+/* Reading mode: a plain block appended after the preview sizer (not a CM
+   widget), so ordinary margins behave normally. */
 .daytasks-widget-host {
 	display: block;
 	user-select: none;
 	clear: both;
-	margin-block: var(--daytasks-widget-margin-top, 1.5em) 2em;
+	margin-block: 1.5em 2em;
 	margin-inline: var(--file-margins, 0);
 }
 

@@ -18,7 +18,7 @@ import { dailyNotePathForDate, resolveDailyNoteDate } from "./daily-notes/dailyN
 import { captureButtonExtension } from "./obsidian/captureButton";
 import { attachReorder, type ReorderHandle } from "./obsidian/dragReorder";
 import { buildTagSearchQuery, openGlobalSearch } from "./obsidian/globalSearch";
-import { dailyTasksLivePreviewExtension } from "./obsidian/livePreview";
+import { dailyTasksLivePreviewExtension, refreshWidget } from "./obsidian/livePreview";
 import {
 	DayTasksDataStore,
 	type DayTasksPluginData,
@@ -179,6 +179,7 @@ export default class DayTasksPlugin extends Plugin {
 		this.registerEditorExtension(
 			dailyTasksLivePreviewExtension({
 				isEnabled: () => this.settings.showDailyNoteWidget,
+				rendersWidget: (notePath) => this.notePathRendersWidget(notePath),
 				renderWidget: (container, notePath) =>
 					this.renderWidgetInto(container, notePath),
 				version: () => this.dataVersion,
@@ -1051,7 +1052,7 @@ export default class DayTasksPlugin extends Plugin {
 			const cm = (view as unknown as { editor?: { cm?: EditorView } }).editor?.cm;
 			// Feature-detect: `cm` is a private shape, so confirm dispatch is callable.
 			if (cm && typeof cm.dispatch === "function") {
-				cm.dispatch({});
+				cm.dispatch({ effects: refreshWidget.of() });
 			}
 		}
 	}
