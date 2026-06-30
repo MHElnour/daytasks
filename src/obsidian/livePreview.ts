@@ -2,6 +2,7 @@ import type { Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { editorInfoField } from "obsidian";
 import { applyBottomOffset, insertWidgetAtBottom } from "./widgetInsertion";
+import { affectsWidgetLayout } from "./widgetLayout";
 
 /** Everything the Live Preview widget needs from the plugin, kept narrow. */
 export interface LivePreviewWidgetHost {
@@ -44,6 +45,9 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 		class implements PluginValue {
 			private widget: HTMLElement | null = null;
 			private lastKey = "";
+			/** Pending bottom-offset measure, tracked so rapid updates coalesce
+			 *  into one rAF and can be cancelled on teardown. */
+			private offsetFrame: { win: Window; id: number } | null = null;
 
 			constructor(view: EditorView) {
 				this.sync(view, true);
@@ -52,8 +56,8 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 			update(update: ViewUpdate): void {
 				// Selection-only updates (cursor moves) cannot change content height,
 				// so skip the bottom-offset re-measure for them and only re-measure
-				// when the document or editor geometry actually changed.
-				this.sync(update.view, update.docChanged || update.geometryChanged);
+				// when the document, geometry, or viewport actually changed.
+				this.sync(update.view, affectsWidgetLayout(update));
 			}
 
 			destroy(): void {
@@ -110,11 +114,18 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 				// Schedule on the editor's own window so the measure runs on the
 				// right frame clock in a popout (LIFE-1).
 				const win = container.ownerDocument.defaultView ?? window;
-				win.requestAnimationFrame(() => {
+				// Coalesce bursts of layout updates — notably viewportChanged, which
+				// fires on every scroll frame — into a single measure per frame.
+				if (this.offsetFrame) {
+					this.offsetFrame.win.cancelAnimationFrame(this.offsetFrame.id);
+				}
+				const id = win.requestAnimationFrame(() => {
+					this.offsetFrame = null;
 					if (widget.parentElement) {
 						applyBottomOffset(container, widget);
 					}
 				});
+				this.offsetFrame = { win, id };
 			}
 
 			private cleanupOrphans(container: HTMLElement): void {
@@ -128,6 +139,10 @@ export function dailyTasksLivePreviewExtension(host: LivePreviewWidgetHost): Ext
 			}
 
 			private remove(): void {
+				if (this.offsetFrame) {
+					this.offsetFrame.win.cancelAnimationFrame(this.offsetFrame.id);
+					this.offsetFrame = null;
+				}
 				if (this.widget) {
 					// Drop drag handles while the widget is still attached, so the
 					// host can match them by containment, then remove the node.
