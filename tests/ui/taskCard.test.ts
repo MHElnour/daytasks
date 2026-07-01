@@ -54,6 +54,21 @@ describe("createTaskCardViewModel", () => {
 		});
 	});
 
+	it("strips inline markdown from the title, description, and dependency ref titles", () => {
+		const blocker = { ...task, id: "TSK-blocker01", title: "**Blocker** [[Note|note]]", status: "open" };
+		const model = createTaskCardViewModel(
+			{ ...task, title: "**Buy** [[Milk]]", description: "get __2%__ milk", blockedBy: ["TSK-blocker01"], status: "blocked" },
+			statusManager,
+			"2026-06-24",
+			priorities,
+			{},
+			{ resolve: (id) => (id === "TSK-blocker01" ? blocker : undefined), blocking: [] }
+		);
+		expect(model.title).toBe("Buy Milk");
+		expect(model.description).toBe("get 2% milk");
+		expect(model.blockedBy[0].title).toBe("Blocker note");
+	});
+
 	it("uses the project filename as a fallback label", () => {
 		const model = createTaskCardViewModel(
 			{ ...task, projects: [{ path: "Projects/Client Launch.md" }] },

@@ -13,6 +13,7 @@ import { safeCssColor } from "../util/cssColor";
 import { parseEstimateMinutes } from "../util/estimate";
 import { noteBasename } from "../util/notePath";
 import { parseLabelList } from "../util/parseLabelList";
+import { stripInlineMarkdown } from "../util/stripMarkdown";
 import { MarkdownPathSuggestModal } from "./modals";
 import { TaskSuggestModal } from "./taskPicker";
 
@@ -169,18 +170,20 @@ export class TaskCreationModal extends Modal {
 			attr: {
 				type: "text",
 				placeholder: "Buy milk",
-				maxlength: String(MAX_TITLE_LENGTH),
 				"aria-label": "Title",
 			},
 		});
-		titleInput.value = this.title.slice(0, MAX_TITLE_LENGTH);
+		// No maxlength / raw clamp: markdown a user types is stripped on save, so
+		// the `**`/`[[` syntax must not eat into the visible-character budget. The
+		// counter and the stored value both measure the stripped text.
+		titleInput.value = this.title;
 		const titleCounter = box1.createDiv({
 			cls: "daytasks-char-counter",
-			text: `${titleInput.value.length}/${MAX_TITLE_LENGTH}`,
+			text: `${stripInlineMarkdown(titleInput.value).length}/${MAX_TITLE_LENGTH}`,
 		});
 		titleInput.addEventListener("input", () => {
-			this.title = titleInput.value.slice(0, MAX_TITLE_LENGTH);
-			titleCounter.setText(`${this.title.length}/${MAX_TITLE_LENGTH}`);
+			this.title = titleInput.value;
+			titleCounter.setText(`${stripInlineMarkdown(this.title).length}/${MAX_TITLE_LENGTH}`);
 			this.updatePreview();
 		});
 		// Defer focus to the next tick; track the handle so a modal closed within
@@ -194,18 +197,17 @@ export class TaskCreationModal extends Modal {
 			cls: "daytasks-description-input",
 			attr: {
 				placeholder: "Description…",
-				maxlength: String(MAX_DESCRIPTION_LENGTH),
 				"aria-label": "Description",
 			},
 		});
 		description.value = this.description;
 		const counter = box1.createDiv({
 			cls: "daytasks-char-counter",
-			text: `${this.description.length}/${MAX_DESCRIPTION_LENGTH}`,
+			text: `${stripInlineMarkdown(this.description).length}/${MAX_DESCRIPTION_LENGTH}`,
 		});
 		description.addEventListener("input", () => {
-			this.description = description.value.slice(0, MAX_DESCRIPTION_LENGTH);
-			counter.setText(`${this.description.length}/${MAX_DESCRIPTION_LENGTH}`);
+			this.description = description.value;
+			counter.setText(`${stripInlineMarkdown(this.description).length}/${MAX_DESCRIPTION_LENGTH}`);
 		});
 
 		// ---- Box 2: metadata ----
@@ -464,7 +466,6 @@ export class TaskCreationModal extends Modal {
 			attr: {
 				type: "text",
 				placeholder: "Add subtask",
-				maxlength: String(MAX_TITLE_LENGTH),
 				"aria-label": "Add subtask",
 			},
 		});
@@ -554,7 +555,7 @@ export class TaskCreationModal extends Modal {
 	}
 
 	private updatePreview(): void {
-		const parts = [this.title.trim() || "(untitled)", `· ${this.status}`];
+		const parts = [stripInlineMarkdown(this.title) || "(untitled)", `· ${this.status}`];
 		if (this.scheduledDate) {
 			parts.push(`· ${this.scheduledDate}`);
 		}

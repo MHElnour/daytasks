@@ -1,12 +1,18 @@
+import { stripInlineMarkdown } from "../util/stripMarkdown";
+
 /** Maximum stored length for a task description. */
 export const MAX_DESCRIPTION_LENGTH = 500;
 
 /** Maximum stored length for a task title. */
 export const MAX_TITLE_LENGTH = 100;
 
-/** Trims a title and clamps it to the maximum length. */
+/**
+ * Flattens inline markdown to plain text, then clamps to the maximum length.
+ * Stripping first means the `**`/`[[` syntax a user types is never stored and
+ * never counts against the length budget — only the visible text does.
+ */
 export function clampTitle(value: string): string {
-	return value.trim().slice(0, MAX_TITLE_LENGTH);
+	return stripInlineMarkdown(value).slice(0, MAX_TITLE_LENGTH);
 }
 
 /** Tag added to every task by default. */
@@ -37,16 +43,20 @@ export function dueBeforeScheduled(
 	return !!dueDate && dueDate < scheduledDate;
 }
 
-/** Trims and clamps a description to the maximum length, or undefined if blank. */
+/**
+ * Flattens inline markdown, then clamps to the maximum length, or undefined if
+ * blank once stripped. Same rationale as `clampTitle`: syntax is neither stored
+ * nor counted against the budget.
+ */
 export function clampDescription(value: string | undefined): string | undefined {
 	if (!value) {
 		return undefined;
 	}
-	const trimmed = value.trim();
-	if (!trimmed) {
+	const stripped = stripInlineMarkdown(value);
+	if (!stripped) {
 		return undefined;
 	}
-	return trimmed.slice(0, MAX_DESCRIPTION_LENGTH);
+	return stripped.slice(0, MAX_DESCRIPTION_LENGTH);
 }
 
 export interface TimeEntry {

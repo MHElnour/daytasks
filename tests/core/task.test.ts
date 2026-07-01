@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_TASK_TAG,
 	MAX_TITLE_LENGTH,
+	clampDescription,
 	clampTitle,
 	dueBeforeScheduled,
 	toUpdateDayTaskInput,
@@ -18,6 +19,27 @@ describe("clampTitle", () => {
 		const result = clampTitle("z".repeat(150));
 		expect(result).toHaveLength(MAX_TITLE_LENGTH);
 		expect(result).toBe("z".repeat(MAX_TITLE_LENGTH));
+	});
+
+	it("strips inline markdown from the title", () => {
+		expect(clampTitle("**call** [[John Doe|John]]")).toBe("call John");
+	});
+
+	it("does not count markdown syntax toward the maximum length", () => {
+		const result = clampTitle(`**${"a".repeat(MAX_TITLE_LENGTH)}**`);
+		expect(result).toBe("a".repeat(MAX_TITLE_LENGTH));
+		expect(result).toHaveLength(MAX_TITLE_LENGTH);
+	});
+});
+
+describe("clampDescription", () => {
+	it("strips inline markdown from the description", () => {
+		expect(clampDescription("__note__ about `x`")).toBe("note about x");
+	});
+
+	it("returns undefined for blank or missing input", () => {
+		expect(clampDescription(undefined)).toBeUndefined();
+		expect(clampDescription("   ")).toBeUndefined();
 	});
 });
 

@@ -5,6 +5,7 @@ import { safeCssColor } from "../util/cssColor";
 import { formatEstimateMinutes } from "../util/estimate";
 import { noteBasename } from "../util/notePath";
 import { formatMonthDay, isOverdue } from "../util/relativeDate";
+import { stripInlineMarkdown } from "../util/stripMarkdown";
 
 /** Lucide icon used for a priority that has no configured icon. */
 const DEFAULT_PRIORITY_ICON = "flag";
@@ -81,7 +82,7 @@ export function createTaskCardViewModel(
 
 	const toRef = (t: DayTask): TaskRef => ({
 		id: t.id,
-		title: t.title,
+		title: stripInlineMarkdown(t.title),
 		scheduledDate: t.scheduledDate,
 		completed: statusManager.isCompletedStatus(t.status),
 	});
@@ -95,7 +96,9 @@ export function createTaskCardViewModel(
 
 	return {
 		id: task.id,
-		title: task.title,
+		// Display-clean text: legacy tasks stored before markdown stripping — and
+		// titles mirrored from a daily-note line — still carry raw `**`/`[[`.
+		title: stripInlineMarkdown(task.title),
 		checked,
 		status: task.status,
 		statusLabel: config?.label ?? task.status,
@@ -120,7 +123,7 @@ export function createTaskCardViewModel(
 			path: project.path,
 			label: project.title ?? noteBasename(project.path),
 		})),
-		description: task.description,
+		description: task.description === undefined ? undefined : stripInlineMarkdown(task.description),
 		children: nesting.children ?? [],
 		childProgress: nesting.childProgress,
 		expanded: nesting.expanded ?? false,
