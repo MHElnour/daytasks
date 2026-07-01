@@ -139,9 +139,7 @@ note straight from the command palette.
 frontmatter and injects an interactive subtasks widget; the note body remains
 yours.
 
-![Detail note managed frontmatter](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/detail-note-properties.png)
-
-![Detail note injected subtasks widget](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/detail-note.png)
+![Detail note managed frontmatter and injected subtasks widget](https://raw.githubusercontent.com/MHElnour/daytasks/main/docs/assets/detail-note-properties.png)
 
 **Settings** control daily-note detection, card metadata, task defaults, and
 detail-note behavior.
